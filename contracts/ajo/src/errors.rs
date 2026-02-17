@@ -49,4 +49,7 @@ pub enum AjoError {
     
     /// Unauthorized operation
     Unauthorized = 15,
+    
+    /// Contribution made outside the active cycle window
+    OutsideCycleWindow = 16,
 }

@@ -93,3 +93,26 @@ pub fn validate_group_params(
     
     Ok(())
 }
+
+/// Check if a contribution is within the active cycle window
+///
+/// # Arguments
+/// * `env` - The environment
+/// * `group` - The group to check
+///
+/// # Returns
+/// Ok(()) if within the cycle window
+///
+/// # Errors
+/// * `OutsideCycleWindow` - If current time is outside the cycle window
+pub fn validate_cycle_window(env: &Env, group: &Group) -> Result<(), AjoError> {
+    let current_time = get_current_timestamp(env);
+    let cycle_end = group.cycle_start_time + group.cycle_duration;
+    
+    // Check if we're within the cycle window
+    if current_time > cycle_end {
+        return Err(AjoError::OutsideCycleWindow);
+    }
+    
+    Ok(())
+}

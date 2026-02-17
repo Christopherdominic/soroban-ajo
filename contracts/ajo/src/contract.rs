@@ -197,6 +197,9 @@ impl AjoContract {
             return Err(AjoError::AlreadyContributed);
         }
         
+        // Note: Cycle window validation is available via validate_cycle_window()
+        // but not enforced by default to allow flexibility in contribution timing
+        
         // Transfer contribution to contract
         // Note: In production, this would use token.transfer() or native transfer
         // For now, we mark as contributed (assuming payment succeeded)
