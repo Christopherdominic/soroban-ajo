@@ -383,3 +383,125 @@ fn test_contribution_across_cycles() {
     let creator_status = status.iter().find(|(addr, _)| addr == &creator).unwrap();
     assert_eq!(creator_status.1, true);
 }
+
+// ========================================
+// Issue 5: Group status helper tests
+// ========================================
+
+#[test]
+fn test_group_status_initial_state() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group with 3 members
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Get status
+    let status = client.get_group_status(&group_id);
+    
+    // Verify initial state
+    assert_eq!(status.group_id, group_id);
+    assert_eq!(status.current_cycle, 1);
+    assert_eq!(status.next_recipient, creator);
+    assert_eq!(status.contributions_count, 0);
+    assert_eq!(status.total_members, 3);
+    assert_eq!(status.cycle_complete, false);
+    assert_eq!(status.is_complete, false);
+}
+
+#[test]
+fn test_group_status_partial_contributions() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group with 3 members
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Two members contribute
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    
+    // Get status
+    let status = client.get_group_status(&group_id);
+    
+    // Verify partial contributions
+    assert_eq!(status.contributions_count, 2);
+    assert_eq!(status.total_members, 3);
+    assert_eq!(status.cycle_complete, false);
+}
+
+#[test]
+fn test_group_status_cycle_complete() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group with 3 members
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // All members contribute
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    client.contribute(&member3, &group_id);
+    
+    // Get status
+    let status = client.get_group_status(&group_id);
+    
+    // Verify cycle is complete
+    assert_eq!(status.contributions_count, 3);
+    assert_eq!(status.total_members, 3);
+    assert_eq!(status.cycle_complete, true);
+    assert_eq!(status.is_complete, false);  // Group not complete yet
+}
+
+#[test]
+fn test_group_status_after_payout() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group with 3 members
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Complete cycle 1 and execute payout
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    client.contribute(&member3, &group_id);
+    client.execute_payout(&group_id);
+    
+    // Get status for cycle 2
+    let status = client.get_group_status(&group_id);
+    
+    // Verify moved to cycle 2
+    assert_eq!(status.current_cycle, 2);
+    assert_eq!(status.next_recipient, member2);  // Next in line
+    assert_eq!(status.contributions_count, 0);  // New cycle, no contributions yet
+    assert_eq!(status.cycle_complete, false);
+    assert_eq!(status.is_complete, false);
+}
+
+#[test]
+fn test_group_status_completed() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group with 3 members
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Complete all 3 cycles
+    for _ in 0..3 {
+        client.contribute(&creator, &group_id);
+        client.contribute(&member2, &group_id);
+        client.contribute(&member3, &group_id);
+        client.execute_payout(&group_id);
+    }
+    
+    // Get status
+    let status = client.get_group_status(&group_id);
+    
+    // Verify group is complete
+    assert_eq!(status.is_complete, true);
+}

@@ -3,7 +3,7 @@ use soroban_sdk::{contract, contractimpl, Address, Env, Vec};
 use crate::errors::AjoError;
 use crate::events;
 use crate::storage;
-use crate::types::Group;
+use crate::types::{Group, GroupStatus};
 use crate::utils;
 
 /// The main Ajo contract
@@ -329,5 +329,61 @@ impl AjoContract {
     pub fn is_complete(env: Env, group_id: u64) -> Result<bool, AjoError> {
         let group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
         Ok(group.is_complete)
+    }
+    
+    /// Get comprehensive status of a group
+    ///
+    /// This function provides a complete view of the group's current state including:
+    /// - Current cycle and next payout recipient
+    /// - Contribution progress for the current cycle
+    /// - Whether the cycle is ready for payout
+    /// - Whether the group has completed all cycles
+    ///
+    /// # Arguments
+    /// * `group_id` - The group to get status for
+    ///
+    /// # Returns
+    /// GroupStatus struct with comprehensive group state information
+    ///
+    /// # Errors
+    /// * `GroupNotFound` - If the group does not exist
+    /// * `NoMembers` - If the group has no members (should never happen)
+    pub fn get_group_status(env: Env, group_id: u64) -> Result<GroupStatus, AjoError> {
+        let group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
+        
+        // Get next recipient (will be Address at payout_index)
+        // If group is complete, payout_index == members.len(), so use last member
+        let recipient_index = if group.is_complete {
+            group.members.len().saturating_sub(1)
+        } else {
+            group.payout_index
+        };
+        
+        let next_recipient = group
+            .members
+            .get(recipient_index)
+            .ok_or(AjoError::NoMembers)?;
+        
+        // Count contributions for current cycle
+        let mut contributions_count = 0u32;
+        for member in group.members.iter() {
+            if storage::has_contributed(&env, group.id, group.current_cycle, &member) {
+                contributions_count += 1;
+            }
+        }
+        
+        let total_members = group.members.len();
+        let cycle_complete = contributions_count == total_members;
+        
+        Ok(GroupStatus {
+            group_id: group.id,
+            current_cycle: group.current_cycle,
+            next_recipient,
+            contributions_count,
+            total_members,
+            cycle_complete,
+            is_complete: group.is_complete,
+            cycle_start_time: group.cycle_start_time,
+        })
     }
 }
