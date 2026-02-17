@@ -77,3 +77,14 @@ pub fn emit_group_completed(env: &Env, group_id: u64) {
     let topics = (symbol_short!("complete"), group_id);
     env.events().publish(topics, ());
 }
+
+/// Emit an event when a group is cancelled by the creator
+///
+/// # Arguments
+/// * `env` - The environment
+/// * `group_id` - The unique group identifier
+/// * `creator` - Address of the creator who cancelled
+pub fn emit_group_cancelled(env: &Env, group_id: u64, creator: &Address) {
+    let topics = (symbol_short!("canceled"), group_id);
+    env.events().publish(topics, creator);
+}

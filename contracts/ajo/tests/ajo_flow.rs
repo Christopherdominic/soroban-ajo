@@ -505,3 +505,85 @@ fn test_group_status_completed() {
     // Verify group is complete
     assert_eq!(status.is_complete, true);
 }
+
+// ========================================
+// Issue 7: Group cancellation tests
+// ========================================
+
+#[test]
+fn test_cancel_group_by_creator() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group with 3 members
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Some members contribute
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    
+    // Creator cancels the group
+    client.cancel_group(&creator, &group_id);
+    
+    // Verify group is marked as complete
+    let group = client.get_group(&group_id);
+    assert_eq!(group.is_complete, true);
+}
+
+#[test]
+fn test_cancel_group_unauthorized() {
+    let (env, client, creator, member2, _) = setup_test_env();
+    
+    // Create group
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    
+    // Non-creator tries to cancel - should fail
+    let result = client.try_cancel_group(&member2, &group_id);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_cancel_completed_group() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create and complete a group
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Complete all cycles
+    for _ in 0..3 {
+        client.contribute(&creator, &group_id);
+        client.contribute(&member2, &group_id);
+        client.contribute(&member3, &group_id);
+        client.execute_payout(&group_id);
+    }
+    
+    // Try to cancel already completed group - should fail
+    let result = client.try_cancel_group(&creator, &group_id);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_operations_after_cancellation() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Cancel the group
+    client.cancel_group(&creator, &group_id);
+    
+    // Try to contribute after cancellation - should fail (group complete)
+    let result = client.try_contribute(&creator, &group_id);
+    assert!(result.is_err());
+    
+    // Try to join after cancellation - should fail (group complete)
+    let new_member = Address::generate(&env);
+    let result = client.try_join_group(&new_member, &group_id);
+    assert!(result.is_err());
+}

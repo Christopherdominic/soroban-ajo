@@ -389,4 +389,50 @@ impl AjoContract {
             cycle_start_time: group.cycle_start_time,
         })
     }
+    
+    /// Cancel a group before completion
+    ///
+    /// This function allows the group creator to cancel an active group.
+    /// In a real implementation, this would refund contributions to all members.
+    /// Only the creator can cancel the group.
+    ///
+    /// # Arguments
+    /// * `creator` - Address of the group creator
+    /// * `group_id` - The group to cancel
+    ///
+    /// # Errors
+    /// * `GroupNotFound` - If the group does not exist
+    /// * `Unauthorized` - If caller is not the group creator
+    /// * `GroupComplete` - If the group has already completed all cycles
+    pub fn cancel_group(env: Env, creator: Address, group_id: u64) -> Result<(), AjoError> {
+        // Require authentication
+        creator.require_auth();
+        
+        // Get group
+        let mut group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
+        
+        // Check if already complete
+        if group.is_complete {
+            return Err(AjoError::GroupComplete);
+        }
+        
+        // Verify caller is the creator
+        if group.creator != creator {
+            return Err(AjoError::Unauthorized);
+        }
+        
+        // In a real implementation, we would:
+        // 1. Calculate refunds for each member based on their contributions
+        // 2. Transfer refunds back to members
+        // 3. Clear contribution records
+        // For now, we just mark the group as complete and cancelled
+        
+        group.is_complete = true;
+        storage::store_group(&env, group_id, &group);
+        
+        // Emit cancellation event
+        events::emit_group_cancelled(&env, group_id, &creator);
+        
+        Ok(())
+    }
 }
