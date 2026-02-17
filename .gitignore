@@ -37,6 +37,7 @@ logs/
 coverage/
 *.profraw
 *.profdata
+test_snapshots/
 
 # System
 Thumbs.db

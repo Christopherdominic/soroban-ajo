@@ -68,19 +68,18 @@ fn test_join_group() {
 }
 
 #[test]
-#[should_panic(expected = "AlreadyMember")]
 fn test_join_group_already_member() {
     let (env, client, creator, _, _) = setup_test_env();
     
     // Create group (creator is automatically a member)
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &10u32);
     
-    // Try to join again - should panic
-    client.join_group(&creator, &group_id);
+    // Try to join again - should return error
+    let result = client.try_join_group(&creator, &group_id);
+    assert!(result.is_err());
 }
 
 #[test]
-#[should_panic(expected = "GroupFull")]
 fn test_join_group_full() {
     let (env, client, creator, member2, _) = setup_test_env();
     
@@ -90,9 +89,10 @@ fn test_join_group_full() {
     // Member 2 joins (now at max)
     client.join_group(&member2, &group_id);
     
-    // Try to add another member - should panic
+    // Try to add another member - should return error
     let member3 = Address::generate(&env);
-    client.join_group(&member3, &group_id);
+    let result = client.try_join_group(&member3, &group_id);
+    assert!(result.is_err());
 }
 
 #[test]
@@ -120,7 +120,6 @@ fn test_contribution_flow() {
 }
 
 #[test]
-#[should_panic(expected = "AlreadyContributed")]
 fn test_double_contribution() {
     let (env, client, creator, _, _) = setup_test_env();
     
@@ -129,12 +128,12 @@ fn test_double_contribution() {
     // Contribute once
     client.contribute(&creator, &group_id);
     
-    // Try to contribute again - should panic
-    client.contribute(&creator, &group_id);
+    // Try to contribute again - should return error
+    let result = client.try_contribute(&creator, &group_id);
+    assert!(result.is_err());
 }
 
 #[test]
-#[should_panic(expected = "IncompleteContributions")]
 fn test_payout_incomplete_contributions() {
     let (env, client, creator, member2, _) = setup_test_env();
     
@@ -145,8 +144,9 @@ fn test_payout_incomplete_contributions() {
     // Only creator contributes
     client.contribute(&creator, &group_id);
     
-    // Try to execute payout - should panic (not all contributed)
-    client.execute_payout(&group_id);
+    // Try to execute payout - should return error (not all contributed)
+    let result = client.try_execute_payout(&group_id);
+    assert!(result.is_err());
 }
 
 #[test]
@@ -212,7 +212,6 @@ fn test_full_lifecycle() {
 }
 
 #[test]
-#[should_panic(expected = "GroupComplete")]
 fn test_contribute_after_completion() {
     let (env, client, creator, member2, member3) = setup_test_env();
     
@@ -229,39 +228,45 @@ fn test_contribute_after_completion() {
         client.execute_payout(&group_id);
     }
     
-    // Try to contribute to completed group - should panic
-    client.contribute(&creator, &group_id);
+    // Try to contribute to completed group - should return error
+    let result = client.try_contribute(&creator, &group_id);
+    assert!(result.is_err());
 }
 
 #[test]
-#[should_panic(expected = "InvalidAmount")]
 fn test_create_group_invalid_amount() {
     let (env, client, creator, _, _) = setup_test_env();
     
     // Try to create group with zero contribution
-    client.create_group(&creator, &0i128, &604_800u64, &10u32);
+    let result = client.try_create_group(&creator, &0i128, &604_800u64, &10u32);
+    
+    // Should return InvalidAmount error (code 9)
+    assert!(result.is_err());
 }
 
 #[test]
-#[should_panic(expected = "InvalidCycleDuration")]
 fn test_create_group_invalid_duration() {
     let (env, client, creator, _, _) = setup_test_env();
     
     // Try to create group with zero duration
-    client.create_group(&creator, &100_000_000i128, &0u64, &10u32);
+    let result = client.try_create_group(&creator, &100_000_000i128, &0u64, &10u32);
+    
+    // Should return InvalidCycleDuration error (code 10)
+    assert!(result.is_err());
 }
 
 #[test]
-#[should_panic(expected = "InvalidMaxMembers")]
 fn test_create_group_invalid_max_members() {
     let (env, client, creator, _, _) = setup_test_env();
     
     // Try to create group with only 1 member max
-    client.create_group(&creator, &100_000_000i128, &604_800u64, &1u32);
+    let result = client.try_create_group(&creator, &100_000_000i128, &604_800u64, &1u32);
+    
+    // Should return InvalidMaxMembers error (code 11)
+    assert!(result.is_err());
 }
 
 #[test]
-#[should_panic(expected = "NotMember")]
 fn test_contribute_not_member() {
     let (env, client, creator, _, _) = setup_test_env();
     
@@ -269,7 +274,8 @@ fn test_contribute_not_member() {
     
     // Try to contribute as non-member
     let non_member = Address::generate(&env);
-    client.contribute(&non_member, &group_id);
+    let result = client.try_contribute(&non_member, &group_id);
+    assert!(result.is_err());
 }
 
 #[test]
@@ -293,4 +299,87 @@ fn test_multiple_groups() {
     assert_eq!(group2.creator, member2);
     assert_eq!(group1.contribution_amount, 100_000_000i128);
     assert_eq!(group2.contribution_amount, 200_000_000i128);
+}
+
+// ========================================
+// Issue 2: Edge case tests for contribution flow
+// ========================================
+
+#[test]
+fn test_negative_contribution_amount() {
+    let (env, client, creator, _, _) = setup_test_env();
+    
+    // Try to create group with negative contribution
+    let result = client.try_create_group(&creator, &-100_000_000i128, &604_800u64, &10u32);
+    
+    // Should return InvalidAmount error
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_join_after_completion() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create and complete a group
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Complete all cycles
+    for _ in 0..3 {
+        client.contribute(&creator, &group_id);
+        client.contribute(&member2, &group_id);
+        client.contribute(&member3, &group_id);
+        client.execute_payout(&group_id);
+    }
+    
+    // Try to join completed group - should return error
+    let new_member = Address::generate(&env);
+    let result = client.try_join_group(&new_member, &group_id);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_duplicate_contribution_same_cycle() {
+    let (env, client, creator, member2, _) = setup_test_env();
+    
+    // Create group with 2 members
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    
+    // Contribute once
+    client.contribute(&creator, &group_id);
+    
+    // Try to contribute again in the same cycle - should return error
+    let result = client.try_contribute(&creator, &group_id);
+    assert!(result.is_err());
+    
+    // Verify contribution status shows only one contribution
+    let status = client.get_contribution_status(&group_id, &1u32);
+    let creator_status = status.iter().find(|(addr, _)| addr == &creator).unwrap();
+    assert_eq!(creator_status.1, true);
+}
+
+#[test]
+fn test_contribution_across_cycles() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group with 3 members
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Cycle 1: All contribute
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    client.contribute(&member3, &group_id);
+    client.execute_payout(&group_id);
+    
+    // Cycle 2: Creator can contribute again (new cycle)
+    client.contribute(&creator, &group_id);
+    
+    // Verify contribution was recorded
+    let status = client.get_contribution_status(&group_id, &2u32);
+    let creator_status = status.iter().find(|(addr, _)| addr == &creator).unwrap();
+    assert_eq!(creator_status.1, true);
 }
