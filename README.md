@@ -73,6 +73,184 @@ stellar keys generate deployer --network testnet
 ./scripts/deploy_testnet.sh
 ```
 
+## 📖 Testnet Deployment Guide
+
+### Prerequisites
+
+Before deploying to Stellar Testnet, ensure you have:
+
+1. **Rust** (1.70+) - [Installation Guide](https://www.rust-lang.org/tools/install)
+2. **Soroban CLI** - Install with:
+   ```bash
+   cargo install --locked soroban-cli --features opt
+   ```
+3. **Stellar CLI** (optional, for advanced operations)
+
+### Step-by-Step Deployment
+
+#### 1. Build the Contract
+
+First, build the optimized WASM binary:
+
+```bash
+./scripts/build.sh
+```
+
+This will:
+- Run all tests to ensure contract works correctly
+- Compile the contract to WebAssembly
+- Produce an optimized `.wasm` file in `contracts/ajo/target/wasm32-unknown-unknown/release/`
+
+#### 2. Configure Testnet Network
+
+The deployment script will automatically configure the Stellar testnet, but you can do it manually:
+
+```bash
+soroban network add \
+  --global testnet \
+  --rpc-url https://soroban-testnet.stellar.org:443 \
+  --network-passphrase "Test SDF Network ; September 2015"
+```
+
+#### 3. Create and Fund Deployer Account
+
+Generate a new identity for deploying:
+
+```bash
+soroban keys generate deployer --network testnet
+```
+
+Get the account address:
+
+```bash
+soroban keys address deployer
+```
+
+Fund the account with testnet XLM using Friendbot:
+
+```bash
+# Replace YOUR_ADDRESS with the output from the previous command
+curl "https://friendbot.stellar.org?addr=YOUR_ADDRESS"
+```
+
+#### 4. Deploy the Contract
+
+Run the deployment script:
+
+```bash
+./scripts/deploy_testnet.sh
+```
+
+The script will:
+- Verify prerequisites (Soroban CLI, built WASM)
+- Configure testnet if needed
+- Create/use deployer identity
+- Deploy the contract
+- Save the contract ID to `.soroban/contract-id-testnet.txt`
+- Display next steps and example invocation
+
+#### 5. Verify Deployment
+
+After successful deployment, you can:
+
+**View on Stellar Expert:**
+```
+https://stellar.expert/explorer/testnet/contract/YOUR_CONTRACT_ID
+```
+
+**Test with a simple invocation:**
+```bash
+# Get the contract ID
+CONTRACT_ID=$(cat .soroban/contract-id-testnet.txt)
+
+# Create a test group
+soroban contract invoke \
+  --id $CONTRACT_ID \
+  --source deployer \
+  --network testnet \
+  -- \
+  create_group \
+  --creator $(soroban keys address deployer) \
+  --contribution_amount 10000000 \
+  --cycle_duration 604800 \
+  --max_members 10
+```
+
+### Troubleshooting
+
+#### Error: "WASM not found"
+**Solution:** Build the contract first with `./scripts/build.sh`
+
+#### Error: "Insufficient balance"
+**Solution:** Fund your deployer account using Friendbot:
+```bash
+ADDR=$(soroban keys address deployer)
+curl "https://friendbot.stellar.org?addr=$ADDR"
+```
+
+#### Error: "Network not configured"
+**Solution:** Add the testnet network manually (see Step 2 above)
+
+#### Error: "soroban command not found"
+**Solution:** Install Soroban CLI:
+```bash
+cargo install --locked soroban-cli --features opt
+```
+
+#### Deployment succeeds but invocation fails
+**Possible causes:**
+- Wrong argument types (use `--help` flag to see expected types)
+- Insufficient authorization (ensure you're using the correct `--source`)
+- Network issues (check Stellar testnet status)
+
+**Debug with:**
+```bash
+# Add --very-verbose flag to see detailed logs
+soroban contract invoke --very-verbose ...
+```
+
+### Advanced: Manual Deployment
+
+If you prefer manual control over deployment:
+
+```bash
+# Build optimized WASM
+cargo build --target wasm32-unknown-unknown --release --manifest-path contracts/ajo/Cargo.toml
+
+# Deploy
+soroban contract deploy \
+  --wasm contracts/ajo/target/wasm32-unknown-unknown/release/soroban_ajo.wasm \
+  --source deployer \
+  --network testnet
+```
+
+### Next Steps After Deployment
+
+1. **Run the demo**: Follow [`demo/demo-script.md`](demo/demo-script.md) for a complete walkthrough
+2. **Integration**: Use the contract ID in your frontend or CLI application
+3. **Monitor**: Track contract activity on [Stellar Expert](https://stellar.expert/explorer/testnet)
+
+### Deploy to Mainnet
+
+⚠️ **Warning:** Deploying to mainnet requires real XLM and should only be done after thorough testing.
+
+```bash
+# Configure mainnet
+soroban network add \
+  --global mainnet \
+  --rpc-url https://soroban-mainnet.stellar.org:443 \
+  --network-passphrase "Public Global Stellar Network ; September 2015"
+
+# Create mainnet deployer (use a secure method for production)
+soroban keys generate mainnet-deployer --network mainnet
+
+# Deploy (requires real XLM for fees)
+soroban contract deploy \
+  --wasm contracts/ajo/target/wasm32-unknown-unknown/release/soroban_ajo.wasm \
+  --source mainnet-deployer \
+  --network mainnet
+```
+
 ### Run Demo
 
 Follow the step-by-step guide in [demo/demo-script.md](demo/demo-script.md)

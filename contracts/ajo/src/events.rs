@@ -1,6 +1,13 @@
 use soroban_sdk::{symbol_short, Address, Env};
 
 /// Emit an event when a group is created
+///
+/// # Arguments
+/// * `env` - The environment
+/// * `group_id` - The unique group identifier
+/// * `creator` - Address of the group creator
+/// * `contribution_amount` - Fixed contribution amount per cycle
+/// * `max_members` - Maximum number of members allowed
 pub fn emit_group_created(
     env: &Env,
     group_id: u64,
@@ -13,12 +20,24 @@ pub fn emit_group_created(
 }
 
 /// Emit an event when a member joins a group
+///
+/// # Arguments
+/// * `env` - The environment
+/// * `group_id` - The unique group identifier
+/// * `member` - Address of the member who joined
 pub fn emit_member_joined(env: &Env, group_id: u64, member: &Address) {
     let topics = (symbol_short!("joined"), group_id);
     env.events().publish(topics, member);
 }
 
 /// Emit an event when a member contributes
+///
+/// # Arguments
+/// * `env` - The environment
+/// * `group_id` - The unique group identifier
+/// * `member` - Address of the contributing member
+/// * `cycle` - The cycle number
+/// * `amount` - The contribution amount
 pub fn emit_contribution_made(
     env: &Env,
     group_id: u64,
@@ -31,6 +50,13 @@ pub fn emit_contribution_made(
 }
 
 /// Emit an event when a payout is executed
+///
+/// # Arguments
+/// * `env` - The environment
+/// * `group_id` - The unique group identifier
+/// * `recipient` - Address of the payout recipient
+/// * `cycle` - The cycle number
+/// * `amount` - The payout amount
 pub fn emit_payout_executed(
     env: &Env,
     group_id: u64,
@@ -43,6 +69,10 @@ pub fn emit_payout_executed(
 }
 
 /// Emit an event when a group completes all cycles
+///
+/// # Arguments
+/// * `env` - The environment
+/// * `group_id` - The unique group identifier
 pub fn emit_group_completed(env: &Env, group_id: u64) {
     let topics = (symbol_short!("complete"), group_id);
     env.events().publish(topics, ());
