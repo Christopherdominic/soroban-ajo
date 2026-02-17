@@ -88,3 +88,17 @@ pub struct GroupStatus {
     /// Timestamp when current cycle started
     pub cycle_start_time: u64,
 }
+
+/// Optional metadata for a group
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GroupMetadata {
+    /// Human-readable name for the group (max 64 chars)
+    pub name: soroban_sdk::String,
+    
+    /// Description of the group's purpose (max 256 chars)
+    pub description: soroban_sdk::String,
+    
+    /// Custom rules or terms (max 512 chars)
+    pub rules: soroban_sdk::String,
+}

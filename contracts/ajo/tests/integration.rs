@@ -256,3 +256,84 @@ fn test_validation_errors() {
     let result = client.try_create_group(&creator, &100_000_000i128, &604_800u64, &1u32);
     assert!(result.is_err());
 }
+
+// ========================================
+// Issue 10: Group metadata tests
+// ========================================
+
+#[test]
+fn test_set_and_get_metadata() {
+    let (env, client, creator, _, _) = setup();
+    
+    // Create group
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    
+    // Initially no metadata
+    let metadata_opt = client.get_group_metadata(&group_id);
+    assert_eq!(metadata_opt, None);
+    
+    // Set metadata
+    use soroban_sdk::String;
+    let metadata = soroban_ajo::GroupMetadata {
+        name: String::from_str(&env, "Community Savings"),
+        description: String::from_str(&env, "Weekly savings group for local community members"),
+        rules: String::from_str(&env, "All members must contribute on time. No withdrawals allowed."),
+    };
+    
+    client.set_group_metadata(&creator, &group_id, &metadata);
+    
+    // Get metadata
+    let retrieved = client.get_group_metadata(&group_id);
+    assert!(retrieved.is_some());
+    let retrieved_metadata = retrieved.unwrap();
+    assert_eq!(retrieved_metadata.name, metadata.name);
+    assert_eq!(retrieved_metadata.description, metadata.description);
+    assert_eq!(retrieved_metadata.rules, metadata.rules);
+}
+
+#[test]
+fn test_update_metadata() {
+    let (env, client, creator, _, _) = setup();
+    
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    
+    // Set initial metadata
+    use soroban_sdk::String;
+    let metadata1 = soroban_ajo::GroupMetadata {
+        name: String::from_str(&env, "Group 1"),
+        description: String::from_str(&env, "Description 1"),
+        rules: String::from_str(&env, "Rules 1"),
+    };
+    client.set_group_metadata(&creator, &group_id, &metadata1);
+    
+    // Update metadata
+    let metadata2 = soroban_ajo::GroupMetadata {
+        name: String::from_str(&env, "Group 2"),
+        description: String::from_str(&env, "Description 2"),
+        rules: String::from_str(&env, "Rules 2"),
+    };
+    client.set_group_metadata(&creator, &group_id, &metadata2);
+    
+    // Verify updated
+    let retrieved = client.get_group_metadata(&group_id).unwrap();
+    assert_eq!(retrieved.name, metadata2.name);
+}
+
+#[test]
+fn test_metadata_unauthorized() {
+    let (env, client, creator, member2, _) = setup();
+    
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    
+    // Non-creator tries to set metadata - should fail
+    use soroban_sdk::String;
+    let metadata = soroban_ajo::GroupMetadata {
+        name: String::from_str(&env, "Unauthorized"),
+        description: String::from_str(&env, "Should fail"),
+        rules: String::from_str(&env, "Not allowed"),
+    };
+    
+    let result = client.try_set_group_metadata(&member2, &group_id, &metadata);
+    assert!(result.is_err());
+}

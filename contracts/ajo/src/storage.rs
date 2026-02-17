@@ -1,6 +1,6 @@
-use soroban_sdk::{symbol_short, Address, Env, Symbol, Vec};
+use soroban_sdk::{symbol_short, Address, Env, String, Symbol, Vec};
 
-use crate::types::Group;
+use crate::types::{Group, GroupMetadata};
 
 /// Storage keys for the Ajo contract
 #[allow(dead_code)]
@@ -157,4 +157,28 @@ pub fn get_cycle_contributions(
     }
     
     results
+}
+
+/// Store metadata for a group
+///
+/// # Arguments
+/// * `env` - The environment
+/// * `group_id` - The group identifier
+/// * `metadata` - The metadata to store
+pub fn store_metadata(env: &Env, group_id: u64, metadata: &GroupMetadata) {
+    let key = (symbol_short!("META"), group_id);
+    env.storage().persistent().set(&key, metadata);
+}
+
+/// Get metadata for a group
+///
+/// # Arguments
+/// * `env` - The environment
+/// * `group_id` - The group identifier
+///
+/// # Returns
+/// The group metadata if it exists, None otherwise
+pub fn get_metadata(env: &Env, group_id: u64) -> Option<GroupMetadata> {
+    let key = (symbol_short!("META"), group_id);
+    env.storage().persistent().get(&key)
 }
