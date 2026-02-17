@@ -9,7 +9,7 @@ repository = "https://github.com/yourusername/soroban-ajo"
 readme = "README.md"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 soroban-sdk = "21.0.0"
