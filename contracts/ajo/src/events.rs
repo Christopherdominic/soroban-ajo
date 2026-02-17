@@ -88,3 +88,20 @@ pub fn emit_group_cancelled(env: &Env, group_id: u64, creator: &Address) {
     let topics = (symbol_short!("canceled"), group_id);
     env.events().publish(topics, creator);
 }
+
+/// Emit an event when a member performs an emergency withdrawal
+///
+/// # Arguments
+/// * `env` - The environment
+/// * `group_id` - The unique group identifier
+/// * `member` - Address of the member withdrawing
+/// * `amount` - Amount withdrawn (after penalty if applicable)
+pub fn emit_emergency_withdrawal(
+    env: &Env,
+    group_id: u64,
+    member: &Address,
+    amount: i128,
+) {
+    let topics = (symbol_short!("withdraw"), group_id);
+    env.events().publish(topics, (member, amount));
+}

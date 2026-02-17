@@ -52,4 +52,7 @@ pub enum AjoError {
     
     /// Contribution made outside the active cycle window
     OutsideCycleWindow = 16,
+    
+    /// Emergency withdrawal not allowed
+    WithdrawalNotAllowed = 17,
 }

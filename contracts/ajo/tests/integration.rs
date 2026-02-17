@@ -337,3 +337,60 @@ fn test_metadata_unauthorized() {
     let result = client.try_set_group_metadata(&member2, &group_id, &metadata);
     assert!(result.is_err());
 }
+
+// ========================================
+// Issue 11: Emergency withdrawal tests
+// ========================================
+
+#[test]
+fn test_emergency_withdraw_basic() {
+    let (env, client, creator, member2, member3) = setup();
+    
+    // Create group
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Some members contribute
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    
+    // Member3 hasn't contributed but wants to withdraw
+    client.emergency_withdraw(&member3, &group_id);
+    
+    // Subsequent withdrawal should fail (already marked as paid out)
+    let result = client.try_emergency_withdraw(&member3, &group_id);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_emergency_withdraw_not_member() {
+    let (env, client, creator, _, _) = setup();
+    
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
+    
+    // Non-member tries to withdraw - should fail
+    let non_member = Address::generate(&env);
+    let result = client.try_emergency_withdraw(&non_member, &group_id);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_emergency_withdraw_after_completion() {
+    let (env, client, creator, member2, _) = setup();
+    
+    // Create and complete a group
+    let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &2u32);
+    client.join_group(&member2, &group_id);
+    
+    // Complete all cycles
+    for _ in 0..2 {
+        client.contribute(&creator, &group_id);
+        client.contribute(&member2, &group_id);
+        client.execute_payout(&group_id);
+    }
+    
+    // Try to withdraw from completed group - should fail
+    let result = client.try_emergency_withdraw(&creator, &group_id);
+    assert!(result.is_err());
+}

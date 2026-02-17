@@ -489,4 +489,84 @@ impl AjoContract {
         // Return metadata (may be None)
         Ok(storage::get_metadata(&env, group_id))
     }
+    
+    /// Emergency withdrawal for a member
+    ///
+    /// Allows a member to withdraw their contributions in emergency situations.
+    /// This is only allowed if:
+    /// - The member hasn't received their payout yet
+    /// - The group is not complete
+    ///
+    /// In a real implementation, this would:
+    /// - Calculate the member's total contributions
+    /// - Apply a penalty (e.g., 10%)
+    /// - Refund the remaining amount
+    /// - Mark the member as having withdrawn
+    ///
+    /// # Arguments
+    /// * `member` - Address of the member withdrawing
+    /// * `group_id` - The group to withdraw from
+    ///
+    /// # Errors
+    /// * `GroupNotFound` - If the group does not exist
+    /// * `NotMember` - If the address is not a member
+    /// * `WithdrawalNotAllowed` - If member already received payout or group is complete
+    /// * `AlreadyReceivedPayout` - If member already received their payout
+    pub fn emergency_withdraw(env: Env, member: Address, group_id: u64) -> Result<(), AjoError> {
+        // Require authentication
+        member.require_auth();
+        
+        // Get group
+        let group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
+        
+        // Check if member
+        if !utils::is_member(&group.members, &member) {
+            return Err(AjoError::NotMember);
+        }
+        
+        // Check if group is complete - withdrawals not allowed
+        if group.is_complete {
+            return Err(AjoError::WithdrawalNotAllowed);
+        }
+        
+        // Check if member already received payout - can't withdraw after getting payout
+        if storage::has_received_payout(&env, group_id, &member) {
+            return Err(AjoError::AlreadyReceivedPayout);
+        }
+        
+        // Find member's index to check if they're past the payout point
+        let mut member_index = None;
+        for (i, m) in group.members.iter().enumerate() {
+            if m == member {
+                member_index = Some(i as u32);
+                break;
+            }
+        }
+        
+        let member_idx = member_index.ok_or(AjoError::NotMember)?;
+        
+        // If member's turn has already passed (payout_index > member_index), they can't withdraw
+        if group.payout_index > member_idx {
+            return Err(AjoError::AlreadyReceivedPayout);
+        }
+        
+        // Calculate refund amount
+        // In production: count actual contributions and apply penalty
+        // For now, we just calculate expected contributions
+        let cycles_contributed = group.current_cycle;  // Simplified
+        let refund_amount = group.contribution_amount * (cycles_contributed as i128);
+        
+        // Apply 10% penalty
+        let penalty = refund_amount / 10;
+        let final_amount = refund_amount - penalty;
+        
+        // In production: transfer final_amount back to member
+        // For now, we just mark them as having received payout to prevent double-withdrawal
+        storage::mark_payout_received(&env, group_id, &member);
+        
+        // Emit withdrawal event
+        events::emit_emergency_withdrawal(&env, group_id, &member, final_amount);
+        
+        Ok(())
+    }
 }
