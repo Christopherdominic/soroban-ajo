@@ -48,3 +48,14 @@ export interface WalletConnection {
   network: 'testnet' | 'mainnet'
   balance?: number
 }
+
+export interface GroupCreationData {
+  groupName: string
+  description: string
+  cycleLength: number
+  contributionAmount: number
+  maxMembers: number
+  frequency?: 'weekly' | 'monthly' | 'quarterly' | 'yearly'
+  duration?: number
+  invitedMembers?: string[]
+}
