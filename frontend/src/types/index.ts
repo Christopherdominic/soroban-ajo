@@ -13,6 +13,9 @@ export interface Group {
   status: 'active' | 'completed' | 'paused'
   createdAt: string
   nextPayoutDate: string
+  frequency?: 'weekly' | 'monthly'
+  duration?: number
+  invitedMembers?: string[]
 }
 
 export interface Member {

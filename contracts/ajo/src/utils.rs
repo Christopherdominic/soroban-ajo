@@ -33,22 +33,27 @@ pub fn get_current_timestamp(env: &Env) -> u64 {
     env.ledger().timestamp()
 }
 
-/// Validate group creation parameters
+/// Logic to ensure group parameters are sane before creating it.
 pub fn validate_group_params(
-    contribution_amount: i128,
-    cycle_duration: u64,
+    amount: i128,
+    duration: u64,
     max_members: u32,
 ) -> Result<(), crate::errors::AjoError> {
-    if contribution_amount <= 0 {
-        return Err(crate::errors::AjoError::InvalidAmount);
+    // Amounts must be positive
+    if amount == 0 {
+        return Err(crate::errors::AjoError::ContributionAmountZero);
+    } else if amount < 0 {
+        return Err(crate::errors::AjoError::ContributionAmountNegative);
     }
     
-    if cycle_duration == 0 {
-        return Err(crate::errors::AjoError::InvalidCycleDuration);
+    // Time stops for no one - especially not a zero duration esusu
+    if duration == 0 {
+        return Err(crate::errors::AjoError::CycleDurationZero);
     }
     
+    // We need at least two people to rotate money
     if max_members < 2 {
-        return Err(crate::errors::AjoError::InvalidMaxMembers);
+        return Err(crate::errors::AjoError::MaxMembersBelowMinimum);
     }
     
     Ok(())

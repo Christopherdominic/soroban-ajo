@@ -41,3 +41,5 @@ coverage/
 # System
 Thumbs.db
 .cache/
+
+.kiro

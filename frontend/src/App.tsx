@@ -8,6 +8,7 @@ import { GroupDetailPage } from '@/components/GroupDetailPage'
 import { GroupAnalytics } from '@/components/GroupAnalytics'
 import { ResponsiveLayout } from '@/components/ResponsiveLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { Tutorial } from '@/components/Tutorial'
 
 type ViewType = 'dashboard' | 'create' | 'detail' | 'analytics' | 'responsive'
 
@@ -16,6 +17,7 @@ function App() {
 
   return (
     <>
+      <Tutorial />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         {/* Navigation */}
         <header className="bg-white shadow sticky top-0 z-50">

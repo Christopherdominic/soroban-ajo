@@ -1,0 +1,79 @@
+A practical guide to meeting WCAG 2.1 AA across our products—ensuring inclusive experiences for users with visual, motor, and cognitive impairments.
+
+1. Color Palette & Contrast
+
+Ensure all text and UI elements meet minimum contrast requirements for readability.
+
+Primary (Brand Yellow)
+
+Black on Yellow — Pass (19.5:1)
+
+White on Yellow — Fail (1.07:1)
+
+Surface Dark
+
+White on Dark — Pass AAA (16.2:1)
+
+UI Components — Pass (19.5:1)
+
+Semantic Red (Error)
+
+White on Red — Pass AAA (7.2:1)
+
+Gray on Red — Large Text Only (4.1:1)
+
+2. Focus Indicators
+
+Clear focus states are required for keyboard and assistive navigation.
+
+Buttons
+
+Use a high-visibility outline with spacing from the element
+
+Must be visible across all backgrounds
+
+Input Fields
+
+Maintain strong contrast on focus
+
+Do not rely on border color alone
+
+3. Typography Scale
+
+Use a consistent and readable type system across all interfaces.
+
+Heading 1
+
+Large, bold for primary titles
+
+Heading 2
+
+Section-level emphasis
+
+Body Large
+
+Default for long-form reading
+
+Body Base (Minimum)
+
+Never go below 16px for core content
+
+4. Iconography & Labels
+
+Icons must always be meaningful and accessible.
+
+Interactive Icons
+
+Require visible labels or accessible names
+
+Decorative Icons
+
+Hidden from screen readers
+
+Status Icons
+
+Must include text labels to communicate meaning
+
+Accessibility First
+
+Accessibility is not optional—it’s a core requirement for every experience.

@@ -1,0 +1,107 @@
+1. Overview Tab
+Header & Metadata
+
+Title: Product Launch Team Alpha
+
+Subtitle: Private Group • Created Oct 2023
+
+Primary Button: + New Post
+
+Contextual Buttons: Edit Cover, Joined (Dropdown)
+
+Status Cards
+
+Total Members: 12 (+2 this week)
+
+Active Tasks: 8
+
+Days Remaining: 14
+
+Progress & Activity
+
+Overall Progress: 65% Complete
+
+Milestones: Strategy Phase (Completed), Design & Prototyping (Completed), Development (In Progress • Due Nov 10), QA & Testing (Pending)
+
+Updates Feed: "[User Name] updated the roadmap", "[User Name] completed a task", "[User Name] commented on [Topic]"
+
+2. Members Tab
+Header & Stats
+
+Title: Project Alpha Team
+
+Description: A collaborative space for the Alpha project development team to share resources, track progress, and innovate together.
+
+Tabs: Overview, Members (24), Files, Settings
+
+Action: Invite Member
+
+Table Headers & Controls
+
+Search Placeholder: Search members by name or email...
+
+Filters: Role: All, Status: Active
+
+Columns: MEMBER, ROLE, STATUS, JOINED DATE
+
+Role/Status Tags
+
+Roles: Admin, Contributor, Viewer
+
+Status: Active, Invited
+
+User Identifier: You (next to name)
+
+3. History (Transaction) Tab
+Header & Actions
+
+Title: Marketing Team Budget
+
+Description: Manage funds, view transaction history, and export financial reports for the Q4 marketing campaign.
+
+Actions: Share, + New Transaction
+
+Log Entry Details
+
+Section Title: Transaction History
+
+Filter Controls: Date Range (e.g., Oct 1, 2023 - Oct 31, 2023), Filters, Export CSV
+
+Column Headers: DESCRIPTION, USER, DATE, AMOUNT / STATUS
+
+Status Tags: Completed, Pending, Failed, Activity
+
+4. Settings Tab
+Navigation (Configuration)
+
+General, Privacy, Notifications, Permissions
+
+General Settings
+
+Heading: General Settings
+
+Instruction: Update your group’s profile information and visibility.
+
+Icon Suggestion: Recommended: 400x400px
+
+Input Labels: Group Name, Description
+
+Helper Text: Public group names must be unique.
+
+Character Count: 0/240 characters
+
+Visibility Toggle
+
+Label: Private Group (Toggle: On)
+
+Status Tag: Invite Only
+
+Description: Only members can see the group content and activity. Membership is by invitation only.
+
+Danger Zone
+
+Heading: Delete Group
+
+Warning: Once you delete a group, there is no going back. This action will permanently remove all member associations, discussions, and file uploads.
+
+Action Button: Delete this group

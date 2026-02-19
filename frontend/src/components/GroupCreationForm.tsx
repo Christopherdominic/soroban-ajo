@@ -10,6 +10,9 @@ interface GroupFormData {
   cycleLength: number
   contributionAmount: number
   maxMembers: number
+  frequency: 'weekly' | 'monthly'
+  duration: number
+  invitedMembers: string[]
 }
 
 interface FormErrors {
@@ -27,7 +30,11 @@ export const GroupCreationForm: React.FC = () => {
     cycleLength: 30,
     contributionAmount: 100,
     maxMembers: 10,
+    frequency: 'monthly',
+    duration: 12,
+    invitedMembers: [],
   })
+  const [memberInput, setMemberInput] = useState('')
 
   const [errors, setErrors] = useState<FormErrors>({})
   const [touched, setTouched] = useState<Record<string, boolean>>({})
@@ -133,7 +140,7 @@ export const GroupCreationForm: React.FC = () => {
     }
   }
 
-  const hasErrors = Object.keys(errors).length > 0
+
 
   return (
     <div className="bg-white rounded-lg shadow p-6 max-w-2xl">
@@ -322,6 +329,103 @@ export const GroupCreationForm: React.FC = () => {
               ⚠️ {errors.maxMembers}
             </p>
           )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold mb-2">Frequency</label>
+            <select
+              value={formData.frequency}
+              onChange={(e) => setFormData({ ...formData, frequency: e.target.value as 'weekly' | 'monthly' })}
+              className="w-full px-4 py-2 border rounded-lg"
+              required
+            >
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2">Duration (cycles)</label>
+            <input
+              type="number"
+              value={formData.duration}
+              onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+              min="1"
+              className="w-full px-4 py-2 border rounded-lg"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold mb-2">Invite Members</label>
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={memberInput}
+              onChange={(e) => setMemberInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddMember())}
+              placeholder="Enter wallet address, email, or username"
+              className="flex-1 px-4 py-2 border rounded-lg"
+            />
+            <button
+              type="button"
+              onClick={handleAddMember}
+              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+            >
+              Add
+            </button>
+          </div>
+          {formData.invitedMembers.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {formData.invitedMembers.map((member) => (
+                <span
+                  key={member}
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                >
+                  {member}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveMember(member)}
+                    className="hover:text-blue-600"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-gray-50 rounded-lg p-4 border">
+          <h3 className="text-lg font-semibold mb-3">Preview</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Group Name:</span>
+              <span className="font-medium">{formData.groupName || 'Not set'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Frequency:</span>
+              <span className="font-medium capitalize">{formData.frequency}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Duration:</span>
+              <span className="font-medium">{formData.duration} cycles</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Contribution:</span>
+              <span className="font-medium">${formData.contributionAmount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Max Members:</span>
+              <span className="font-medium">{formData.maxMembers}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Invited Members:</span>
+              <span className="font-medium">{formData.invitedMembers.length}</span>
+            </div>
+          </div>
         </div>
 
         <button

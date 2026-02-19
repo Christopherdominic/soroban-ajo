@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use soroban_sdk::{testutils::Address as _, Address, Env};
-use soroban_ajo::{AjoContract, AjoContractClient};
+use soroban_ajo::{AjoContract, AjoContractClient, AjoError};
 
 /// Helper function to create a test environment and contract
 fn setup_test_env() -> (Env, AjoContractClient<'static>, Address, Address, Address) {
@@ -68,20 +68,19 @@ fn test_join_group() {
 }
 
 #[test]
-#[should_panic(expected = "AlreadyMember")]
 fn test_join_group_already_member() {
     let (env, client, creator, _, _) = setup_test_env();
     
     // Create group (creator is automatically a member)
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &10u32);
     
-    // Try to join again - should panic
-    client.join_group(&creator, &group_id);
+    // Try to join again - should fail with AlreadyMember
+    let result = client.try_join_group(&creator, &group_id);
+    assert_eq!(result, Err(Ok(AjoError::AlreadyMember)));
 }
 
 #[test]
-#[should_panic(expected = "GroupFull")]
-fn test_join_group_full() {
+fn test_join_group_max_members_exceeded() {
     let (env, client, creator, member2, _) = setup_test_env();
     
     // Create group with max 2 members
@@ -90,9 +89,10 @@ fn test_join_group_full() {
     // Member 2 joins (now at max)
     client.join_group(&member2, &group_id);
     
-    // Try to add another member - should panic
+    // Try to add another member - should fail with MaxMembersExceeded
     let member3 = Address::generate(&env);
-    client.join_group(&member3, &group_id);
+    let result = client.try_join_group(&member3, &group_id);
+    assert_eq!(result, Err(Ok(AjoError::MaxMembersExceeded)));
 }
 
 #[test]
@@ -120,7 +120,6 @@ fn test_contribution_flow() {
 }
 
 #[test]
-#[should_panic(expected = "AlreadyContributed")]
 fn test_double_contribution() {
     let (env, client, creator, _, _) = setup_test_env();
     
@@ -129,12 +128,12 @@ fn test_double_contribution() {
     // Contribute once
     client.contribute(&creator, &group_id);
     
-    // Try to contribute again - should panic
-    client.contribute(&creator, &group_id);
+    // Try to contribute again - should fail with AlreadyContributed
+    let result = client.try_contribute(&creator, &group_id);
+    assert_eq!(result, Err(Ok(AjoError::AlreadyContributed)));
 }
 
 #[test]
-#[should_panic(expected = "IncompleteContributions")]
 fn test_payout_incomplete_contributions() {
     let (env, client, creator, member2, _) = setup_test_env();
     
@@ -145,8 +144,9 @@ fn test_payout_incomplete_contributions() {
     // Only creator contributes
     client.contribute(&creator, &group_id);
     
-    // Try to execute payout - should panic (not all contributed)
-    client.execute_payout(&group_id);
+    // Try to execute payout - should fail with IncompleteContributions
+    let result = client.try_execute_payout(&group_id);
+    assert_eq!(result, Err(Ok(AjoError::IncompleteContributions)));
 }
 
 #[test]
@@ -212,7 +212,6 @@ fn test_full_lifecycle() {
 }
 
 #[test]
-#[should_panic(expected = "GroupComplete")]
 fn test_contribute_after_completion() {
     let (env, client, creator, member2, member3) = setup_test_env();
     
@@ -229,47 +228,57 @@ fn test_contribute_after_completion() {
         client.execute_payout(&group_id);
     }
     
-    // Try to contribute to completed group - should panic
-    client.contribute(&creator, &group_id);
+    // Try to contribute to completed group - should fail with GroupComplete
+    let result = client.try_contribute(&creator, &group_id);
+    assert_eq!(result, Err(Ok(AjoError::GroupComplete)));
 }
 
 #[test]
-#[should_panic(expected = "InvalidAmount")]
-fn test_create_group_invalid_amount() {
-    let (env, client, creator, _, _) = setup_test_env();
+fn test_create_group_zero_contribution_fails() {
+    let (_, client, admin, _, _) = setup_test_env();
     
-    // Try to create group with zero contribution
-    client.create_group(&creator, &0i128, &604_800u64, &10u32);
+    // Exactly zero shouldn't work
+    let res = client.try_create_group(&admin, &0i128, &604_800u64, &10u32);
+    assert_eq!(res, Err(Ok(AjoError::ContributionAmountZero)));
 }
 
 #[test]
-#[should_panic(expected = "InvalidCycleDuration")]
-fn test_create_group_invalid_duration() {
-    let (env, client, creator, _, _) = setup_test_env();
+fn test_create_group_negative_contribution_fails() {
+    let (_, client, admin, _, _) = setup_test_env();
     
-    // Try to create group with zero duration
-    client.create_group(&creator, &100_000_000i128, &0u64, &10u32);
+    // Negative amounts are a no-go
+    let res = client.try_create_group(&admin, &-500i128, &604_800u64, &10u32);
+    assert_eq!(res, Err(Ok(AjoError::ContributionAmountNegative)));
 }
 
 #[test]
-#[should_panic(expected = "InvalidMaxMembers")]
-fn test_create_group_invalid_max_members() {
-    let (env, client, creator, _, _) = setup_test_env();
+fn test_create_group_invalid_duration_fails() {
+    let (_, client, admin, _, _) = setup_test_env();
     
-    // Try to create group with only 1 member max
-    client.create_group(&creator, &100_000_000i128, &604_800u64, &1u32);
+    // Can't have a 0 duration cycle
+    let res = client.try_create_group(&admin, &100_000_000i128, &0u64, &5u32);
+    assert_eq!(res, Err(Ok(AjoError::CycleDurationZero)));
 }
 
 #[test]
-#[should_panic(expected = "NotMember")]
+fn test_create_group_tiny_limit_fails() {
+    let (_, client, admin, _, _) = setup_test_env();
+    
+    // Need at least 2 people for a rotation
+    let res = client.try_create_group(&admin, &100_000_000i128, &604_800u64, &1u32);
+    assert_eq!(res, Err(Ok(AjoError::MaxMembersBelowMinimum)));
+}
+
+#[test]
 fn test_contribute_not_member() {
     let (env, client, creator, _, _) = setup_test_env();
     
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &10u32);
     
-    // Try to contribute as non-member
+    // Try to contribute as non-member - should fail with NotMember
     let non_member = Address::generate(&env);
-    client.contribute(&non_member, &group_id);
+    let result = client.try_contribute(&non_member, &group_id);
+    assert_eq!(result, Err(Ok(AjoError::NotMember)));
 }
 
 #[test]

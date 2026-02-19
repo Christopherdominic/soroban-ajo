@@ -14,19 +14,19 @@ pub struct AjoContract;
 impl AjoContract {
     /// Create a new Ajo group
     ///
-    /// # Arguments
-    /// * `creator` - Address of the group creator (automatically becomes first member)
-    /// * `contribution_amount` - Fixed amount each member contributes per cycle (in stroops)
-    /// * `cycle_duration` - Duration of each cycle in seconds
-    /// * `max_members` - Maximum number of members allowed in the group
+    /// * `creator` - Who is starting the group (first member)
+    /// * `contribution_amount` - Amount in stroops each person puts in per cycle
+    /// * `cycle_duration` - How long each rotation lasts (in seconds)
+    /// * `max_members` - Total headcount limit for this group
     ///
     /// # Returns
     /// The unique group ID
     ///
     /// # Errors
-    /// * `InvalidAmount` - If contribution_amount <= 0
-    /// * `InvalidCycleDuration` - If cycle_duration == 0
-    /// * `InvalidMaxMembers` - If max_members < 2
+    /// * `ContributionAmountZero` - Amount is exactly zero
+    /// * `ContributionAmountNegative` - Amount is less than zero
+    /// * `CycleDurationZero` - Duration is zero
+    /// * `MaxMembersBelowMinimum` - Less than 2 members
     pub fn create_group(
         env: Env,
         creator: Address,
@@ -106,14 +106,14 @@ impl AjoContract {
     /// Join an existing group
     ///
     /// # Arguments
-    /// * `member` - Address of the member joining
-    /// * `group_id` - The group to join
+    /// * `member` - User joining the esusu
+    /// * `group_id` - ID of the target group
     ///
     /// # Errors
-    /// * `GroupNotFound` - If the group does not exist
-    /// * `GroupFull` - If the group has reached max members
-    /// * `AlreadyMember` - If the address is already a member
-    /// * `GroupComplete` - If the group has completed all cycles
+    /// * `GroupNotFound` - Group ID doesn't exist
+    /// * `MaxMembersExceeded` - Room is full
+    /// * `AlreadyMember` - User is already in there
+    /// * `GroupComplete` - This esusu has already finished
     pub fn join_group(env: Env, member: Address, group_id: u64) -> Result<(), AjoError> {
         // Require authentication
         member.require_auth();
@@ -133,7 +133,7 @@ impl AjoContract {
         
         // Check if group is full
         if group.members.len() >= group.max_members {
-            return Err(AjoError::GroupFull);
+            return Err(AjoError::MaxMembersExceeded);
         }
         
         // Add member

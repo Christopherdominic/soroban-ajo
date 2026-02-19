@@ -1,52 +1,55 @@
 use soroban_sdk::contracterror;
 
-/// Error codes for the Ajo contract
+/// Error codes for the Ajo contract.
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[repr(u32)]
 pub enum AjoError {
-    /// Group does not exist
+    /// The specified group wasn't found in storage.
     GroupNotFound = 1,
     
-    /// Group has reached maximum members
-    GroupFull = 2,
+    /// Can't join because the group is already at its member limit.
+    MaxMembersExceeded = 2,
     
-    /// Address is already a member of this group
+    /// This account is already part of the group.
     AlreadyMember = 3,
     
-    /// Address is not a member of this group
+    /// Address isn't a member of the group.
     NotMember = 4,
     
-    /// Member has already contributed for this cycle
+    /// You've already made your contribution for this cycle.
     AlreadyContributed = 5,
     
-    /// Not all members have contributed for this cycle
+    /// We can't move forward until everyone has contributed.
     IncompleteContributions = 6,
     
-    /// Member has already received payout
+    /// Member has already been paid out.
     AlreadyReceivedPayout = 7,
     
-    /// Group cycle is complete
+    /// All cycles for this group are finished.
     GroupComplete = 8,
     
-    /// Invalid contribution amount
-    InvalidAmount = 9,
+    /// Contribution amount can't be zero.
+    ContributionAmountZero = 9,
     
-    /// Invalid cycle duration
-    InvalidCycleDuration = 10,
+    /// Cycle duration must be greater than zero.
+    CycleDurationZero = 10,
     
-    /// Invalid maximum members count
-    InvalidMaxMembers = 11,
+    /// Groups need at least 2 members to work.
+    MaxMembersBelowMinimum = 11,
     
-    /// Insufficient balance for contribution
+    /// Negative amounts aren't allowed for contributions.
+    ContributionAmountNegative = 16,
+    
+    /// Member doesn't have enough balance.
     InsufficientBalance = 12,
     
-    /// Transfer failed
+    /// The token transfer didn't go through.
     TransferFailed = 13,
     
-    /// Group has no members
+    /// This group has no members initialized.
     NoMembers = 14,
     
-    /// Unauthorized operation
+    /// Only the creator or authorized members can do this.
     Unauthorized = 15,
 }
