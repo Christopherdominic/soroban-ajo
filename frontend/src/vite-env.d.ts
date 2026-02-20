@@ -1,6 +1,9 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
+  // Vite Environment
+  readonly MODE: 'development' | 'staging' | 'production' | 'test';
+  
   // Application
   readonly VITE_APP_ENV: 'development' | 'staging' | 'production';
   readonly VITE_APP_NAME: string;
@@ -57,6 +60,12 @@ interface ImportMetaEnv {
   // Performance
   readonly VITE_ENABLE_SW: string;
   readonly VITE_CACHE_DURATION: string;
+  
+  // Caching
+  readonly VITE_CACHE_ENABLED?: string;
+  readonly VITE_CACHE_DEFAULT_TTL?: string;
+  readonly VITE_CACHE_MAX_SIZE?: string;
+  readonly VITE_CACHE_STALE_WHILE_REVALIDATE?: string;
 
   // Links
   readonly VITE_GITHUB_URL?: string;
