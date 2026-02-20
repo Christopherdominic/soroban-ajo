@@ -9,7 +9,8 @@ pub fn emit_group_created(
     max_members: u32,
 ) {
     let topics = (symbol_short!("created"), group_id);
-    env.events().publish(topics, (creator, contribution_amount, max_members));
+    env.events()
+        .publish(topics, (creator, contribution_amount, max_members));
 }
 
 /// Emit an event when a member joins a group
