@@ -51,13 +51,14 @@ export const GroupCreationForm: React.FC = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 max-w-2xl">
+    <div className="theme-surface p-6 max-w-2xl">
       <h2 className="text-2xl font-bold mb-6">Create a New Group</h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold mb-2">Group Name</label>
+          <label htmlFor="group-name" className="block text-sm font-semibold mb-2">Group Name</label>
           <input
+            id="group-name"
             type="text"
             value={formData.groupName}
             onChange={(e) => setFormData({ ...formData, groupName: e.target.value })}
@@ -68,8 +69,9 @@ export const GroupCreationForm: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2">Description</label>
+          <label htmlFor="group-description" className="block text-sm font-semibold mb-2">Description</label>
           <textarea
+            id="group-description"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Describe your group's purpose..."
@@ -80,8 +82,9 @@ export const GroupCreationForm: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold mb-2">Cycle Length (days)</label>
+            <label htmlFor="cycle-length" className="block text-sm font-semibold mb-2">Cycle Length (days)</label>
             <input
+              id="cycle-length"
               type="number"
               value={formData.cycleLength}
               onChange={(e) => setFormData({ ...formData, cycleLength: parseInt(e.target.value) })}
@@ -91,8 +94,9 @@ export const GroupCreationForm: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2">Contribution Amount ($)</label>
+            <label htmlFor="contribution-amount" className="block text-sm font-semibold mb-2">Contribution Amount ($)</label>
             <input
+              id="contribution-amount"
               type="number"
               step="0.01"
               value={formData.contributionAmount}
@@ -104,8 +108,9 @@ export const GroupCreationForm: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2">Max Members</label>
+          <label htmlFor="max-members" className="block text-sm font-semibold mb-2">Max Members</label>
           <input
+            id="max-members"
             type="number"
             value={formData.maxMembers}
             onChange={(e) => setFormData({ ...formData, maxMembers: parseInt(e.target.value) })}
@@ -118,8 +123,9 @@ export const GroupCreationForm: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold mb-2">Frequency</label>
+            <label htmlFor="frequency" className="block text-sm font-semibold mb-2">Frequency</label>
             <select
+              id="frequency"
               value={formData.frequency}
               onChange={(e) => setFormData({ ...formData, frequency: e.target.value as 'weekly' | 'monthly' })}
               className="w-full px-4 py-2 border rounded-lg"
@@ -131,8 +137,9 @@ export const GroupCreationForm: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2">Duration (cycles)</label>
+            <label htmlFor="duration" className="block text-sm font-semibold mb-2">Duration (cycles)</label>
             <input
+              id="duration"
               type="number"
               value={formData.duration}
               onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
@@ -144,9 +151,10 @@ export const GroupCreationForm: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2">Invite Members</label>
+          <label htmlFor="invite-members" className="block text-sm font-semibold mb-2">Invite Members</label>
           <div className="flex gap-2 mb-2">
             <input
+              id="invite-members"
               type="text"
               value={memberInput}
               onChange={(e) => setMemberInput(e.target.value)}
@@ -157,7 +165,7 @@ export const GroupCreationForm: React.FC = () => {
             <button
               type="button"
               onClick={handleAddMember}
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+              className="theme-btn-secondary px-4 py-2"
             >
               Add
             </button>
@@ -167,13 +175,13 @@ export const GroupCreationForm: React.FC = () => {
               {formData.invitedMembers.map((member) => (
                 <span
                   key={member}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                  className="inline-flex items-center gap-1 px-3 py-1 theme-surface-muted theme-primary rounded-full text-sm"
                 >
                   {member}
                   <button
                     type="button"
                     onClick={() => handleRemoveMember(member)}
-                    className="hover:text-blue-600"
+                    className="hover:opacity-80"
                   >
                     ×
                   </button>
@@ -183,31 +191,31 @@ export const GroupCreationForm: React.FC = () => {
           )}
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4 border">
+        <div className="theme-surface-muted p-4">
           <h3 className="text-lg font-semibold mb-3">Preview</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">Group Name:</span>
+              <span className="theme-muted">Group Name:</span>
               <span className="font-medium">{formData.groupName || 'Not set'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Frequency:</span>
+              <span className="theme-muted">Frequency:</span>
               <span className="font-medium capitalize">{formData.frequency}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Duration:</span>
+              <span className="theme-muted">Duration:</span>
               <span className="font-medium">{formData.duration} cycles</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Contribution:</span>
+              <span className="theme-muted">Contribution:</span>
               <span className="font-medium">${formData.contributionAmount}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Max Members:</span>
+              <span className="theme-muted">Max Members:</span>
               <span className="font-medium">{formData.maxMembers}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Invited Members:</span>
+              <span className="theme-muted">Invited Members:</span>
               <span className="font-medium">{formData.invitedMembers.length}</span>
             </div>
           </div>
@@ -215,7 +223,7 @@ export const GroupCreationForm: React.FC = () => {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg"
+          className="w-full theme-btn font-semibold py-2"
         >
           Create Group
         </button>

@@ -27,9 +27,9 @@ export const GroupCard: React.FC<GroupCardProps> = ({
   onClick,
 }) => {
   const statusColors = {
-    active: 'bg-green-100 text-green-800 border-green-200',
-    completed: 'bg-blue-100 text-blue-800 border-blue-200',
-    paused: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    active: 'theme-status-active',
+    completed: 'theme-status-completed',
+    paused: 'theme-status-paused',
   }
 
   const cardVariants = {
@@ -44,17 +44,29 @@ export const GroupCard: React.FC<GroupCardProps> = ({
   const cardClass = cardVariants[variant]
   const isCompact = variant === 'compact'
   const isSpaciousOrElevated = variant === 'spacious' || variant === 'elevated'
+  const progressPercent = maxMembers > 0 ? (memberCount / maxMembers) * 100 : 0
+  const progressWidthClass =
+    progressPercent >= 100
+      ? 'w-full'
+      : progressPercent >= 75
+      ? 'w-3/4'
+      : progressPercent >= 50
+      ? 'w-1/2'
+      : progressPercent >= 25
+      ? 'w-1/4'
+      : progressPercent > 0
+      ? 'w-[10%]'
+      : 'w-0'
 
   return (
     <div 
       className={cardClass}
       onClick={onClick}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
+      tabIndex={onClick ? 0 : -1}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
     >
       <div className={`flex justify-between items-start ${isCompact ? 'mb-3' : 'mb-4'}`}>
-        <h3 className={`font-bold text-gray-900 ${isCompact ? 'text-lg' : isSpaciousOrElevated ? 'text-2xl' : 'text-xl'}`}>
+        <h3 className={`font-bold ${isCompact ? 'text-lg' : isSpaciousOrElevated ? 'text-2xl' : 'text-xl'}`}>
           {groupName}
         </h3>
         <span 
@@ -66,32 +78,31 @@ export const GroupCard: React.FC<GroupCardProps> = ({
 
       <div className={`card-body ${isCompact ? 'space-y-2' : 'space-y-3'}`}>
         <div className="flex justify-between items-center">
-          <span className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>Members</span>
+          <span className={`theme-muted ${isCompact ? 'text-sm' : 'text-base'}`}>Members</span>
           <span className={`font-semibold ${isCompact ? 'text-sm' : 'text-base'}`}>
             {memberCount}/{maxMembers}
           </span>
         </div>
 
-        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+        <div className="w-full rounded-full h-2 overflow-hidden bg-[color:var(--color-border)]">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${(memberCount / maxMembers) * 100}%` }}
+            className={`h-2 rounded-full transition-all duration-300 ease-out bg-[color:var(--color-primary)] ${progressWidthClass}`}
           />
         </div>
 
         <div className={`flex justify-between items-center ${isCompact ? 'text-xs' : 'text-sm'}`}>
-          <span className="text-gray-600">Total Contributed</span>
-          <span className="font-semibold text-gray-900">${totalContributions.toFixed(2)}</span>
+          <span className="theme-muted">Total Contributed</span>
+          <span className="font-semibold">${totalContributions.toFixed(2)}</span>
         </div>
 
         <div className={`flex justify-between items-center ${isCompact ? 'text-xs' : 'text-sm'}`}>
-          <span className="text-gray-600">Next Payout</span>
-          <span className="text-blue-600 font-semibold">{nextPayout}</span>
+          <span className="theme-muted">Next Payout</span>
+          <span className="theme-primary font-semibold">{nextPayout}</span>
         </div>
       </div>
 
       <button 
-        className={`w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md ${
+        className={`w-full theme-btn font-semibold transition-colors duration-200 shadow-sm hover:shadow-md ${
           isCompact ? 'mt-3 py-1.5 text-sm' : 'mt-4 py-2 text-base'
         }`}
         onClick={(e) => {

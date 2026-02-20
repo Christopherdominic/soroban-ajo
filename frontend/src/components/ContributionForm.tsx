@@ -43,21 +43,22 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 max-w-md">
+    <div className="theme-surface p-6 max-w-md">
       <h3 className="text-2xl font-bold mb-4">Make a Contribution</h3>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg text-sm">
+        <div className="mb-4 p-3 theme-surface-muted rounded-lg text-sm theme-danger">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold mb-2">Amount to Contribute ($)</label>
+          <label htmlFor="contribution-amount" className="block text-sm font-semibold mb-2">Amount to Contribute ($)</label>
           <div className="relative">
-            <span className="absolute left-3 top-3 text-gray-600">$</span>
+            <span className="absolute left-3 top-3 theme-muted">$</span>
             <input
+              id="contribution-amount"
               type="number"
               value={amount}
               onChange={(e) => setAmount(parseFloat(e.target.value))}
@@ -69,18 +70,18 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
           </div>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="theme-surface-muted p-4 rounded-lg">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-600">Subtotal:</span>
+            <span className="theme-muted">Subtotal:</span>
             <span className="font-semibold">${amount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-600">Network Fee:</span>
+            <span className="theme-muted">Network Fee:</span>
             <span className="font-semibold">$0.01</span>
           </div>
           <div className="border-t pt-2 flex justify-between items-center">
-            <span className="text-gray-900 font-semibold">Total:</span>
-            <span className="text-lg font-bold text-blue-600">
+            <span className="font-semibold">Total:</span>
+            <span className="text-lg font-bold theme-primary">
               ${(amount + 0.01).toFixed(2)}
             </span>
           </div>
@@ -89,12 +90,12 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-2 rounded-lg transition"
+          className="w-full theme-btn disabled:opacity-60 disabled:cursor-not-allowed font-semibold py-2 transition"
         >
           {loading ? 'Processing...' : 'Contribute'}
         </button>
 
-        <p className="text-xs text-gray-600 text-center">
+        <p className="text-xs theme-muted text-center">
           You'll be prompted to confirm this transaction in your wallet.
         </p>
       </form>
