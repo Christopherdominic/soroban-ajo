@@ -47,3 +47,9 @@ pub fn emit_group_completed(env: &Env, group_id: u64) {
     let topics = (symbol_short!("complete"), group_id);
     env.events().publish(topics, ());
 }
+
+/// Emit an event when a cycle advances
+pub fn emit_cycle_advanced(env: &Env, group_id: u64, new_cycle: u32, cycle_start_time: u64) {
+    let topics = (symbol_short!("cycle"), group_id);
+    env.events().publish(topics, (new_cycle, cycle_start_time));
+}

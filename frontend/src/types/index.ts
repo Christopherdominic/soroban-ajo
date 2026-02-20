@@ -69,3 +69,22 @@ export interface TransactionSort {
   field: TransactionSortField
   direction: SortDirection
 }
+
+export interface ValidationError {
+  field: string
+  message: string
+}
+
+export interface ContributionValidation {
+  isValid: boolean
+  errors: ValidationError[]
+}
+
+export interface ContributionFormData {
+  amount: number
+  groupId: string
+  userBalance?: number
+  requiredAmount: number
+  hasExistingContribution?: boolean
+  lastContributionDate?: string
+}

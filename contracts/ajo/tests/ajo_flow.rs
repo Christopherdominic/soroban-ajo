@@ -303,3 +303,93 @@ fn test_multiple_groups() {
     assert_eq!(group1.contribution_amount, 100_000_000i128);
     assert_eq!(group2.contribution_amount, 200_000_000i128);
 }
+
+#[test]
+fn test_contribution_within_cycle_window() {
+    let (env, client, creator, member2, _) = setup_test_env();
+    
+    let cycle_duration = 604_800u64; // 1 week
+    let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
+    client.join_group(&member2, &group_id);
+    
+    // Contribute immediately (within window)
+    client.contribute(&creator, &group_id);
+    
+    // Advance time but stay within cycle
+    env.ledger().with_mut(|li| li.timestamp += 300_000); // 5 days
+    
+    // Should still be able to contribute
+    client.contribute(&member2, &group_id);
+}
+
+#[test]
+#[should_panic(expected = "OutsideCycleWindow")]
+fn test_contribution_after_cycle_ends() {
+    let (env, client, creator, _, _) = setup_test_env();
+    
+    let cycle_duration = 604_800u64; // 1 week
+    let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
+    
+    // Advance time past cycle end
+    env.ledger().with_mut(|li| li.timestamp += cycle_duration + 1);
+    
+    // Try to contribute after cycle ends - should panic
+    client.contribute(&creator, &group_id);
+}
+
+#[test]
+#[should_panic(expected = "OutsideCycleWindow")]
+fn test_contribution_late() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    let cycle_duration = 86_400u64; // 1 day
+    let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Advance time beyond cycle duration
+    env.ledger().with_mut(|li| li.timestamp += cycle_duration + 3600); // 1 day + 1 hour
+    
+    // Late contribution should fail
+    client.contribute(&creator, &group_id);
+}
+
+#[test]
+fn test_contribution_at_cycle_boundary() {
+    let (env, client, creator, _, _) = setup_test_env();
+    
+    let cycle_duration = 604_800u64; // 1 week
+    let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
+    
+    // Advance to exactly cycle end (should fail as it's exclusive)
+    env.ledger().with_mut(|li| li.timestamp += cycle_duration);
+    
+    // At exact boundary, should be outside window
+    let result = client.try_contribute(&creator, &group_id);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_new_cycle_resets_window() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    let cycle_duration = 86_400u64; // 1 day
+    let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Complete first cycle
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    client.contribute(&member3, &group_id);
+    client.execute_payout(&group_id);
+    
+    // New cycle starts, should be able to contribute immediately
+    client.contribute(&creator, &group_id);
+    
+    // Advance time within new cycle window
+    env.ledger().with_mut(|li| li.timestamp += 43_200); // 12 hours
+    
+    // Should still work
+    client.contribute(&member2, &group_id);
+}

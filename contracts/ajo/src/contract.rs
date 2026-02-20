@@ -175,6 +175,7 @@ impl AjoContract {
     /// * `NotMember` - If the address is not a member
     /// * `AlreadyContributed` - If already contributed this cycle
     /// * `GroupComplete` - If the group has completed all cycles
+    /// * `OutsideCycleWindow` - If contribution is outside the active cycle window
     pub fn contribute(env: Env, member: Address, group_id: u64) -> Result<(), AjoError> {
         // Require authentication
         member.require_auth();
@@ -190,6 +191,12 @@ impl AjoContract {
         // Check if member
         if !utils::is_member(&group.members, &member) {
             return Err(AjoError::NotMember);
+        }
+        
+        // Check if within cycle window
+        let current_time = utils::get_current_timestamp(&env);
+        if !utils::is_within_cycle_window(&group, current_time) {
+            return Err(AjoError::OutsideCycleWindow);
         }
         
         // Check if already contributed
@@ -308,6 +315,7 @@ impl AjoContract {
             // Advance to next cycle
             group.current_cycle += 1;
             group.cycle_start_time = utils::get_current_timestamp(&env);
+            events::emit_cycle_advanced(&env, group_id, group.current_cycle, group.cycle_start_time);
         }
         
         // Update storage

@@ -1,0 +1,40 @@
+Ajo Finance: Community-Driven Savings
+I worked on translating the core values of Ajo Finance into a cohesive digital experience. My focus was on building the future of Community Finance by creating a visual and verbal language that reflects trust, modernity, and a community-centric approach.
+
+🎨 Design Philosophy & Visual Language
+I worked on implementing a design system that balances technical sophistication with high readability.
+
+Core Principles
+Trusted: I prioritized creating a sense of reliability and security through consistent branding.
+
+Modern: I utilized clean layouts and high-quality imagery to deliver a forward-thinking fintech experience.
+
+Community-Focused: Every design choice I made supports the growth and financial stability of our users.
+
+Typography & Imagery
+Typography: I selected Space Grotesk as the primary typeface—using Bold for impact and Regular for body content—to balance a technical feel with accessibility.
+
+Imagery Style: I curated an imagery style that combines global connectivity (abstract 3D visuals) with tangible, human-centered elements.
+
+🛠 Features & Security
+I worked on the essential modules that empower users to manage their savings securely.
+
+Account & Wallet Management
+Edit Profile: I streamlined the interface for managing personal details, bios, and contact information.
+
+Wallet Management: I built a clear overview for linked cards and detailed transaction histories.
+
+Notification Preferences: I implemented granular controls for push, email, and SMS alerts.
+
+Security & Privacy (My Contribution)
+Security was a primary focus for me. I worked on:
+
+Multi-Factor Authentication: Integrated 2FA via SMS and Apps for enhanced security.
+
+Biometric Login: Enabled FaceID and Fingerprint unlock for seamless, secure access.
+
+Privacy Controls: I developed the "Profile Visibility" toggle and "Data Sharing" preferences to give users complete control over their digital footprint.
+
+Activity Monitoring: I built the Account Activity Log to provide transparency on active sessions across devices and locations (e.g., Lagos, London, Abuja).
+
+figma link https://www.figma.com/design/qvGJ2FSPCy020qeLB7xfnL/Design-brand-guidelines-and-visual-identity?node-id=0-3&t=Jo3O4LxPsYVGmfOR-0

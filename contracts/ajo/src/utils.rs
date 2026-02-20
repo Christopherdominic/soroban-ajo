@@ -58,3 +58,17 @@ pub fn validate_group_params(
     
     Ok(())
 }
+
+/// Get cycle start and end timestamps
+pub fn get_cycle_window(group: &Group, current_time: u64) -> (u64, u64) {
+    let cycle_start = group.cycle_start_time;
+    let cycle_end = cycle_start + group.cycle_duration;
+    (cycle_start, cycle_end)
+}
+
+/// Check if current time is within the active cycle window
+pub fn is_within_cycle_window(group: &Group, current_time: u64) -> bool {
+    let (cycle_start, cycle_end) = get_cycle_window(group, current_time);
+    current_time >= cycle_start && current_time < cycle_end
+}
+

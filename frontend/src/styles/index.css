@@ -15,6 +15,27 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* --- Issue #54: Chart Color Tokens & Tooltip Styling --- */
+  --chart-primary: #6366f1;   /* Indigo */
+  --chart-secondary: #8b5cf6; /* Violet */
+  --chart-tertiary: #ec4899;  /* Pink */
+  --chart-quaternary: #14b8a6; /* Teal */
+  
+  --chart-tooltip-bg: #ffffff;
+  --chart-tooltip-border: #e2e8f0;
+  --chart-tooltip-text: #1e293b;
+  --chart-grid-line: #f1f5f9;
+}
+
+/* Dark mode overrides for charts */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --chart-tooltip-bg: #1e293b;
+    --chart-tooltip-border: #334155;
+    --chart-tooltip-text: #f8fafc;
+    --chart-grid-line: #334155;
+  }
 }
 
 a {

@@ -42,4 +42,6 @@ coverage/
 Thumbs.db
 .cache/
 
-.kiro
+# Kiro (allow specs to be tracked)
+.kiro/*
+!.kiro/specs/

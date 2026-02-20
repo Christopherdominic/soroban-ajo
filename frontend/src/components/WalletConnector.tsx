@@ -1,46 +1,32 @@
-// Issue #19: Create wallet connection component
-// Complexity: Trivial (100 pts)
-// Status: Placeholder
+// Wallet connection component with Freighter/Albedo integration
+// This component provides a reusable wallet connection interface
 
-import React, { useState } from 'react'
-import { useTheme } from '@/hooks/useTheme'
+import React from 'react'
+import { WalletConnect } from './WalletConnect';
+
 
 export const WalletConnector: React.FC = () => {
-  const { resolvedTheme } = useTheme()
-  const [connected, setConnected] = useState(false)
-  const [address, setAddress] = useState('')
+  const handleConnect = (address: string) => {
+    console.log('Wallet connected:', address);
+  };
 
-  const handleConnect = async () => {
-    // TODO: Integrate with Freighter wallet
-    // Steps:
-    // 1. Check if Freighter is installed
-    // 2. Request user to connect wallet
-    // 3. Get user's public key
-    // 4. Store in Zustand store
-    // 5. Update connected state
-    setConnected(true)
-    setAddress('GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-  }
+  const handleDisconnect = () => {
+    console.log('Wallet disconnected');
+  };
+
+  const handleError = (error: string) => {
+    console.error('Wallet connection error:', error);
+  };
 
   return (
-    <div className="theme-surface p-4" data-theme={resolvedTheme}>
-      <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--color-text)' }}>
-        Wallet Connection
-      </h2>
-      {connected ? (
-        <div>
-          <p style={{ color: 'var(--color-success)' }} className="mb-2">
-            Connected ✓
-          </p>
-          <p className="text-sm break-all" style={{ color: 'var(--color-text-muted)' }}>
-            {address}
-          </p>
-        </div>
-      ) : (
-        <button onClick={handleConnect} className="theme-btn">
-          Connect Wallet
-        </button>
-      )}
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">Wallet Connection</h2>
+      <WalletConnect
+        onConnect={handleConnect}
+        onDisconnect={handleDisconnect}
+        onError={handleError}
+        showNetworkSelector={true}
+      />
     </div>
-  )
-}
+  );
+};
