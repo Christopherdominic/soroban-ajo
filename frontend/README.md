@@ -1,8 +1,27 @@
 # Soroban Ajo Frontend
 
-This is the React/TypeScript frontend for Soroban Ajo, a decentralized rotational savings platform built on the Stellar blockchain.
+> Decentralized rotational savings platform built on Stellar blockchain
+
+[![React](https://img.shields.io/badge/React-18-blue)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5-purple)](https://vitejs.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-cyan)](https://tailwindcss.com)
 
 ## 🚀 Quick Start
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Open http://localhost:5173
+```
+
+**New to the project?** Read [FRONTEND_SETUP.md](../FRONTEND_SETUP.md) for detailed setup instructions.
+
+---
 
 ### Prerequisites
 
