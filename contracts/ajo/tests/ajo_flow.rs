@@ -1,37 +1,37 @@
 #![cfg(test)]
 
-use soroban_sdk::{testutils::Address as _, Address, Env};
-use soroban_sdk::testutils::Ledger;
 use soroban_ajo::{AjoContract, AjoContractClient, AjoError};
+use soroban_sdk::testutils::Ledger;
+use soroban_sdk::{testutils::Address as _, Address, Env};
 
 /// Helper function to create a test environment and contract
 fn setup_test_env() -> (Env, AjoContractClient<'static>, Address, Address, Address) {
     let env = Env::default();
     env.mock_all_auths();
-    
+
     let contract_id = env.register_contract(None, AjoContract);
     let client = AjoContractClient::new(&env, &contract_id);
-    
+
     // Generate test addresses
     let creator = Address::generate(&env);
     let member2 = Address::generate(&env);
     let member3 = Address::generate(&env);
-    
+
     (env, client, creator, member2, member3)
 }
 
 #[test]
 fn test_create_group() {
     let (env, client, creator, _, _) = setup_test_env();
-    
+
     let contribution = 100_000_000i128; // 10 XLM
     let cycle_duration = 604_800u64; // 1 week in seconds
     let max_members = 10u32;
-    
+
     let group_id = client.create_group(&creator, &contribution, &cycle_duration, &max_members);
-    
+
     assert_eq!(group_id, 1);
-    
+
     // Verify group was created correctly
     let group = client.get_group(&group_id);
     assert_eq!(group.id, 1);
@@ -48,20 +48,20 @@ fn test_create_group() {
 #[test]
 fn test_join_group() {
     let (env, client, creator, member2, member3) = setup_test_env();
-    
+
     // Create group
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &10u32);
-    
+
     // Member 2 joins
     client.join_group(&member2, &group_id);
-    
+
     // Member 3 joins
     client.join_group(&member3, &group_id);
-    
+
     // Verify members
     let members = client.list_members(&group_id);
     assert_eq!(members.len(), 3);
-    
+
     // Verify is_member checks
     assert_eq!(client.is_member(&group_id, &creator), true);
     assert_eq!(client.is_member(&group_id, &member2), true);
@@ -71,10 +71,10 @@ fn test_join_group() {
 #[test]
 fn test_join_group_already_member() {
     let (env, client, creator, _, _) = setup_test_env();
-    
+
     // Create group (creator is automatically a member)
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &10u32);
-    
+
     // Try to join again - should fail with AlreadyMember
     let result = client.try_join_group(&creator, &group_id);
     assert_eq!(result, Err(Ok(AjoError::AlreadyMember)));
@@ -83,13 +83,13 @@ fn test_join_group_already_member() {
 #[test]
 fn test_join_group_max_members_exceeded() {
     let (env, client, creator, member2, _) = setup_test_env();
-    
+
     // Create group with max 2 members
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &2u32);
-    
+
     // Member 2 joins (now at max)
     client.join_group(&member2, &group_id);
-    
+
     // Try to add another member - should fail with MaxMembersExceeded
     let member3 = Address::generate(&env);
     let result = client.try_join_group(&member3, &group_id);
@@ -99,21 +99,21 @@ fn test_join_group_max_members_exceeded() {
 #[test]
 fn test_contribution_flow() {
     let (env, client, creator, member2, member3) = setup_test_env();
-    
+
     // Create group with 3 members max
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
     client.join_group(&member2, &group_id);
     client.join_group(&member3, &group_id);
-    
+
     // All members contribute
     client.contribute(&creator, &group_id);
     client.contribute(&member2, &group_id);
     client.contribute(&member3, &group_id);
-    
+
     // Check contribution status
     let status = client.get_contribution_status(&group_id, &1u32);
     assert_eq!(status.len(), 3);
-    
+
     // All should have contributed
     for (_, has_paid) in status.iter() {
         assert_eq!(has_paid, true);
@@ -123,12 +123,12 @@ fn test_contribution_flow() {
 #[test]
 fn test_double_contribution() {
     let (env, client, creator, _, _) = setup_test_env();
-    
+
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
-    
+
     // Contribute once
     client.contribute(&creator, &group_id);
-    
+
     // Try to contribute again - should fail with AlreadyContributed
     let result = client.try_contribute(&creator, &group_id);
     assert_eq!(result, Err(Ok(AjoError::AlreadyContributed)));
@@ -137,14 +137,14 @@ fn test_double_contribution() {
 #[test]
 fn test_payout_incomplete_contributions() {
     let (env, client, creator, member2, _) = setup_test_env();
-    
+
     // Create group with 2 members
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
     client.join_group(&member2, &group_id);
-    
+
     // Only creator contributes
     client.contribute(&creator, &group_id);
-    
+
     // Try to execute payout - should fail with IncompleteContributions
     let result = client.try_execute_payout(&group_id);
     assert_eq!(result, Err(Ok(AjoError::IncompleteContributions)));
@@ -153,18 +153,18 @@ fn test_payout_incomplete_contributions() {
 #[test]
 fn test_payout_execution() {
     let (env, client, creator, member2, member3) = setup_test_env();
-    
+
     // Create group with 3 members
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
     client.join_group(&member2, &group_id);
     client.join_group(&member3, &group_id);
-    
+
     // Cycle 1: All contribute, creator receives payout
     client.contribute(&creator, &group_id);
     client.contribute(&member2, &group_id);
     client.contribute(&member3, &group_id);
     client.execute_payout(&group_id);
-    
+
     // Verify state after first payout
     let group = client.get_group(&group_id);
     assert_eq!(group.current_cycle, 2);
@@ -175,38 +175,38 @@ fn test_payout_execution() {
 #[test]
 fn test_full_lifecycle() {
     let (env, client, creator, member2, member3) = setup_test_env();
-    
+
     // Create group with 3 members
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
     client.join_group(&member2, &group_id);
     client.join_group(&member3, &group_id);
-    
+
     // Verify not complete initially
     assert_eq!(client.is_complete(&group_id), false);
-    
+
     // Cycle 1: Creator receives payout
     client.contribute(&creator, &group_id);
     client.contribute(&member2, &group_id);
     client.contribute(&member3, &group_id);
     client.execute_payout(&group_id);
     assert_eq!(client.is_complete(&group_id), false);
-    
+
     // Cycle 2: Member 2 receives payout
     client.contribute(&creator, &group_id);
     client.contribute(&member2, &group_id);
     client.contribute(&member3, &group_id);
     client.execute_payout(&group_id);
     assert_eq!(client.is_complete(&group_id), false);
-    
+
     // Cycle 3: Member 3 receives payout (final)
     client.contribute(&creator, &group_id);
     client.contribute(&member2, &group_id);
     client.contribute(&member3, &group_id);
     client.execute_payout(&group_id);
-    
+
     // Group should now be complete
     assert_eq!(client.is_complete(&group_id), true);
-    
+
     let group = client.get_group(&group_id);
     assert_eq!(group.is_complete, true);
     assert_eq!(group.payout_index, 3);
@@ -215,12 +215,12 @@ fn test_full_lifecycle() {
 #[test]
 fn test_contribute_after_completion() {
     let (env, client, creator, member2, member3) = setup_test_env();
-    
+
     // Create and complete a group
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &3u32);
     client.join_group(&member2, &group_id);
     client.join_group(&member3, &group_id);
-    
+
     // Complete all cycles
     for _ in 0..3 {
         client.contribute(&creator, &group_id);
@@ -228,7 +228,7 @@ fn test_contribute_after_completion() {
         client.contribute(&member3, &group_id);
         client.execute_payout(&group_id);
     }
-    
+
     // Try to contribute to completed group - should fail with GroupComplete
     let result = client.try_contribute(&creator, &group_id);
     assert_eq!(result, Err(Ok(AjoError::GroupComplete)));
@@ -237,7 +237,7 @@ fn test_contribute_after_completion() {
 #[test]
 fn test_create_group_zero_contribution_fails() {
     let (_, client, admin, _, _) = setup_test_env();
-    
+
     // Exactly zero shouldn't work
     let res = client.try_create_group(&admin, &0i128, &604_800u64, &10u32);
     assert_eq!(res, Err(Ok(AjoError::ContributionAmountZero)));
@@ -246,7 +246,7 @@ fn test_create_group_zero_contribution_fails() {
 #[test]
 fn test_create_group_negative_contribution_fails() {
     let (_, client, admin, _, _) = setup_test_env();
-    
+
     // Negative amounts are a no-go
     let res = client.try_create_group(&admin, &-500i128, &604_800u64, &10u32);
     assert_eq!(res, Err(Ok(AjoError::ContributionAmountNegative)));
@@ -255,7 +255,7 @@ fn test_create_group_negative_contribution_fails() {
 #[test]
 fn test_create_group_invalid_duration_fails() {
     let (_, client, admin, _, _) = setup_test_env();
-    
+
     // Can't have a 0 duration cycle
     let res = client.try_create_group(&admin, &100_000_000i128, &0u64, &5u32);
     assert_eq!(res, Err(Ok(AjoError::CycleDurationZero)));
@@ -264,7 +264,7 @@ fn test_create_group_invalid_duration_fails() {
 #[test]
 fn test_create_group_tiny_limit_fails() {
     let (_, client, admin, _, _) = setup_test_env();
-    
+
     // Need at least 2 people for a rotation
     let res = client.try_create_group(&admin, &100_000_000i128, &604_800u64, &1u32);
     assert_eq!(res, Err(Ok(AjoError::MaxMembersBelowMinimum)));
@@ -273,9 +273,9 @@ fn test_create_group_tiny_limit_fails() {
 #[test]
 fn test_contribute_not_member() {
     let (env, client, creator, _, _) = setup_test_env();
-    
+
     let group_id = client.create_group(&creator, &100_000_000i128, &604_800u64, &10u32);
-    
+
     // Try to contribute as non-member - should fail with NotMember
     let non_member = Address::generate(&env);
     let result = client.try_contribute(&non_member, &group_id);
@@ -285,20 +285,20 @@ fn test_contribute_not_member() {
 #[test]
 fn test_multiple_groups() {
     let (env, client, creator, member2, _) = setup_test_env();
-    
+
     // Create first group
     let group_id1 = client.create_group(&creator, &100_000_000i128, &604_800u64, &5u32);
-    
+
     // Create second group
     let group_id2 = client.create_group(&member2, &200_000_000i128, &1_209_600u64, &3u32);
-    
+
     // Verify both groups exist independently
     assert_eq!(group_id1, 1);
     assert_eq!(group_id2, 2);
-    
+
     let group1 = client.get_group(&group_id1);
     let group2 = client.get_group(&group_id2);
-    
+
     assert_eq!(group1.creator, creator);
     assert_eq!(group2.creator, member2);
     assert_eq!(group1.contribution_amount, 100_000_000i128);
@@ -308,17 +308,17 @@ fn test_multiple_groups() {
 #[test]
 fn test_contribution_within_cycle_window() {
     let (env, client, creator, member2, _) = setup_test_env();
-    
+
     let cycle_duration = 604_800u64; // 1 week
     let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
     client.join_group(&member2, &group_id);
-    
+
     // Contribute immediately (within window)
     client.contribute(&creator, &group_id);
-    
+
     // Advance time but stay within cycle
     env.ledger().with_mut(|li| li.timestamp += 300_000); // 5 days
-    
+
     // Should still be able to contribute
     client.contribute(&member2, &group_id);
 }
@@ -327,13 +327,14 @@ fn test_contribution_within_cycle_window() {
 #[should_panic(expected = "OutsideCycleWindow")]
 fn test_contribution_after_cycle_ends() {
     let (env, client, creator, _, _) = setup_test_env();
-    
+
     let cycle_duration = 604_800u64; // 1 week
     let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
-    
+
     // Advance time past cycle end
-    env.ledger().with_mut(|li| li.timestamp += cycle_duration + 1);
-    
+    env.ledger()
+        .with_mut(|li| li.timestamp += cycle_duration + 1);
+
     // Try to contribute after cycle ends - should panic
     client.contribute(&creator, &group_id);
 }
@@ -342,15 +343,16 @@ fn test_contribution_after_cycle_ends() {
 #[should_panic(expected = "OutsideCycleWindow")]
 fn test_contribution_late() {
     let (env, client, creator, member2, member3) = setup_test_env();
-    
+
     let cycle_duration = 86_400u64; // 1 day
     let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
     client.join_group(&member2, &group_id);
     client.join_group(&member3, &group_id);
-    
+
     // Advance time beyond cycle duration
-    env.ledger().with_mut(|li| li.timestamp += cycle_duration + 3600); // 1 day + 1 hour
-    
+    env.ledger()
+        .with_mut(|li| li.timestamp += cycle_duration + 3600); // 1 day + 1 hour
+
     // Late contribution should fail
     client.contribute(&creator, &group_id);
 }
@@ -358,13 +360,13 @@ fn test_contribution_late() {
 #[test]
 fn test_contribution_at_cycle_boundary() {
     let (env, client, creator, _, _) = setup_test_env();
-    
+
     let cycle_duration = 604_800u64; // 1 week
     let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
-    
+
     // Advance to exactly cycle end (should fail as it's exclusive)
     env.ledger().with_mut(|li| li.timestamp += cycle_duration);
-    
+
     // At exact boundary, should be outside window
     let result = client.try_contribute(&creator, &group_id);
     assert!(result.is_err());
@@ -373,24 +375,24 @@ fn test_contribution_at_cycle_boundary() {
 #[test]
 fn test_new_cycle_resets_window() {
     let (env, client, creator, member2, member3) = setup_test_env();
-    
+
     let cycle_duration = 86_400u64; // 1 day
     let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
     client.join_group(&member2, &group_id);
     client.join_group(&member3, &group_id);
-    
+
     // Complete first cycle
     client.contribute(&creator, &group_id);
     client.contribute(&member2, &group_id);
     client.contribute(&member3, &group_id);
     client.execute_payout(&group_id);
-    
+
     // New cycle starts, should be able to contribute immediately
     client.contribute(&creator, &group_id);
-    
+
     // Advance time within new cycle window
     env.ledger().with_mut(|li| li.timestamp += 43_200); // 12 hours
-    
+
     // Should still work
     client.contribute(&member2, &group_id);
 }

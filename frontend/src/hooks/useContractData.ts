@@ -52,17 +52,5 @@ export const useCreateGroup = () => {
   })
 }
 
-export const useContribute = () => {
-  const queryClient = useQueryClient()
-
-  // TODO: Implement useMutation hook for contributing
-  return useMutation({
-    mutationFn: async (params: { groupId: string; amount: number }) => {
-      console.log('TODO: Contribute mutation', params)
-    },
-    onSuccess: (_, variables) => {
-      // Invalidate group and contributions
-      queryClient.invalidateQueries({ queryKey: ['group', variables.groupId] })
-    },
-  })
-}
+// Re-export useContribute from dedicated file
+export { useContribute } from './useContribute'

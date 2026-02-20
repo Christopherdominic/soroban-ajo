@@ -1,34 +1,4 @@
-use soroban_sdk::{symbol_short, Address, Env, Symbol, Vec};
-
-/// Storage keys for the Ajo contract
-pub enum StorageKey {
-    /// Counter for group IDs
-    GroupCounter,
-    
-    /// Group data: Group(group_id) -> Group
-    Group(u64),
-    
-    /// Contribution record: Contribution(group_id, cycle, member) -> bool
-    Contribution(u64, u32, Address),
-    
-    /// Payout record: Payout(group_id, member) -> bool
-    PayoutReceived(u64, Address),
-}
-
-impl StorageKey {
-    /// Convert storage key to Symbol for use with Soroban storage
-    pub fn to_symbol(&self, env: &Env) -> Symbol {
-        match self {
-            StorageKey::GroupCounter => symbol_short!("GCOUNTER"),
-            StorageKey::Group(id) => {
-                // For complex keys, we use a tuple-like approach
-                symbol_short!("GROUP")
-            }
-            StorageKey::Contribution(_, _, _) => symbol_short!("CONTRIB"),
-            StorageKey::PayoutReceived(_, _) => symbol_short!("PAYOUT"),
-        }
-    }
-}
+use soroban_sdk::{symbol_short, Address, Env, Vec};
 
 /// Get the next group ID and increment the counter
 pub fn get_next_group_id(env: &Env) -> u64 {
@@ -70,6 +40,7 @@ pub fn mark_payout_received(env: &Env, group_id: u64, member: &Address) {
 }
 
 /// Check if a member has received their payout
+#[allow(dead_code)]
 pub fn has_received_payout(env: &Env, group_id: u64, member: &Address) -> bool {
     let key = (symbol_short!("PAYOUT"), group_id, member);
     env.storage().persistent().get(&key).unwrap_or(false)
@@ -83,11 +54,11 @@ pub fn get_cycle_contributions(
     members: &Vec<Address>,
 ) -> Vec<(Address, bool)> {
     let mut results = Vec::new(env);
-    
+
     for member in members.iter() {
         let paid = has_contributed(env, group_id, cycle, &member);
         results.push_back((member, paid));
     }
-    
+
     results
 }

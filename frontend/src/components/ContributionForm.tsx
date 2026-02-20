@@ -4,6 +4,8 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { ValidationError, ContributionValidation } from '../types'
+import { useContribute } from '../hooks/useContribute'
+import { showNotification } from '../utils/notifications'
 
 interface ContributionFormProps {
   groupId: string
@@ -21,10 +23,11 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
   existingContributions = [],
 }) => {
   const [amount, setAmount] = useState(contributionAmount)
-  const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
   const [touched, setTouched] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  
+  const { mutate: contribute, isPending: loading } = useContribute()
 
   const NETWORK_FEE = 0.01
   const MIN_AMOUNT = 0.01
@@ -121,36 +124,28 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
       return
     }
 
-    setLoading(true)
     setErrors([])
 
-    try {
-      // TODO: Validate amount
-      // TODO: Call contribute function on smart contract
-      // TODO: Sign transaction with user's wallet
-      // TODO: Show success/error notification
-      // TODO: Update contributions in UI
-
-      // Placeholder for contract call
-      console.log('Contributing to group:', groupId, 'Amount:', amount)
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
-      setSuccessMessage('Contribution successful! Transaction confirmed.')
-      setAmount(contributionAmount)
-      setTouched(false)
-
-      // Clear success message after 5 seconds
-      setTimeout(() => setSuccessMessage(''), 5000)
-    } catch (err) {
-      setErrors([{
-        field: 'submit',
-        message: 'Failed to process contribution. Please try again.',
-      }])
-    } finally {
-      setLoading(false)
-    }
+    contribute(
+      { groupId, amount },
+      {
+        onSuccess: (data) => {
+          setSuccessMessage(`Contribution successful! Transaction hash: ${data.transactionHash}`)
+          setAmount(contributionAmount)
+          setTouched(false)
+          
+          setTimeout(() => setSuccessMessage(''), 5000)
+        },
+        onError: (error) => {
+          const errorMessage = error.message || 'Failed to process contribution. Please try again.'
+          setErrors([{
+            field: 'submit',
+            message: errorMessage,
+          }])
+          showNotification.error(errorMessage)
+        },
+      }
+    )
   }
 
   const getErrorByField = (field: string): string | undefined => {
