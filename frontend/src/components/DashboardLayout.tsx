@@ -20,7 +20,7 @@ export const DashboardLayout: React.FC = () => {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -53,7 +53,7 @@ export const DashboardLayout: React.FC = () => {
             )}
           </div>
           
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="theme-surface p-6">
             <h3 className="text-lg font-semibold mb-2">Total Saved</h3>
             {isLoading ? (
               <div className="skeleton h-9 w-24 rounded mt-1"></div>
@@ -62,7 +62,7 @@ export const DashboardLayout: React.FC = () => {
             )}
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="theme-surface p-6">
             <h3 className="text-lg font-semibold mb-2">Next Payout</h3>
             {isLoading ? (
               <div className="skeleton h-6 w-32 rounded mt-2"></div>

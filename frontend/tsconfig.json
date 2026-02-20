@@ -24,6 +24,19 @@
       "@/*": ["./src/*"]
     }
   },
+<<<<<<< HEAD
+  "include": ["src"],
+  "exclude": [
+    "src/stories/**/*",
+    "src/**/*.stories.ts",
+    "src/**/*.stories.tsx",
+    "src/tests/**/*",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
+  ],
+  "references": [{ "path": "./tsconfig.node.json" }]
+=======
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
+>>>>>>> 545485e03a311afa4a93e0cb0b74ee75536f1544
 }

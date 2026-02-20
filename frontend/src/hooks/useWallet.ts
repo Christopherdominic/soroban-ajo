@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-    WalletType,
     WalletState,
     WalletError,
     ConnectWalletParams,
@@ -65,7 +64,7 @@ export const useWallet = () => {
 
     // Connect to Freighter wallet
     const connectFreighter = useCallback(
-        async (network: string = 'testnet'): Promise<WalletConnectionResult> => {
+        async (): Promise<WalletConnectionResult> => {
             if (!window.freighter) {
                 return {
                     success: false,
@@ -170,7 +169,7 @@ export const useWallet = () => {
             let result: WalletConnectionResult;
 
             if (walletType === 'freighter') {
-                result = await connectFreighter(network);
+                result = await connectFreighter();
             } else if (walletType === 'albedo') {
                 result = await connectAlbedo(network);
             } else {

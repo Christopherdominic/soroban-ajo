@@ -33,7 +33,7 @@ export const MemberList: React.FC<MemberListProps> = ({ members, groupId }) => {
   const displayMembers = members.length > 0 ? members : mockMembers
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-6" data-group-id={groupId}>
       <h3 className="text-2xl font-bold mb-4">Group Members ({displayMembers.length})</h3>
 
       <div className="overflow-x-auto">

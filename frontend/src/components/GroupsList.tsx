@@ -58,10 +58,10 @@ export const GroupsList: React.FC<GroupsListProps> = ({ groups, onSelectGroup })
   const displayGroups = groups.length > 0 ? groups : sampleGroups
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 dark:text-[var(--color-text)]">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Your Groups</h2>
-        <button className="text-blue-600 hover:text-blue-700 font-semibold">
+        <h2 className="text-2xl font-bold dark:text-[var(--color-text)]">Your Groups</h2>
+        <button className="text-blue-600 hover:text-blue-700 dark:text-[var(--color-primary)] font-semibold">
           View All
         </button>
       </div>

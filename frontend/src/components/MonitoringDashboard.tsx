@@ -74,7 +74,7 @@ export const MonitoringDashboard: React.FC = () => {
                     {event.label && <span className="text-gray-600 ml-2">({event.label})</span>}
                   </div>
                   <span className="text-xs text-gray-500">
-                    {new Date(event.timestamp).toLocaleTimeString()}
+                    {new Date(event.timestamp ?? Date.now()).toLocaleTimeString()}
                   </span>
                 </div>
                 {event.value !== undefined && (

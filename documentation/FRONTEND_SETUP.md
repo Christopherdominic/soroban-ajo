@@ -34,6 +34,7 @@ Pick a frontend issue (#19-35) from the Wave program and comment to get assigned
 - **Recharts** - Data visualization
 - **React Hot Toast** - Notifications
 - **date-fns** - Date utilities
+- **lucide-react** - react icons
 
 ### Development Tools ✅
 - **ESLint** - Code linting

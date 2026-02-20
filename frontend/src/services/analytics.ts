@@ -5,6 +5,7 @@ export interface AnalyticsEvent {
   action: string
   label?: string
   value?: number
+  timestamp?: number
   metadata?: Record<string, any>
 }
 
@@ -192,7 +193,7 @@ class AnalyticsService {
     }
   }
 
-  private sendToBackend(type: string, data: any) {
+  private sendToBackend(_type: string, _data: any) {
     // TODO: Implement actual backend integration
     // Options: Google Analytics, Mixpanel, PostHog, custom backend
     // For now, just store locally and log

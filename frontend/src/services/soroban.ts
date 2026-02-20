@@ -2,11 +2,12 @@
 // Complexity: Medium (150 pts)
 // Status: Enhanced with retry mechanisms, error handling, and intelligent caching
 
-import { Keypair, SorobanRpc, Contract } from 'stellar-sdk'
 import { analytics, trackUserAction } from './analytics'
 import { showNotification } from '../utils/notifications'
 import { cacheService, CacheKeys, CacheTags } from './cache'
 
+<<<<<<< Light/DarkMode-theme
+=======
 const RPC_URL = import.meta.env.VITE_SOROBAN_RPC_URL
 const CONTRACT_ID = import.meta.env.VITE_SOROBAN_CONTRACT_ID
 
@@ -18,6 +19,7 @@ const CACHE_TTL = {
   TRANSACTIONS: 2 * 60 * 1000, // 2 minutes - historical data
 } as const
 
+>>>>>>> master
 // Retry configuration
 const MAX_RETRIES = 3
 const INITIAL_RETRY_DELAY = 1000
@@ -385,7 +387,7 @@ export const initializeSoroban = (): SorobanService => {
             }
           )
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'getGroupStatus', groupId }, severity)
           throw error
         }
@@ -415,7 +417,7 @@ export const initializeSoroban = (): SorobanService => {
             }
           )
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'getGroupMembers', groupId }, severity)
           throw error
         }
