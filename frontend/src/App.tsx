@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { QueryClientProvider } from '@tanstack/react-query'
 import './App.css'
 import { WalletConnector } from '@/components/WalletConnector'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -13,6 +14,7 @@ import { Tutorial } from '@/components/Tutorial'
 import { Explore } from '@/pages/Explore'
 import { Login } from '@/pages/Login'
 import { useAuthContext } from '@/context/AuthContext'
+import { queryClient } from '@/services/queryClient'
 
 type ViewType = 'dashboard' | 'create' | 'detail' | 'analytics' | 'responsive' | 'explore'
 
@@ -50,7 +52,7 @@ function App() {
   }
 
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <Tutorial />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         {/* Navigation */}
@@ -172,7 +174,7 @@ function App() {
           </div>
         </footer>
       </div>
-    </>
+    </QueryClientProvider>
   )
 }
 
