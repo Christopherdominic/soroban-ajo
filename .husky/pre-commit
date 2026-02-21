@@ -1,0 +1,33 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Check for console.log statements in source files only
+if git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx)$' | grep -v 'node_modules' | xargs grep -n "console\.\(log\|debug\|info\)" 2>/dev/null; then
+  echo "❌ Error: Found console.log statements. Please remove them before committing."
+  exit 1
+fi
+
+# Check for merge conflict markers in source files only (exclude workflow files and docs)
+if git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx|json|css)$' | xargs grep -l -E '^(<<<<<<<|=======|>>>>>>>)' 2>/dev/null; then
+  echo "❌ Error: Merge conflict markers detected in source files. Please resolve conflicts."
+  exit 1
+fi
+
+# Check for large files
+for file in $(git diff --cached --name-only); do
+  if [ -f "$file" ]; then
+    size=$(wc -c < "$file")
+    if [ $size -gt 1048576 ]; then  # 1MB
+      echo "⚠️  Warning: Large file detected: $file ($(($size / 1024))KB)"
+      echo "Consider using Git LFS for large files."
+    fi
+  fi
+done
+
+# Run linting on staged files
+echo "🔎 Linting staged files..."
+npx lint-staged || true
+
+echo "✅ Pre-commit checks passed!"

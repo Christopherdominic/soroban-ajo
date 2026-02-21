@@ -1,0 +1,73 @@
+name: PR Quality Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  quality-checks:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for console.log statements
+        run: |
+          if git diff origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.tsx' '*.js' '*.jsx' | grep -E '^\+.*console\.(log|debug|info|warn)'; then
+            echo "❌ Found console statements in your changes. Please remove them."
+            exit 1
+          else
+            echo "✅ No console statements found."
+          fi
+
+      - name: Check file sizes
+        run: |
+          find frontend/src backend/src -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) -size +500k -exec echo "⚠️ Large file detected: {} (consider splitting)" \;
+
+      - name: Check for TODO/FIXME comments
+        run: |
+          echo "📝 TODOs and FIXMEs in your changes:"
+          git diff origin/${{ github.base_ref }}...HEAD | grep -E '^\+.*(TODO|FIXME|HACK|XXX)' || echo "✅ None found"
+
+      - name: Validate package.json versions
+        run: |
+          cd frontend && npm ls || echo "⚠️ Dependency issues in frontend"
+          cd ../backend && npm ls || echo "⚠️ Dependency issues in backend"
+
+      - name: Check for sensitive data
+        run: |
+          if git diff origin/${{ github.base_ref }}...HEAD | grep -iE '(password|secret|api[_-]?key|private[_-]?key|token).*=.*["\x27][^"\x27]{8,}'; then
+            echo "⚠️ Possible sensitive data detected. Please review carefully."
+          fi
+
+      - name: Line count analysis
+        run: |
+          echo "📊 Lines changed:"
+          git diff --stat origin/${{ github.base_ref }}...HEAD
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate

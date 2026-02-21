@@ -1,0 +1,32 @@
+# Code Owners for Drips Repository
+# These owners will be automatically requested for review when someone opens a pull request
+
+# Default owners for everything in the repo
+* @christopher
+
+# Frontend
+/frontend/ @christopher
+/frontend/src/components/ @christopher
+/frontend/src/app/ @christopher
+
+# Backend
+/backend/ @christopher
+/backend/src/ @christopher
+
+# Smart Contracts - Require extra scrutiny
+/contracts/ @christopher
+*.rs @christopher
+
+# CI/CD Configuration
+/.github/ @christopher
+/.husky/ @christopher
+
+# Documentation
+/documentation/ @christopher
+*.md @christopher
+
+# Configuration files
+package.json @christopher
+tsconfig.json @christopher
+*.config.js @christopher
+*.config.ts @christopher

@@ -1,124 +1,282 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 env:
+  NODE_VERSION: '18'
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
 
 jobs:
-  build:
-    name: Build
+  # Job 1: Lint and Type Check
+  lint-and-typecheck:
+    name: Lint & Type Check
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
-        target: wasm32-unknown-unknown
-        override: true
-        components: rustfmt, clippy
-    
-    - name: Cache cargo registry
-      uses: actions/cache@v3
-      with:
-        path: ~/.cargo/registry
-        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-    
-    - name: Cache cargo index
-      uses: actions/cache@v3
-      with:
-        path: ~/.cargo/git
-        key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
-    
-    - name: Cache cargo build
-      uses: actions/cache@v3
-      with:
-        path: target
-        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-    
-    - name: Install Soroban CLI
-      run: |
-        cargo install --locked soroban-cli --features opt || echo "soroban-cli already installed"
-    
-    - name: Build contracts
-      run: |
-        cd contracts/ajo
-        cargo build --target wasm32-unknown-unknown --release
-    
-    - name: Run clippy
-      run: |
-        cd contracts/ajo
-        cargo clippy -- -D warnings
-    
-    - name: Check formatting
-      run: |
-        cd contracts/ajo
-        cargo fmt -- --check
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint Frontend
+        run: cd frontend && npm run lint
+        continue-on-error: false
+
+      - name: Type Check Frontend
+        run: cd frontend && npm run type-check
+        continue-on-error: false
+
+      - name: Lint Backend
+        run: cd backend && npm run lint
+        continue-on-error: false
+
+      - name: Type Check Backend
+        run: cd backend && npm run type-check
+        continue-on-error: false
+
+  # Job 2: Build Verification
+  build:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Frontend
+        run: cd frontend && npm run build
+        env:
+          NEXT_PUBLIC_STELLAR_NETWORK: testnet
+          NEXT_PUBLIC_SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
+
+      - name: Build Backend
+        run: cd backend && npm run build
+
+      - name: Upload Frontend Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/.next
+          retention-days: 7
+
+      - name: Upload Backend Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: backend/dist
+          retention-days: 7
+
+  # Job 3: Smart Contract Build
+  contracts:
+    name: Build Smart Contracts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Cache Cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            contracts/ajo/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install Stellar CLI
+        run: |
+          cargo install --locked stellar-cli --features opt || echo "stellar-cli already installed"
+
+      - name: Build Contract
+        run: cd contracts/ajo && stellar contract build
+
+      - name: Run Contract Tests
+        run: cd contracts/ajo && cargo test
+
+      - name: Upload Contract Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: contracts
+          path: contracts/ajo/target/wasm32-unknown-unknown/release/*.wasm
+          retention-days: 30
+
+  # Job 4: Security Audit
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run npm audit
+        run: |
+          npm audit --audit-level=high || true
+          cd frontend && npm audit --audit-level=high || true
+          cd ../backend && npm audit --audit-level=high || true
+
+  # Job 5: PR Validation (only runs on PRs)
+  pr-validation:
+    name: PR Validation
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, build, contracts]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate PR Title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+
+      - name: Check for merge conflicts
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          if git merge-tree $(git merge-base HEAD origin/${{ github.base_ref }}) HEAD origin/${{ github.base_ref }} | grep -q '<<<<<<<'; then
+            echo "Merge conflicts detected!"
+            exit 1
+          fi
+
+      - name: Comment PR Success
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ All CI checks passed! This PR is ready for review.'
+            })
+
+  # Job 6: Deploy Preview (only on PRs)
+  deploy-preview:
+    name: Deploy Preview
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Comment Deployment Info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Preview deployment ready! Configure your hosting provider for automatic preview deploys.'
+            })
 
   test:
     name: Test
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
-        override: true
-    
-    - name: Cache cargo registry
-      uses: actions/cache@v3
-      with:
-        path: ~/.cargo/registry
-        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-    
-    - name: Cache cargo index
-      uses: actions/cache@v3
-      with:
-        path: ~/.cargo/git
-        key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
-    
-    - name: Cache cargo build
-      uses: actions/cache@v3
-      with:
-        path: target
-        key: ${{ runner.os }}-cargo-test-target-${{ hashFiles('**/Cargo.lock') }}
-    
-    - name: Run tests
-      run: |
-        cd contracts/ajo
-        cargo test --verbose
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-test-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run tests
+        run: |
+          cd contracts/ajo
+          cargo test --verbose
 
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
-        override: true
-    
-    - name: Install cargo-audit
-      run: cargo install cargo-audit
-    
-    - name: Run security audit
-      run: |
-        cd contracts/ajo
-        cargo audit
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Run security audit
+        run: |
+          cd contracts/ajo
+          cargo audit

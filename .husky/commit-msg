@@ -1,0 +1,29 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Validate commit message format
+# Format: type(scope): subject
+# Example: feat(auth): add wallet connection
+
+commit_msg=$(cat "$1")
+
+# Regex for conventional commits
+commit_regex='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9_-]+\))?: .{1,100}$'
+
+if ! echo "$commit_msg" | grep -qE "$commit_regex"; then
+  echo "❌ Invalid commit message format!"
+  echo ""
+  echo "Commit message must follow conventional commits:"
+  echo "  type(scope): subject"
+  echo ""
+  echo "Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+  echo ""
+  echo "Examples:"
+  echo "  feat(auth): add wallet connection"
+  echo "  fix(dashboard): resolve loading state issue"
+  echo "  docs: update README"
+  echo ""
+  exit 1
+fi
+
+echo "✅ Commit message validated"

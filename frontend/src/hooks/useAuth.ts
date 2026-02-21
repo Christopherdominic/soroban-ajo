@@ -16,7 +16,7 @@ type AuthStore = AuthState & AuthActions
 export const useAuthStore = create<AuthStore>((set, get) => ({
   // --- State ---
   isAuthenticated: false,
-  isLoading: true,
+  isLoading: false,
   address: null,
   network: 'testnet' as StellarNetwork,
   provider: null as WalletProvider | null,
@@ -152,8 +152,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   checkSession: async () => {
-    set({ isLoading: true })
-
+    // Silent check - don't show loading UI on mount
     try {
       const session = await authService.loadSession()
       if (session) {

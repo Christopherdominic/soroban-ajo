@@ -112,7 +112,7 @@ This starts both frontend and backend concurrently.
 - [Monorepo Guide](documentation/MONOREPO_GUIDE.md) - Monorepo workflow
 - [Architecture](documentation/architecture.md) - System design
 - [Security](documentation/SECURITY.md) - Security considerations
-- [Contributing](documentation/CONTRIBUTING.md) - Contribution guidelines
+- [Contributing](CONTRIBUTING.md) - Contribution guidelines
 
 ## 🛠 Technology Stack
 
