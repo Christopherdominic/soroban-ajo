@@ -6,18 +6,50 @@ import React, { useState } from 'react'
 import { MemberList } from './MemberList'
 import { ContributionForm } from './ContributionForm'
 import { TransactionHistory } from './TransactionHistory'
+import { EmptyMemberState } from './EmptyMemberState'
 
 type TabKey = 'overview' | 'members' | 'history' | 'settings'
 
-interface GroupDetailPageProps {
-  groupId: string
+interface Member {
+  id: string
+  address: string
 }
 
-export const GroupDetailPage: React.FC<GroupDetailPageProps> = ({ groupId }) => {
+interface GroupDetailPageProps {
+  groupId: string
+  members?: Member[]
+  onShareLink?: () => void
+  onCopyLink?: () => void
+}
+
+export const GroupDetailPage: React.FC<GroupDetailPageProps> = ({
+  groupId,
+  members = [],
+  onShareLink,
+  onCopyLink,
+}) => {
   const [activeTab, setActiveTab] = useState<TabKey>('overview')
 
   // TODO: Fetch group details from smart contract
   // TODO: Fetch member list and transaction history
+
+  const handleShareLink = () => {
+    if (onShareLink) {
+      onShareLink()
+    } else {
+      // Default share behavior
+      console.log('Share group link')
+    }
+  }
+
+  const handleCopyLink = () => {
+    if (onCopyLink) {
+      onCopyLink()
+    } else {
+      // Default copy behavior
+      console.log('Copy invite link')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -87,7 +119,13 @@ export const GroupDetailPage: React.FC<GroupDetailPageProps> = ({ groupId }) => 
           )}
 
           {activeTab === 'members' && (
-            <MemberList groupId={groupId} members={[]} />
+            <>
+              {members.length === 0 ? (
+                <EmptyMemberState onShareLink={handleShareLink} onCopyLink={handleCopyLink} />
+              ) : (
+                <MemberList groupId={groupId} members={members} />
+              )}
+            </>
           )}
 
           {activeTab === 'history' && (

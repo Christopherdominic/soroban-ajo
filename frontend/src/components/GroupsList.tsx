@@ -4,6 +4,7 @@
 
 import React from 'react'
 import { GroupCard } from './GroupCard'
+import { EmptyGroupState } from './EmptyGroupState'
 
 interface GroupSummary {
   id: string
@@ -18,9 +19,16 @@ interface GroupSummary {
 interface GroupsListProps {
   groups: GroupSummary[]
   onSelectGroup?: (groupId: string) => void
+  onCreateGroup?: () => void
+  onLearnMore?: () => void
 }
 
-export const GroupsList: React.FC<GroupsListProps> = ({ groups, onSelectGroup }) => {
+export const GroupsList: React.FC<GroupsListProps> = ({
+  groups,
+  onSelectGroup,
+  onCreateGroup,
+  onLearnMore,
+}) => {
   // TODO: Fetch groups from smart contract
   // TODO: Add loading and empty states
   // TODO: Add filtering (active/completed)
@@ -56,6 +64,10 @@ export const GroupsList: React.FC<GroupsListProps> = ({ groups, onSelectGroup })
   ]
 
   const displayGroups = groups.length > 0 ? groups : sampleGroups
+
+  if (groups.length === 0 && onCreateGroup) {
+    return <EmptyGroupState onCreateGroup={onCreateGroup} onLearnMore={onLearnMore} />
+  }
 
   return (
     <div className="space-y-4">
