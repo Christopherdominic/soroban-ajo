@@ -85,6 +85,21 @@ export const GroupsList: React.FC<GroupsListProps> = ({
     )
   }
 
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {displayGroups.map((group) => (
+          <div key={group.id} onClick={() => onSelectGroup?.(group.id)} className="cursor-pointer">
+            <GroupCard
+              groupId={group.id}
+              groupName={group.name}
+              memberCount={group.memberCount}
+              maxMembers={group.maxMembers}
+              nextPayout={group.nextPayout}
+              totalContributions={group.totalContributions}
+              status={group.status}
+            />
+          </div>
+        ))}
+      </div>
   return (
     <div className="bg-white rounded-2xl border border-surface-200/80 overflow-hidden animate-fade-in">
       <table className="table-premium">
