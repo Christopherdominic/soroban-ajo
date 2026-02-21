@@ -16,11 +16,11 @@ interface GroupSummary {
 }
 
 interface GroupsListProps {
-  groups: GroupSummary[]
+  groups?: GroupSummary[]
   onSelectGroup?: (groupId: string) => void
 }
 
-export const GroupsList: React.FC<GroupsListProps> = ({ groups, onSelectGroup }) => {
+export const GroupsList: React.FC<GroupsListProps> = ({ groups = [], onSelectGroup }) => {
   // TODO: Fetch groups from smart contract
   // TODO: Add loading and empty states
   // TODO: Add filtering (active/completed)

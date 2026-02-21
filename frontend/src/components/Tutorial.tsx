@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTheme } from '@/hooks/useTheme'
 
 interface TutorialStep {
   title: string
@@ -29,6 +30,7 @@ const steps: TutorialStep[] = [
 ]
 
 export function Tutorial() {
+  const { resolvedTheme } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
 
@@ -61,44 +63,43 @@ export function Tutorial() {
   const step = steps[currentStep]
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" data-theme={resolvedTheme}>
+      <div className="theme-surface rounded-lg shadow-xl max-w-md w-full p-6">
         <div className="mb-4">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-gray-500">
+            <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
               Step {currentStep + 1} of {steps.length}
             </span>
             <button
               onClick={handleSkip}
-              className="text-gray-400 hover:text-gray-600 text-sm"
+              className="text-sm"
+              style={{ color: 'var(--color-text-muted)' }}
             >
               Skip
             </button>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full rounded-full h-2" style={{ background: 'var(--color-border)' }}>
             <div
-              className="bg-blue-600 h-2 rounded-full transition-all"
-              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+              className="h-2 rounded-full transition-all"
+              style={{ width: `${((currentStep + 1) / steps.length) * 100}%`, background: 'var(--color-primary)' }}
             />
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">{step.title}</h2>
-        <p className="text-gray-600 mb-6">{step.description}</p>
+        <h2 className="text-2xl font-bold mb-3" style={{ color: 'var(--color-text)' }}>{step.title}</h2>
+        <p className="mb-6" style={{ color: 'var(--color-text-muted)' }}>{step.description}</p>
 
         <div className="flex gap-3">
           {currentStep > 0 && (
             <button
               onClick={() => setCurrentStep(currentStep - 1)}
-              className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+              className="px-4 py-2 rounded"
+              style={{ border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
             >
               Back
             </button>
           )}
-          <button
-            onClick={handleNext}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
+          <button onClick={handleNext} className="flex-1 theme-btn">
             {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
           </button>
         </div>

@@ -238,6 +238,8 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
                   ? 'border-red-500 focus:ring-red-500'
                   : 'border-gray-300 focus:ring-blue-500'
               }`}
+              aria-required="true"
+              aria-describedby={`amount-help${touched && hasError ? ' amount-error' : ''}`}
               placeholder="0.00"
               required
             />
@@ -273,6 +275,10 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
           )}
         </div>
 
+        <div className="theme-surface-muted p-4 rounded-lg" aria-live="polite" aria-label="Contribution summary">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-gray-600 text-sm">Subtotal:</span>
+            <span className="font-semibold text-gray-900">${amount.toFixed(2)}</span>
         {/* Transaction Summary */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <div className="flex justify-between items-center mb-2">
@@ -314,7 +320,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
           )}
         </button>
 
-        <p className="text-xs text-gray-600 text-center">
+        <p className="text-xs theme-muted text-center">
           You'll be prompted to confirm this transaction in your wallet.
         </p>
       </form>

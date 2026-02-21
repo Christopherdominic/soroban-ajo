@@ -40,20 +40,20 @@ export const DashboardLayout: React.FC = () => {
           <div className="flex justify-between items-center py-4">
             <div>
               <Link href="/" className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold text-blue-600">Soroban Ajo</h1>
+                <h1 className="text-3xl font-bold theme-primary">Soroban Ajo</h1>
               </Link>
-              <p className="text-gray-600 text-sm">Decentralized Rotational Savings</p>
+              <p className="theme-muted text-sm">Decentralized Rotational Savings</p>
             </div>
-            
+
             <div className="flex items-center gap-4">
               {/* TASK: State Indicator Spinner (#62) */}
               {isLoading && (
-                <div className="flex items-center space-x-3 text-blue-600">
+                <div className="flex items-center space-x-3 theme-primary">
                   <span className="text-sm font-semibold animate-pulse">Syncing...</span>
                   <div className="spinner"></div>
                 </div>
               )}
-              
+
               {/* Wallet Connector */}
               <WalletConnector />
             </div>
@@ -69,8 +69,8 @@ export const DashboardLayout: React.FC = () => {
                   href={link.href}
                   className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm transition-colors ${
                     isActive
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                      ? 'border-blue-600 theme-primary'
+                      : 'border-transparent theme-muted hover:text-gray-900 hover:border-gray-300'
                   }`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,10 +89,10 @@ export const DashboardLayout: React.FC = () => {
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-8 mb-8 text-white">
           <h2 className="text-3xl font-bold mb-2">
-            {isAuthenticated ? `Welcome back!` : 'Welcome to Soroban Ajo'}
+            {isAuthenticated ? 'Welcome back!' : 'Welcome to Soroban Ajo'}
           </h2>
           <p className="text-blue-100 text-lg">
-            {isAuthenticated 
+            {isAuthenticated
               ? 'Manage your savings groups and track your contributions.'
               : 'Connect your wallet to get started with community savings.'}
           </p>
@@ -109,17 +109,16 @@ export const DashboardLayout: React.FC = () => {
         {isAuthenticated && (
           <>
             {/* Stat Cards Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold mb-2">Active Groups</h3>
-                {/* TASK: Stat Card Skeleton (#62) */}
                 {isLoading ? (
                   <div className="skeleton h-9 w-12 rounded mt-1"></div>
                 ) : (
                   <p className="text-3xl font-bold text-blue-600">0</p>
                 )}
               </div>
-              
+
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold mb-2">Total Saved</h3>
                 {isLoading ? (
@@ -134,14 +133,14 @@ export const DashboardLayout: React.FC = () => {
                 {isLoading ? (
                   <div className="skeleton h-6 w-32 rounded mt-2"></div>
                 ) : (
-                  <p className="text-gray-600">None scheduled</p>
+                  <p className="theme-muted">None scheduled</p>
                 )}
               </div>
             </div>
 
             {/* Groups List Section */}
-            <div className="mt-8">
-              <div className="flex justify-between items-center mb-4">
+            <div>
+              <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">Your Groups</h2>
                 <Link
                   href="/groups/create"
@@ -153,7 +152,7 @@ export const DashboardLayout: React.FC = () => {
                   Create Group
                 </Link>
               </div>
-              
+
               {/* TASK: GroupCard Skeleton Loaders (#62) */}
               {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -163,17 +162,32 @@ export const DashboardLayout: React.FC = () => {
                 </div>
               ) : (
                 <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-                  <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <svg
+                    className="w-16 h-16 theme-muted mx-auto mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
                   </svg>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No groups yet</h3>
-                  <p className="text-gray-600 mb-6">Create your first savings group to get started</p>
+                  <h3 className="text-xl font-semibold mb-2">No groups yet</h3>
+                  <p className="theme-muted mb-6">Create your first savings group to get started</p>
                   <Link
                     href="/groups/create"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
                     </svg>
                     Create Your First Group
                   </Link>
