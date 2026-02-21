@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { SorobanService } from '../services/sorobanService'
+import { CreateGroupInput, JoinGroupInput, ContributeInput } from '../validators/groups'
 
 const sorobanService = new SorobanService()
 
@@ -41,16 +42,17 @@ export class GroupsController {
     }
   }
 
-  async getGroup(req: Request, res: Response, next: NextFunction) {
+  async getGroup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params
       const group = await sorobanService.getGroup(id)
 
       if (!group) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           error: 'Group not found',
         })
+        return
       }
 
       res.json({ success: true, data: group })
@@ -61,8 +63,7 @@ export class GroupsController {
 
   async createGroup(req: Request, res: Response, next: NextFunction) {
     try {
-      const groupData = req.body
-      // TODO: Validate with Zod schema
+      const groupData: CreateGroupInput = req.body
       const result = await sorobanService.createGroup(groupData)
       res.status(201).json({ success: true, data: result })
     } catch (error) {
@@ -73,7 +74,7 @@ export class GroupsController {
   async joinGroup(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params
-      const { publicKey } = req.body
+      const { publicKey }: JoinGroupInput = req.body
       const result = await sorobanService.joinGroup(id, publicKey)
       res.json({ success: true, data: result })
     } catch (error) {
@@ -84,7 +85,7 @@ export class GroupsController {
   async contribute(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params
-      const { amount, publicKey } = req.body
+      const { amount, publicKey }: ContributeInput = req.body
       const result = await sorobanService.contribute(id, publicKey, amount)
       res.json({ success: true, data: result })
     } catch (error) {
