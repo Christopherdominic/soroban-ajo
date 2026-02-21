@@ -128,4 +128,144 @@ button:focus-visible {
   .card-hover-glow {
     @apply transition-shadow duration-200 hover:shadow-2xl hover:shadow-blue-100;
   }
+
+  /* Brand Pattern Backgrounds */
+  .bg-pattern-waves {
+    @apply bg-stellar-waves bg-cover bg-center bg-no-repeat;
+  }
+
+  .bg-pattern-mesh {
+    @apply bg-stellar-mesh bg-cover bg-center;
+  }
+
+  .bg-pattern-constellation {
+    @apply bg-stellar-constellation bg-repeat;
+  }
+
+  .bg-pattern-grid {
+    @apply bg-stellar-grid bg-repeat;
+  }
+
+  .bg-pattern-gradient {
+    @apply bg-gradient-stellar;
+  }
+
+  .bg-pattern-gradient-subtle {
+    @apply bg-gradient-stellar-subtle;
+  }
+
+  /* Pattern Overlays */
+  .pattern-overlay-waves {
+    @apply relative;
+  }
+
+  .pattern-overlay-waves::before {
+    content: '';
+    @apply absolute inset-0 bg-stellar-waves bg-cover bg-center opacity-30 pointer-events-none;
+  }
+
+  .pattern-overlay-mesh {
+    @apply relative;
+  }
+
+  .pattern-overlay-mesh::before {
+    content: '';
+    @apply absolute inset-0 bg-stellar-mesh bg-cover bg-center opacity-20 pointer-events-none;
+  }
+
+  .pattern-overlay-constellation {
+    @apply relative;
+  }
+
+  .pattern-overlay-constellation::before {
+    content: '';
+    @apply absolute inset-0 bg-stellar-constellation bg-repeat opacity-40 pointer-events-none;
+  }
+
+  .pattern-overlay-grid {
+    @apply relative;
+  }
+
+  .pattern-overlay-grid::before {
+    content: '';
+    @apply absolute inset-0 bg-stellar-grid bg-repeat opacity-50 pointer-events-none;
+  }
+}
+
+/* Animated Background Patterns */
+@layer utilities {
+  .bg-animated-gradient {
+    background: linear-gradient(
+      135deg,
+      #3B82F6 0%,
+      #8B5CF6 25%,
+      #06B6D4 50%,
+      #8B5CF6 75%,
+      #3B82F6 100%
+    );
+    background-size: 400% 400%;
+    animation: gradient-shift 15s ease infinite;
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .bg-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(59, 130, 246, 0.1) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Stellar Glow Effect */
+  .stellar-glow {
+    box-shadow: 
+      0 0 20px rgba(59, 130, 246, 0.3),
+      0 0 40px rgba(139, 92, 246, 0.2),
+      0 0 60px rgba(6, 182, 212, 0.1);
+  }
+
+  .stellar-glow-hover {
+    transition: box-shadow 0.3s ease;
+  }
+
+  .stellar-glow-hover:hover {
+    box-shadow: 
+      0 0 30px rgba(59, 130, 246, 0.4),
+      0 0 60px rgba(139, 92, 246, 0.3),
+      0 0 90px rgba(6, 182, 212, 0.2);
+  }
+
+  /* Floating Animation */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Mesh Gradient Background */
+  .bg-mesh-gradient {
+    background: 
+      radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+  }
+
+  /* Subtle Pattern Texture */
+  .bg-texture-subtle {
+    background-image: 
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(59, 130, 246, 0.02) 10px,
+        rgba(59, 130, 246, 0.02) 20px
+      );
+  }
 }

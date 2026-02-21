@@ -10,8 +10,10 @@ import { ResponsiveLayout } from '@/components/ResponsiveLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Tutorial } from '@/components/Tutorial'
 import { Explore } from '@/pages/Explore'
+import { BrandPatternWrapper } from '@/components/BrandPatternWrapper'
+import { PatternShowcase } from '@/components/PatternShowcase'
 
-type ViewType = 'dashboard' | 'create' | 'detail' | 'analytics' | 'responsive' | 'explore'
+type ViewType = 'dashboard' | 'create' | 'detail' | 'analytics' | 'responsive' | 'explore' | 'patterns'
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard')
@@ -19,7 +21,7 @@ function App() {
   return (
     <>
       <Tutorial />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <BrandPatternWrapper pattern="mesh-gradient" className="min-h-screen">
         {/* Navigation */}
         <header className="bg-white shadow sticky top-0 z-50">
           <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -96,6 +98,16 @@ function App() {
             >
               Explore
             </button>
+            <button
+              onClick={() => setCurrentView('patterns')}
+              className={`px-4 py-2 rounded font-semibold transition ${
+                currentView === 'patterns'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Patterns
+            </button>
           </div>
         </div>
 
@@ -122,6 +134,8 @@ function App() {
             {currentView === 'responsive' && <ResponsiveLayout />}
 
             {currentView === 'explore' && <Explore />}
+
+            {currentView === 'patterns' && <PatternShowcase />}
           </ErrorBoundary>
         </main>
 
@@ -136,7 +150,7 @@ function App() {
             </p>
           </div>
         </footer>
-      </div>
+      </BrandPatternWrapper>
     </>
   )
 }
