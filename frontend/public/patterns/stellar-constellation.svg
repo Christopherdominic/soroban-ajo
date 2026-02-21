@@ -1,0 +1,28 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="star-glow">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  <!-- Stars -->
+  <circle cx="100" cy="100" r="2" fill="#3B82F6" opacity="0.6"/>
+  <circle cx="300" cy="150" r="2" fill="#8B5CF6" opacity="0.6"/>
+  <circle cx="500" cy="120" r="2" fill="#06B6D4" opacity="0.6"/>
+  <circle cx="700" cy="180" r="2" fill="#3B82F6" opacity="0.6"/>
+  <circle cx="200" cy="300" r="2" fill="#8B5CF6" opacity="0.6"/>
+  <circle cx="400" cy="350" r="2" fill="#06B6D4" opacity="0.6"/>
+  <circle cx="600" cy="320" r="2" fill="#3B82F6" opacity="0.6"/>
+  <circle cx="150" cy="500" r="2" fill="#8B5CF6" opacity="0.6"/>
+  <circle cx="450" cy="520" r="2" fill="#06B6D4" opacity="0.6"/>
+  <circle cx="650" cy="480" r="2" fill="#3B82F6" opacity="0.6"/>
+  
+  <!-- Connection lines -->
+  <line x1="100" y1="100" x2="300" y2="150" stroke="#3B82F6" stroke-width="0.5" opacity="0.2"/>
+  <line x1="300" y1="150" x2="500" y2="120" stroke="#8B5CF6" stroke-width="0.5" opacity="0.2"/>
+  <line x1="500" y1="120" x2="700" y2="180" stroke="#06B6D4" stroke-width="0.5" opacity="0.2"/>
+  <line x1="200" y1="300" x2="400" y2="350" stroke="#3B82F6" stroke-width="0.5" opacity="0.2"/>
+  <line x1="400" y1="350" x2="600" y2="320" stroke="#8B5CF6" stroke-width="0.5" opacity="0.2"/>
+  <line x1="150" y1="500" x2="450" y2="520" stroke="#06B6D4" stroke-width="0.5" opacity="0.2"/>
+  <line x1="450" y1="520" x2="650" y2="480" stroke="#3B82F6" stroke-width="0.5" opacity="0.2"/>
+</svg>
