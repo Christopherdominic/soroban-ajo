@@ -1,4 +1,4 @@
-use soroban_sdk::{contract, contractimpl, Address, Env, Vec, BytesN};
+use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, Vec};
 
 use crate::errors::AjoError;
 use crate::events;
@@ -20,7 +20,7 @@ impl AjoContract {
         storage::store_admin(&env, &admin);
         Ok(())
     }
-    
+
     /// Upgrade the contract's Wasm
     pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) -> Result<(), AjoError> {
         let admin = storage::get_admin(&env).ok_or(AjoError::Unauthorized)?;
@@ -53,20 +53,20 @@ impl AjoContract {
     ) -> Result<u64, AjoError> {
         // Validate parameters
         utils::validate_group_params(contribution_amount, cycle_duration, max_members)?;
-        
+
         // Require authentication
         creator.require_auth();
-        
+
         // Generate new group ID
         let group_id = storage::get_next_group_id(&env);
-        
+
         // Initialize members list with creator
         let mut members = Vec::new(&env);
         members.push_back(creator.clone());
-        
+
         // Get current timestamp
         let now = utils::get_current_timestamp(&env);
-        
+
         // Create group
         let group = Group {
             id: group_id,
@@ -81,16 +81,16 @@ impl AjoContract {
             cycle_start_time: now,
             is_complete: false,
         };
-        
+
         // Store group
         storage::store_group(&env, group_id, &group);
-        
+
         // Emit event
         events::emit_group_created(&env, group_id, &creator, contribution_amount, max_members);
-        
+
         Ok(group_id)
     }
-    
+
     /// Get group information
     ///
     /// # Arguments
@@ -104,7 +104,7 @@ impl AjoContract {
     pub fn get_group(env: Env, group_id: u64) -> Result<Group, AjoError> {
         storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)
     }
-    
+
     /// Get list of all members in a group
     ///
     /// # Arguments
@@ -119,7 +119,7 @@ impl AjoContract {
         let group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
         Ok(group.members)
     }
-    
+
     /// Join an existing group
     ///
     /// # Arguments
@@ -134,37 +134,37 @@ impl AjoContract {
     pub fn join_group(env: Env, member: Address, group_id: u64) -> Result<(), AjoError> {
         // Require authentication
         member.require_auth();
-        
+
         // Get group
         let mut group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
-        
+
         // Check if group is complete
         if group.is_complete {
             return Err(AjoError::GroupComplete);
         }
-        
+
         // Check if already a member
         if utils::is_member(&group.members, &member) {
             return Err(AjoError::AlreadyMember);
         }
-        
+
         // Check if group is full
         if group.members.len() >= group.max_members {
             return Err(AjoError::MaxMembersExceeded);
         }
-        
+
         // Add member
         group.members.push_back(member.clone());
-        
+
         // Update storage
         storage::store_group(&env, group_id, &group);
-        
+
         // Emit event
         events::emit_member_joined(&env, group_id, &member);
-        
+
         Ok(())
     }
-    
+
     /// Check if an address is a member of a group
     ///
     /// # Arguments
@@ -180,7 +180,7 @@ impl AjoContract {
         let group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
         Ok(utils::is_member(&group.members, &address))
     }
-    
+
     /// Contribute to the current cycle
     ///
     /// # Arguments
@@ -195,32 +195,32 @@ impl AjoContract {
     pub fn contribute(env: Env, member: Address, group_id: u64) -> Result<(), AjoError> {
         // Require authentication
         member.require_auth();
-        
+
         // Get group
         let group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
-        
+
         // Check if group is complete
         if group.is_complete {
             return Err(AjoError::GroupComplete);
         }
-        
+
         // Check if member
         if !utils::is_member(&group.members, &member) {
             return Err(AjoError::NotMember);
         }
-        
+
         // Check if already contributed
         if storage::has_contributed(&env, group_id, group.current_cycle, &member) {
             return Err(AjoError::AlreadyContributed);
         }
-        
+
         // Transfer contribution to contract
         // Note: In production, this would use token.transfer() or native transfer
         // For now, we mark as contributed (assuming payment succeeded)
-        
+
         // Record contribution
         storage::store_contribution(&env, group_id, group.current_cycle, &member, true);
-        
+
         // Emit event
         events::emit_contribution_made(
             &env,
@@ -229,10 +229,10 @@ impl AjoContract {
             group.current_cycle,
             group.contribution_amount,
         );
-        
+
         Ok(())
     }
-    
+
     /// Get contribution status for all members in the current cycle
     ///
     /// # Arguments
@@ -257,7 +257,7 @@ impl AjoContract {
             &group.members,
         ))
     }
-    
+
     /// Execute payout for the current cycle
     ///
     /// This function:
@@ -277,33 +277,33 @@ impl AjoContract {
     pub fn execute_payout(env: Env, group_id: u64) -> Result<(), AjoError> {
         // Get group
         let mut group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
-        
+
         // Check if group is complete
         if group.is_complete {
             return Err(AjoError::GroupComplete);
         }
-        
+
         // Check if all members have contributed
         if !utils::all_members_contributed(&env, &group) {
             return Err(AjoError::IncompleteContributions);
         }
-        
+
         // Get payout recipient
         let payout_recipient = group
             .members
             .get(group.payout_index)
             .ok_or(AjoError::NoMembers)?;
-        
+
         // Calculate payout amount
         let payout_amount = utils::calculate_payout_amount(&group);
-        
+
         // Transfer payout to recipient
         // Note: In production, this would use token.transfer() or native transfer
         // For now, we just record it
-        
+
         // Mark payout as received
         storage::mark_payout_received(&env, group_id, &payout_recipient);
-        
+
         // Emit payout event
         events::emit_payout_executed(
             &env,
@@ -312,10 +312,10 @@ impl AjoContract {
             group.current_cycle,
             payout_amount,
         );
-        
+
         // Advance payout index
         group.payout_index += 1;
-        
+
         // Check if all members have received payout
         if group.payout_index >= group.members.len() {
             // All members have received payout - mark complete
@@ -326,13 +326,13 @@ impl AjoContract {
             group.current_cycle += 1;
             group.cycle_start_time = utils::get_current_timestamp(&env);
         }
-        
+
         // Update storage
         storage::store_group(&env, group_id, &group);
-        
+
         Ok(())
     }
-    
+
     /// Check if a group has completed all cycles
     ///
     /// # Arguments
@@ -347,7 +347,7 @@ impl AjoContract {
         let group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
         Ok(group.is_complete)
     }
-    
+
     /// Get comprehensive group status
     ///
     /// Returns detailed information about the group's current state including:
@@ -367,26 +367,22 @@ impl AjoContract {
     pub fn get_group_status(env: Env, group_id: u64) -> Result<GroupStatus, AjoError> {
         // Get the group data
         let group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
-        
+
         // Get current timestamp
         let current_time = utils::get_current_timestamp(&env);
-        
+
         // Calculate cycle timing
         let cycle_end_time = group.cycle_start_time + group.cycle_duration;
         let is_cycle_active = current_time < cycle_end_time;
-        
+
         // Get contribution status for all members in current cycle
-        let contributions = storage::get_cycle_contributions(
-            &env,
-            group_id,
-            group.current_cycle,
-            &group.members,
-        );
-        
+        let contributions =
+            storage::get_cycle_contributions(&env, group_id, group.current_cycle, &group.members);
+
         // Count contributions and build pending list
         let mut contributions_received: u32 = 0;
         let mut pending_contributors = Vec::new(&env);
-        
+
         for (member, has_contributed) in contributions.iter() {
             if has_contributed {
                 contributions_received += 1;
@@ -394,7 +390,7 @@ impl AjoContract {
                 pending_contributors.push_back(member);
             }
         }
-        
+
         // Determine next recipient
         let (has_next_recipient, next_recipient) = if group.is_complete {
             // Use placeholder (creator) when complete
@@ -407,7 +403,7 @@ impl AjoContract {
                 .unwrap_or_else(|| group.creator.clone());
             (true, recipient)
         };
-        
+
         // Build and return status
         Ok(GroupStatus {
             group_id: group.id,
