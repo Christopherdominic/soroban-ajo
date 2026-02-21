@@ -2,13 +2,9 @@
 // Complexity: Medium (150 pts)
 // Status: Enhanced with retry mechanisms, error handling, and intelligent caching
 
-import { Keypair, SorobanRpc, Contract } from 'stellar-sdk'
 import { analytics, trackUserAction } from './analytics'
 import { showNotification } from '../utils/notifications'
 import { cacheService, CacheKeys, CacheTags } from './cache'
-
-const RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL
-const CONTRACT_ID = process.env.NEXT_PUBLIC_SOROBAN_CONTRACT_ID
 
 // Cache TTL configurations (in milliseconds)
 const CACHE_TTL = {
@@ -385,7 +381,7 @@ export const initializeSoroban = (): SorobanService => {
             }
           )
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'getGroupStatus', groupId }, severity)
           throw error
         }
@@ -415,7 +411,7 @@ export const initializeSoroban = (): SorobanService => {
             }
           )
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'getGroupMembers', groupId }, severity)
           throw error
         }
@@ -445,7 +441,7 @@ export const initializeSoroban = (): SorobanService => {
             }
           )
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'getUserGroups', userId }, severity)
           throw error
         }

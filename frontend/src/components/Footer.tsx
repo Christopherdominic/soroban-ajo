@@ -2,6 +2,7 @@
 // Complexity: Trivial (100 pts)
 
 import React from 'react'
+import { CommunityLinks } from './CommunityLinks'
 
 export const Footer: React.FC = () => {
   return (
@@ -21,6 +22,7 @@ export const Footer: React.FC = () => {
             <h3 className="font-semibold text-gray-900 mb-3">Resources</h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li><a href="#" className="hover:text-blue-600">Documentation</a></li>
+              <li><a href="/community" className="hover:text-blue-600">Community Hub</a></li>
               <li><a href="#" className="hover:text-blue-600">GitHub</a></li>
               <li><a href="#" className="hover:text-blue-600">Support</a></li>
             </ul>
@@ -29,9 +31,10 @@ export const Footer: React.FC = () => {
           {/* Social */}
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Community</h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 mb-4">
               Built with ❤️ for financial inclusion on Stellar
             </p>
+            <CommunityLinks />
           </div>
         </div>
 

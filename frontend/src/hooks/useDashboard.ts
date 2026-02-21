@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useGroups } from './useContractData'
-import { Group } from '@/types'
 
 export type ViewMode = 'grid' | 'list'
 export type FilterStatus = 'all' | 'active' | 'completed' | 'paused'

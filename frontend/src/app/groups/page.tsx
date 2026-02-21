@@ -2,10 +2,18 @@
 
 import { GroupsList } from '@/components/GroupsList'
 import { GroupCreationForm } from '@/components/GroupCreationForm'
+import { useDashboard } from '@/hooks/useDashboard'
 import { useState } from 'react'
 
 export default function GroupsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const { 
+    groups, 
+    isLoading, 
+    sortField, 
+    sortDirection, 
+    toggleSort 
+  } = useDashboard()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -25,7 +33,13 @@ export default function GroupsPage() {
             <GroupCreationForm onSuccess={() => setShowCreateForm(false)} />
           </div>
         ) : (
-          <GroupsList />
+          <GroupsList 
+            groups={groups}
+            isLoading={isLoading}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={toggleSort}
+          />
         )}
       </div>
     </div>

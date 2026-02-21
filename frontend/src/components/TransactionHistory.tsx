@@ -3,7 +3,7 @@
 // Status: Implemented with filtering and sorting
 
 import React, { useState, useMemo } from 'react'
-import { TransactionFilters, TransactionSort, TransactionSortField, SortDirection } from '../types'
+import { TransactionFilters, TransactionSort, TransactionSortField } from '../types'
 
 interface Transaction {
   id: string

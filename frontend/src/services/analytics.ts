@@ -6,6 +6,9 @@ export interface AnalyticsEvent {
   label?: string
   value?: number
   metadata?: Record<string, any>
+  timestamp: number
+  sessionId: string
+  userId?: string
 }
 
 export interface PerformanceMetric {
@@ -62,8 +65,8 @@ class AnalyticsService {
   }
 
   // Track user actions
-  trackEvent(event: AnalyticsEvent) {
-    const enrichedEvent = {
+  trackEvent(event: Omit<AnalyticsEvent, 'timestamp' | 'sessionId' | 'userId'>) {
+    const enrichedEvent: AnalyticsEvent = {
       ...event,
       timestamp: Date.now(),
       sessionId: this.sessionId,
@@ -192,7 +195,7 @@ class AnalyticsService {
     }
   }
 
-  private sendToBackend(type: string, data: any) {
+  private sendToBackend(_type: string, _data: any) {
     // TODO: Implement actual backend integration
     // Options: Google Analytics, Mixpanel, PostHog, custom backend
     // For now, just store locally and log

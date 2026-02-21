@@ -23,7 +23,11 @@ interface FormErrors {
   maxMembers?: string
 }
 
-export const GroupCreationForm: React.FC = () => {
+interface GroupCreationFormProps {
+  onSuccess?: () => void
+}
+
+export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess }) => {
   const [formData, setFormData] = useState<GroupFormData>({
     groupName: '',
     description: '',
@@ -43,6 +47,8 @@ export const GroupCreationForm: React.FC = () => {
   const errorSummaryRef = useRef<HTMLDivElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const groupNameRef = useRef<HTMLInputElement>(null)
+  
+  const hasErrors = Object.keys(errors).length > 0
 
   // Focus on error summary when errors occur after submission
   useEffect(() => {
@@ -114,6 +120,23 @@ export const GroupCreationForm: React.FC = () => {
     return Object.keys(newErrors).length === 0
   }
 
+  const handleAddMember = () => {
+    if (memberInput.trim() && !formData.invitedMembers.includes(memberInput.trim())) {
+      setFormData({
+        ...formData,
+        invitedMembers: [...formData.invitedMembers, memberInput.trim()]
+      })
+      setMemberInput('')
+    }
+  }
+
+  const handleRemoveMember = (member: string) => {
+    setFormData({
+      ...formData,
+      invitedMembers: formData.invitedMembers.filter(m => m !== member)
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitted(true)
@@ -133,6 +156,7 @@ export const GroupCreationForm: React.FC = () => {
       // 3. Show success notification
       // 4. Redirect to group detail page
       console.log('Create group:', formData)
+      onSuccess?.()
     } catch (err) {
       console.error('Failed to create group:', err)
     } finally {
@@ -226,7 +250,7 @@ export const GroupCreationForm: React.FC = () => {
             aria-describedby={`description-help${touched.description && errors.description ? ' description-error' : ''}`}
           />
           <p id="description-help" className="mt-2 text-xs text-gray-600">
-            Provide context about your group's goals and purpose (max 500 characters)
+            Provide context about your group&apos;s goals and purpose (max 500 characters)
           </p>
           {touched.description && errors.description && (
             <p id="description-error" className="mt-1 text-sm text-red-600 font-medium" role="alert">

@@ -2,7 +2,7 @@
 // Complexity: Trivial (100 pts)
 // Status: Implemented with comprehensive validation
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { ValidationError, ContributionValidation } from '../types'
 
 interface ContributionFormProps {
@@ -30,14 +30,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
   const MIN_AMOUNT = 0.01
   const CONTRIBUTION_COOLDOWN_HOURS = 24
 
-  // Validate form on amount change
-  useEffect(() => {
-    if (touched) {
-      validateForm()
-    }
-  }, [amount, touched])
-
-  const validateForm = (): ContributionValidation => {
+  const validateForm = useCallback((): ContributionValidation => {
     const validationErrors: ValidationError[] = []
 
     // Validate amount input
@@ -97,7 +90,14 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
       isValid: validationErrors.length === 0,
       errors: validationErrors,
     }
-  }
+  }, [amount, contributionAmount, userBalance, existingContributions])
+
+  // Validate form on amount change
+  useEffect(() => {
+    if (touched) {
+      validateForm()
+    }
+  }, [amount, touched, validateForm])
 
   const handleAmountChange = (value: string) => {
     setTouched(true)
@@ -182,7 +182,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
         </div>
       )}
       <p className="text-sm text-gray-600 mb-6">
-        Enter the amount you'd like to contribute to this group. Fields marked with <span className="text-red-600 font-semibold">*</span> are required.
+        Enter the amount you&apos;d like to contribute to this group. Fields marked with <span className="text-red-600 font-semibold">*</span> are required.
       </p>
 
       {formErrors.amount && (
@@ -315,7 +315,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
         </button>
 
         <p className="text-xs text-gray-600 text-center">
-          You'll be prompted to confirm this transaction in your wallet.
+          You&apos;ll be prompted to confirm this transaction in your wallet.
         </p>
       </form>
 

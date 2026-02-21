@@ -125,7 +125,7 @@ export default function HomePage() {
                 <div>
                   <h3 className="text-xl font-semibold mb-2 text-gray-900">Fast & Low-Cost</h3>
                   <p className="text-gray-600">
-                    Stellar's lightning-fast transactions and minimal fees mean more money stays in your group.
+                    Stellar&apos;s lightning-fast transactions and minimal fees mean more money stays in your group.
                   </p>
                 </div>
               </div>
