@@ -26,6 +26,12 @@
   --chart-tooltip-border: #e2e8f0;
   --chart-tooltip-text: #1e293b;
   --chart-grid-line: #f1f5f9;
+
+  /* --- Brand Pattern Variables --- */
+  --pattern-primary: #3B82F6;
+  --pattern-secondary: #8B5CF6;
+  --pattern-accent: #06B6D4;
+  --pattern-opacity: 0.05;
 }
 
 /* Dark mode overrides for charts */
@@ -127,5 +133,174 @@ button:focus-visible {
 
   .card-hover-glow {
     @apply transition-shadow duration-200 hover:shadow-2xl hover:shadow-blue-100;
+  }
+}
+
+/* Brand Patterns & Background Textures */
+@layer utilities {
+  /* Pattern Backgrounds */
+  .pattern-mesh {
+    background-image: url('/patterns/stellar-mesh.svg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .pattern-constellation {
+    background-image: url('/patterns/stellar-constellation.svg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .pattern-grid {
+    background-image: url('/patterns/stellar-grid.svg');
+    background-size: 60px 60px;
+    background-position: center;
+    background-repeat: repeat;
+  }
+
+  .pattern-hexagon {
+    background-image: url('/patterns/stellar-hexagon.svg');
+    background-size: 100px 87px;
+    background-position: center;
+    background-repeat: repeat;
+  }
+
+  .pattern-waves {
+    background-image: url('/patterns/stellar-waves.svg');
+    background-size: cover;
+    background-position: bottom;
+    background-repeat: no-repeat;
+  }
+
+  /* Gradient Patterns */
+  .gradient-stellar {
+    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #06B6D4 100%);
+  }
+
+  .gradient-stellar-soft {
+    background: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.1) 0%, 
+      rgba(139, 92, 246, 0.08) 50%, 
+      rgba(6, 182, 212, 0.1) 100%);
+  }
+
+  .gradient-radial-stellar {
+    background: radial-gradient(circle at 50% 50%, 
+      rgba(59, 130, 246, 0.15) 0%, 
+      rgba(139, 92, 246, 0.08) 50%, 
+      transparent 100%);
+  }
+
+  .gradient-mesh-1 {
+    background: 
+      radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.12) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+  }
+
+  .gradient-mesh-2 {
+    background: 
+      radial-gradient(at 20% 30%, rgba(59, 130, 246, 0.2) 0px, transparent 40%),
+      radial-gradient(at 80% 20%, rgba(139, 92, 246, 0.15) 0px, transparent 40%),
+      radial-gradient(at 60% 80%, rgba(6, 182, 212, 0.18) 0px, transparent 40%);
+  }
+
+  /* Animated Backgrounds */
+  .bg-animated-gradient {
+    background: linear-gradient(270deg, #3B82F6, #8B5CF6, #06B6D4);
+    background-size: 600% 600%;
+    animation: gradient-shift 15s ease infinite;
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .bg-animated-pulse {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+
+  /* Subtle floating animation */
+  .bg-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Combined Pattern + Gradient */
+  .pattern-overlay-mesh {
+    background-color: #f8fafc;
+    background-image: 
+      url('/patterns/stellar-mesh.svg'),
+      linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.03) 100%);
+    background-blend-mode: overlay;
+  }
+
+  .pattern-overlay-grid {
+    background-color: #ffffff;
+    background-image: url('/patterns/stellar-grid.svg');
+    background-size: 60px 60px;
+  }
+
+  .pattern-overlay-constellation {
+    background-color: #f8fafc;
+    background-image: url('/patterns/stellar-constellation.svg');
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* Card with pattern background */
+  .card-pattern {
+    @apply relative overflow-hidden;
+  }
+
+  .card-pattern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/patterns/stellar-grid.svg');
+    background-size: 60px 60px;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  /* Hero section with animated background */
+  .hero-stellar {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 50%, #ECFEFF 100%);
+  }
+
+  .hero-stellar::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+      radial-gradient(circle at 30% 40%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 70% 60%, rgba(139, 92, 246, 0.12) 0%, transparent 50%);
+    animation: rotate-slow 30s linear infinite;
+  }
+
+  @keyframes rotate-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 }
