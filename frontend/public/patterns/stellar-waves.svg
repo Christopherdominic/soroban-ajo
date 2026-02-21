@@ -1,0 +1,12 @@
+<svg width="1200" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="wave-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.1" />
+      <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:0.08" />
+      <stop offset="100%" style="stop-color:#06B6D4;stop-opacity:0.1" />
+    </linearGradient>
+  </defs>
+  <path d="M0,200 Q300,100 600,200 T1200,200 L1200,600 L0,600 Z" fill="url(#wave-gradient)"/>
+  <path d="M0,300 Q300,250 600,300 T1200,300 L1200,600 L0,600 Z" fill="url(#wave-gradient)" opacity="0.6"/>
+  <path d="M0,400 Q300,350 600,400 T1200,400 L1200,600 L0,600 Z" fill="url(#wave-gradient)" opacity="0.4"/>
+</svg>
