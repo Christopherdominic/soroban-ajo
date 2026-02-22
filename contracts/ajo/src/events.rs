@@ -9,7 +9,8 @@ pub fn emit_group_created(
     max_members: u32,
 ) {
     let topics = (symbol_short!("created"), group_id);
-    env.events().publish(topics, (creator, contribution_amount, max_members));
+    env.events()
+        .publish(topics, (creator, contribution_amount, max_members));
 }
 
 /// Emit an event when a member joins a group
@@ -63,5 +64,12 @@ pub fn emit_group_cancelled(
     refund_per_member: i128,
 ) {
     let topics = (symbol_short!("cancel"), group_id);
-    env.events().publish(topics, (creator, member_count, refund_per_member));
+    env.events()
+        .publish(topics, (creator, member_count, refund_per_member));
+}
+
+/// Emit an event when group metadata is updated
+pub fn emit_metadata_updated(env: &Env, group_id: u64, updater: &Address) {
+    let topics = (symbol_short!("metadata"), group_id);
+    env.events().publish(topics, updater);
 }

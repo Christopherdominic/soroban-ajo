@@ -21,3 +21,4 @@ mod utils;
 pub use contract::AjoContract;
 pub use contract::AjoContractClient;
 pub use errors::AjoError;
+pub use types::{Group, GroupMetadata, GroupStatus};

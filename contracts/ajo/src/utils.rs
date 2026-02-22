@@ -147,3 +147,48 @@ pub fn is_within_cycle_window(group: &Group, current_time: u64) -> bool {
     let (cycle_start, cycle_end) = get_cycle_window(group, current_time);
     current_time >= cycle_start && current_time < cycle_end
 }
+
+/// Validates group metadata size limits.
+///
+/// Ensures that metadata fields do not exceed their maximum allowed lengths:
+/// - Name: 64 characters
+/// - Description: 256 characters
+/// - Rules: 512 characters
+///
+/// # Arguments
+/// * `metadata` - The metadata to validate
+///
+/// # Errors
+/// * [`MetadataNameTooLong`](crate::errors::AjoError::MetadataNameTooLong) — if name exceeds 64 chars
+/// * [`MetadataDescriptionTooLong`](crate::errors::AjoError::MetadataDescriptionTooLong) — if description exceeds 256 chars
+/// * [`MetadataRulesTooLong`](crate::errors::AjoError::MetadataRulesTooLong) — if rules exceed 512 chars
+pub fn validate_metadata(
+    metadata: &crate::types::GroupMetadata,
+) -> Result<(), crate::errors::AjoError> {
+    const MAX_NAME_LENGTH: u32 = 64;
+    const MAX_DESCRIPTION_LENGTH: u32 = 256;
+    const MAX_RULES_LENGTH: u32 = 512;
+
+    // Validate name length
+    if let Some(ref name) = metadata.name {
+        if name.len() > MAX_NAME_LENGTH {
+            return Err(crate::errors::AjoError::MetadataNameTooLong);
+        }
+    }
+
+    // Validate description length
+    if let Some(ref description) = metadata.description {
+        if description.len() > MAX_DESCRIPTION_LENGTH {
+            return Err(crate::errors::AjoError::MetadataDescriptionTooLong);
+        }
+    }
+
+    // Validate rules length
+    if let Some(ref rules) = metadata.rules {
+        if rules.len() > MAX_RULES_LENGTH {
+            return Err(crate::errors::AjoError::MetadataRulesTooLong);
+        }
+    }
+
+    Ok(())
+}
