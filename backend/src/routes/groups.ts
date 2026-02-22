@@ -2,6 +2,14 @@ import { Router } from 'express'
 import { GroupsController } from '../controllers/groupsController'
 import { webhookMiddleware } from '../middleware/webhook'
 import { authMiddleware } from '../middleware/auth'
+import { validateRequest } from '../middleware/validateRequest'
+import {
+  createGroupSchema,
+  joinGroupSchema,
+  contributeSchema,
+  groupIdParamSchema,
+  paginationQuerySchema,
+} from '../validators/groups'
 
 const router = Router()
 const controller = new GroupsController()
@@ -30,7 +38,11 @@ const controller = new GroupsController()
  *       200:
  *         description: List of groups
  */
-router.get('/', controller.listGroups.bind(controller))
+router.get(
+  '/',
+  validateRequest({ query: paginationQuerySchema }),
+  controller.listGroups.bind(controller)
+)
 
 /**
  * @swagger
@@ -51,7 +63,13 @@ router.get('/', controller.listGroups.bind(controller))
  *       404:
  *         description: Group not found
  */
-router.get('/:id', controller.getGroup.bind(controller))
+
+// GET /api/groups/:id - Get group by ID
+router.get(
+  '/:id',
+  validateRequest({ params: groupIdParamSchema }),
+  controller.getGroup.bind(controller)
+)
 
 /**
  * @swagger
@@ -84,7 +102,14 @@ router.get('/:id', controller.getGroup.bind(controller))
  *       401:
  *         description: Unauthorized
  */
-router.post('/', authMiddleware, controller.createGroup.bind(controller), webhookMiddleware.afterGroupCreated)
+// POST /api/groups - Create new group (with webhook) - PROTECTED
+router.post(
+  '/',
+  authMiddleware,
+  validateRequest({ body: createGroupSchema }),
+  controller.createGroup.bind(controller),
+  webhookMiddleware.afterGroupCreated
+)
 
 /**
  * @swagger
@@ -108,7 +133,14 @@ router.post('/', authMiddleware, controller.createGroup.bind(controller), webhoo
  *       404:
  *         description: Group not found
  */
-router.post('/:id/join', authMiddleware, controller.joinGroup.bind(controller), webhookMiddleware.afterMemberJoined)
+// POST /api/groups/:id/join - Join a group (with webhook) - PROTECTED
+router.post(
+  '/:id/join',
+  authMiddleware,
+  validateRequest({ params: groupIdParamSchema, body: joinGroupSchema }),
+  controller.joinGroup.bind(controller),
+  webhookMiddleware.afterMemberJoined
+)
 
 /**
  * @swagger
@@ -130,7 +162,14 @@ router.post('/:id/join', authMiddleware, controller.joinGroup.bind(controller), 
  *       401:
  *         description: Unauthorized
  */
-router.post('/:id/contribute', authMiddleware, controller.contribute.bind(controller), webhookMiddleware.afterContribution)
+// POST /api/groups/:id/contribute - Make contribution (with webhook) - PROTECTED
+router.post(
+  '/:id/contribute',
+  authMiddleware,
+  validateRequest({ params: groupIdParamSchema, body: contributeSchema }),
+  controller.contribute.bind(controller),
+  webhookMiddleware.afterContribution
+)
 
 /**
  * @swagger
@@ -148,7 +187,13 @@ router.post('/:id/contribute', authMiddleware, controller.contribute.bind(contro
  *       200:
  *         description: List of members
  */
-router.get('/:id/members', controller.getMembers.bind(controller))
+
+// GET /api/groups/:id/members - Get group members
+router.get(
+  '/:id/members',
+  validateRequest({ params: groupIdParamSchema }),
+  controller.getMembers.bind(controller)
+)
 
 /**
  * @swagger
@@ -175,8 +220,16 @@ router.get('/:id/members', controller.getMembers.bind(controller))
  *           maximum: 100
  *     responses:
  *       200:
- *         description: List of transactions
+  *         description: List of transactions
+ * @route   GET /api/groups/:id/transactions
+ * @desc    Get transactions for a group (paginated)
+ * @query   page  {number} Page number, 1-indexed (default: 1)
+ * @query   limit {number} Items per page, max 100 (default: 20)
  */
-router.get('/:id/transactions', controller.getTransactions.bind(controller))
+router.get(
+  '/:id/transactions',
+  validateRequest({ params: groupIdParamSchema, query: paginationQuerySchema }),
+  controller.getTransactions.bind(controller)
+)
 
 export const groupsRouter = router

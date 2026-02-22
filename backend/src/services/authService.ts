@@ -1,12 +1,13 @@
 import jwt from 'jsonwebtoken'
+import dotenv from "dotenv"
+dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'
-
-if (!JWT_SECRET) {
+if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required')
 }
 
+const JWT_SECRET: string = process.env.JWT_SECRET
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'
 export interface JWTPayload {
   publicKey: string
   iat?: number
