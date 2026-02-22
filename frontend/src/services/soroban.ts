@@ -1,6 +1,7 @@
 // Issue #25: Integrate Stellar SDK for contract interaction
 // Complexity: Medium (150 pts)
 // Status: Enhanced with retry mechanisms, error handling, and intelligent caching
+// #80: Performance metrics and stable references for frontend re-render optimization
 
 import { analytics, trackUserAction } from './analytics'
 import { showNotification } from '../utils/notifications'
@@ -216,8 +217,16 @@ export interface SorobanService {
   clearCache: () => void
 }
 
+/** Performance mark names for DevTools / Performance API */
+const PERF_MARKS = {
+  fetchStart: (op: string) => `soroban_${op}_start`,
+  fetchEnd: (op: string) => `soroban_${op}_end`,
+  cacheHit: (op: string) => `soroban_${op}_cache_hit`,
+} as const
+
 /**
- * Cached fetch wrapper with stale-while-revalidate
+ * Cached fetch wrapper with stale-while-revalidate.
+ * Uses performance marks for metrics (#80); returns same reference for cached data to aid React re-render optimization.
  */
 async function cachedFetch<T>(
   cacheKey: string,
@@ -227,23 +236,34 @@ async function cachedFetch<T>(
     tags?: string[]
     forceRefresh?: boolean
     version?: string
+    operationName?: string
   } = {}
 ): Promise<T> {
-  const { ttl, tags, forceRefresh = false, version } = options
+  const { ttl, tags, forceRefresh = false, version, operationName = 'fetch' } = options
+  const op = operationName
 
-  // Check cache first (unless force refresh)
+  if (typeof performance !== 'undefined' && performance.mark) {
+    performance.mark(PERF_MARKS.fetchStart(op))
+  }
+
   if (!forceRefresh) {
     const cached = cacheService.get<T>(cacheKey)
     if (cached !== null) {
+      if (typeof performance !== 'undefined' && performance.mark) {
+        performance.mark(PERF_MARKS.cacheHit(op))
+        performance.measure(`soroban_${op}`, PERF_MARKS.fetchStart(op), PERF_MARKS.cacheHit(op))
+      }
       return cached
     }
   }
 
-  // Fetch fresh data
   const data = await fetcher()
-
-  // Store in cache
   cacheService.set(cacheKey, data, { ttl, tags, version })
+
+  if (typeof performance !== 'undefined' && performance.mark) {
+    performance.mark(PERF_MARKS.fetchEnd(op))
+    performance.measure(`soroban_${op}`, PERF_MARKS.fetchStart(op), PERF_MARKS.fetchEnd(op))
+  }
 
   return data
 }
@@ -378,6 +398,7 @@ export const initializeSoroban = (): SorobanService => {
               ttl: CACHE_TTL.GROUP_STATUS,
               tags: [CacheTags.groups, CacheTags.group(groupId)],
               forceRefresh: !useCache,
+              operationName: 'getGroupStatus',
             }
           )
         } catch (error) {
@@ -408,6 +429,7 @@ export const initializeSoroban = (): SorobanService => {
               ttl: CACHE_TTL.GROUP_MEMBERS,
               tags: [CacheTags.groups, CacheTags.group(groupId)],
               forceRefresh: !useCache,
+              operationName: 'getGroupMembers',
             }
           )
         } catch (error) {
@@ -438,6 +460,7 @@ export const initializeSoroban = (): SorobanService => {
               ttl: CACHE_TTL.GROUP_LIST,
               tags: [CacheTags.groups, CacheTags.user(userId)],
               forceRefresh: !useCache,
+              operationName: 'getUserGroups',
             }
           )
         } catch (error) {

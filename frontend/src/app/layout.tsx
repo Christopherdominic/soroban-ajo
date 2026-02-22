@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import '../styles/globals.css'
 import { Providers } from './providers'
+import { ResponsiveLayout } from '@/components/ResponsiveLayout'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,7 +25,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <ResponsiveLayout>
+            {children}
+          </ResponsiveLayout>
+        </Providers>
       </body>
     </html>
   )

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useGroups } from './useContractData'
 
 export type ViewMode = 'grid' | 'list'
@@ -56,36 +56,58 @@ export const useDashboard = (userId?: string) => {
   }, [groups, filterStatus, searchQuery, sortField, sortDirection])
 
   const totalPages = Math.ceil(filteredAndSortedGroups.length / ITEMS_PER_PAGE)
-  const paginatedGroups = filteredAndSortedGroups.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+  const paginatedGroups = useMemo(
+    () =>
+      filteredAndSortedGroups.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+      ),
+    [filteredAndSortedGroups, currentPage]
   )
 
-  const toggleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
+  const toggleSort = useCallback((field: SortField) => {
+    setSortField(prev => {
+      if (prev === field) {
+        setSortDirection(s => (s === 'asc' ? 'desc' : 'asc'))
+        return prev
+      }
       setSortDirection('asc')
-    }
-  }
+      return field
+    })
+  }, [])
 
-  return {
-    viewMode,
-    setViewMode,
-    filterStatus,
-    setFilterStatus,
-    searchQuery,
-    setSearchQuery,
-    sortField,
-    sortDirection,
-    toggleSort,
-    currentPage,
-    setCurrentPage,
-    totalPages,
-    groups: paginatedGroups,
-    totalGroups: filteredAndSortedGroups.length,
-    isLoading,
-    error,
-  }
+  return useMemo(
+    () => ({
+      viewMode,
+      setViewMode,
+      filterStatus,
+      setFilterStatus,
+      searchQuery,
+      setSearchQuery,
+      sortField,
+      sortDirection,
+      toggleSort,
+      currentPage,
+      setCurrentPage,
+      totalPages,
+      groups: paginatedGroups,
+      totalGroups: filteredAndSortedGroups.length,
+      isLoading,
+      error,
+    }),
+    [
+      viewMode,
+      filterStatus,
+      searchQuery,
+      sortField,
+      sortDirection,
+      toggleSort,
+      currentPage,
+      totalPages,
+      paginatedGroups,
+      filteredAndSortedGroups.length,
+      isLoading,
+      error,
+    ]
+  )
 }

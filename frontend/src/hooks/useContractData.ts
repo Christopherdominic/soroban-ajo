@@ -1,6 +1,6 @@
 /**
  * Contract Data Management with Intelligent Caching
- * 
+ *
  * Features:
  * - React Query integration for server state
  * - Multi-layer caching (React Query + custom cache service)
@@ -9,25 +9,38 @@
  * - Optimistic updates
  * - Background refetching
  * - Cache busting strategies
+ * - Memoization and stable selectors to reduce re-renders (#80)
+ * - Performance metrics integration
  */
 
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { initializeSoroban } from '../services/soroban'
 import { cacheService, CacheKeys, CacheTags } from '../services/cache'
 import { analytics } from '../services/analytics'
 import { Group } from '@/types'
 
-// Initialize Soroban service
+// Initialize Soroban service (singleton, stable reference)
 const sorobanService = initializeSoroban()
 
-// React Query default options with caching strategy
-const DEFAULT_QUERY_OPTIONS = {
+// React Query default options - frozen for referential stability and to avoid accidental mutation
+const DEFAULT_QUERY_OPTIONS = Object.freeze({
   staleTime: 30 * 1000, // Consider data fresh for 30 seconds
-  cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-  refetchOnWindowFocus: true, // Refetch when user returns to tab
-  refetchOnReconnect: true, // Refetch when network reconnects
-  retry: 2, // Retry failed requests twice
-}
+  gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes (formerly cacheTime in RQ v5)
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
+  retry: 2,
+})
+
+// --- Selectors: stable functions so React Query only triggers re-renders when selected value changes ---
+// Stable empty references to avoid re-renders when data is loading/undefined
+
+const EMPTY_GROUPS: Group[] = []
+
+export const selectGroupsData = (data: Group[] | undefined): Group[] =>
+  data && data.length > 0 ? data : EMPTY_GROUPS
+export const selectGroupDetailData = <T>(data: T | undefined): T | undefined => data
+export const selectGroupMembersData = <T>(data: T[] | undefined): T[] => data ?? ([] as T[])
 
 interface CacheOptions {
   useCache?: boolean
@@ -35,78 +48,99 @@ interface CacheOptions {
 }
 
 /**
- * Fetch user's groups with intelligent caching
+ * Fetch user's groups with intelligent caching.
+ * Uses stable selector so consumers only re-render when groups array reference changes.
  */
-export const useGroups = (userId?: string, options: CacheOptions = {}): { data: Group[], isLoading: boolean, error: Error | null } => {
+export const useGroups = (
+  userId?: string,
+  options: CacheOptions = {}
+): { data: Group[]; isLoading: boolean; error: Error | null } => {
   const { useCache = true, bustCache = false } = options
 
+  const queryKey = useMemo(() => ['groups', userId] as const, [userId])
+
   return useQuery({
-    queryKey: ['groups', userId],
+    queryKey,
     queryFn: async (): Promise<Group[]> => {
-      // Bust cache if requested
-      if (bustCache && userId) {
-        cacheService.invalidate(CacheKeys.userGroups(userId))
-      }
-
-      // Fetch with caching
-      if (userId) {
-        return await sorobanService.getUserGroups(userId, useCache)
-      }
-
-      console.log('TODO: Fetch all groups from contract')
-      return []
+      return analytics.measureAsync('query_groups', async () => {
+        if (bustCache && userId) {
+          cacheService.invalidate(CacheKeys.userGroups(userId))
+        }
+        if (userId) {
+          return await sorobanService.getUserGroups(userId, useCache)
+        }
+        console.log('TODO: Fetch all groups from contract')
+        return []
+      })
     },
     ...DEFAULT_QUERY_OPTIONS,
-    enabled: !!userId, // Only run if userId is provided
-  }) as any
+    enabled: !!userId,
+    select: selectGroupsData,
+  }) as ReturnType<typeof useQuery<Group[], Error>> & { data: Group[] }
 }
 
 /**
- * Fetch single group detail with caching
+ * Fetch single group detail with caching.
+ * Stable queryKey and memoized onError to avoid unnecessary re-runs.
  */
 export const useGroupDetail = (groupId: string, options: CacheOptions = {}) => {
   const { useCache = true, bustCache = false } = options
+  const queryKey = useMemo(() => ['group', groupId] as const, [groupId])
+
+  const onError = useCallback(
+    (error: Error) => {
+      analytics.trackError(error, { operation: 'useGroupDetail', groupId }, 'medium')
+    },
+    [groupId]
+  )
 
   return useQuery({
-    queryKey: ['group', groupId],
+    queryKey,
     queryFn: async () => {
-      // Bust cache if requested
       if (bustCache) {
         cacheService.invalidate(CacheKeys.group(groupId))
       }
-
-      return await sorobanService.getGroupStatus(groupId, useCache)
+      return analytics.measureAsync('query_group_detail', () =>
+        sorobanService.getGroupStatus(groupId, useCache)
+      )
     },
     ...DEFAULT_QUERY_OPTIONS,
     enabled: !!groupId,
-    onError: (error: Error) => {
-      analytics.trackError(error, { operation: 'useGroupDetail', groupId }, 'medium')
-    },
+    onError,
+    select: selectGroupDetailData,
   })
 }
 
 /**
- * Fetch group members with caching
+ * Fetch group members with caching.
+ * Stable queryKey and memoized onError to reduce re-renders.
  */
 export const useGroupMembers = (groupId: string, options: CacheOptions = {}) => {
   const { useCache = true, bustCache = false } = options
+  const queryKey = useMemo(() => ['groupMembers', groupId] as const, [groupId])
+
+  const onError = useCallback(
+    (error: Error) => {
+      analytics.trackError(error, { operation: 'useGroupMembers', groupId }, 'medium')
+    },
+    [groupId]
+  )
 
   return useQuery({
-    queryKey: ['groupMembers', groupId],
+    queryKey,
     queryFn: async () => {
-      // Bust cache if requested
       if (bustCache) {
         cacheService.invalidate(CacheKeys.groupMembers(groupId))
       }
-
-      return await sorobanService.getGroupMembers(groupId, useCache)
+      return analytics.measureAsync('query_group_members', () =>
+        sorobanService.getGroupMembers(groupId, useCache)
+      )
     },
     ...DEFAULT_QUERY_OPTIONS,
-    staleTime: 60 * 1000, // Members change less frequently
+    staleTime: 60 * 1000,
     enabled: !!groupId,
-    onError: (error: Error) => {
-      analytics.trackError(error, { operation: 'useGroupMembers', groupId }, 'medium')
-    },
+    onError,
+    select: selectGroupMembersData,
   })
 }
 
@@ -278,43 +312,60 @@ export const useContribute = () => {
 }
 
 /**
- * Manual cache invalidation hook
+ * Manual cache invalidation hook.
+ * Returns a stable object with stable function refs to avoid downstream re-renders.
  */
 export const useCacheInvalidation = () => {
   const queryClient = useQueryClient()
 
-  return {
-    invalidateGroup: (groupId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['group', groupId] })
-      queryClient.invalidateQueries({ queryKey: ['groupMembers', groupId] })
-      sorobanService.invalidateGroupCache(groupId)
-    },
-    invalidateGroups: () => {
-      queryClient.invalidateQueries({ queryKey: ['groups'] })
-      cacheService.invalidateByTag(CacheTags.groups)
-    },
-    invalidateUser: (userId: string) => {
+  const invalidateGroup = useCallback((groupId: string) => {
+    queryClient.invalidateQueries({ queryKey: ['group', groupId] })
+    queryClient.invalidateQueries({ queryKey: ['groupMembers', groupId] })
+    sorobanService.invalidateGroupCache(groupId)
+  }, [queryClient])
+
+  const invalidateGroups = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['groups'] })
+    cacheService.invalidateByTag(CacheTags.groups)
+  }, [queryClient])
+
+  const invalidateUser = useCallback(
+    (userId: string) => {
       queryClient.invalidateQueries({ queryKey: ['groups', userId] })
       sorobanService.invalidateUserCache(userId)
     },
-    bustAllCache: () => {
-      queryClient.clear()
-      sorobanService.clearCache()
-    },
-  }
+    [queryClient]
+  )
+
+  const bustAllCache = useCallback(() => {
+    queryClient.clear()
+    sorobanService.clearCache()
+  }, [queryClient])
+
+  return useMemo(
+    () => ({
+      invalidateGroup,
+      invalidateGroups,
+      invalidateUser,
+      bustAllCache,
+    }),
+    [invalidateGroup, invalidateGroups, invalidateUser, bustAllCache]
+  )
 }
 
 /**
- * Cache metrics hook for monitoring
+ * Cache metrics hook for monitoring.
+ * Stable queryKey to avoid unnecessary refetches.
  */
+const CACHE_METRICS_QUERY_KEY = ['cacheMetrics'] as const
+
 export const useCacheMetrics = () => {
   return useQuery({
-    queryKey: ['cacheMetrics'],
+    queryKey: CACHE_METRICS_QUERY_KEY,
     queryFn: () => {
       const metrics = cacheService.getMetrics()
       const hitRate = cacheService.getHitRate()
       const state = cacheService.exportState()
-      
       return {
         ...metrics,
         hitRate,
@@ -322,31 +373,83 @@ export const useCacheMetrics = () => {
         state,
       }
     },
-    refetchInterval: 10000, // Refresh every 10 seconds
+    refetchInterval: 10000,
     staleTime: 5000,
   })
 }
 
 /**
- * Prefetch data for better UX
+ * Prefetch data for better UX.
+ * Stable return value to avoid triggering re-renders in consumers.
  */
 export const usePrefetch = () => {
   const queryClient = useQueryClient()
 
-  return {
-    prefetchGroup: (groupId: string) => {
+  const prefetchGroup = useCallback(
+    (groupId: string) => {
       queryClient.prefetchQuery({
         queryKey: ['group', groupId],
         queryFn: () => sorobanService.getGroupStatus(groupId),
         staleTime: 30 * 1000,
       })
     },
-    prefetchGroupMembers: (groupId: string) => {
+    [queryClient]
+  )
+
+  const prefetchGroupMembers = useCallback(
+    (groupId: string) => {
       queryClient.prefetchQuery({
         queryKey: ['groupMembers', groupId],
         queryFn: () => sorobanService.getGroupMembers(groupId),
         staleTime: 60 * 1000,
       })
     },
-  }
+    [queryClient]
+  )
+
+  return useMemo(
+    () => ({ prefetchGroup, prefetchGroupMembers }),
+    [prefetchGroup, prefetchGroupMembers]
+  )
+}
+
+// --- Performance metrics (#80) ---
+
+export interface PerformanceMetricsOptions {
+  /** Report render count to analytics (e.g. for debugging re-render bottlenecks). Default: false in prod. */
+  reportRenderCount?: boolean
+  /** Component/hook name for analytics label. */
+  label?: string
+}
+
+/**
+ * Tracks re-renders and exposes performance metrics for the calling component.
+ * Use to identify re-render bottlenecks and to report metrics to analytics.
+ * When reportRenderCount is true, reports total render count on unmount.
+ */
+export const usePerformanceMetrics = (options: PerformanceMetricsOptions = {}) => {
+  const { reportRenderCount = false, label = 'unknown' } = options
+  const renderCountRef = useRef(0)
+  renderCountRef.current += 1
+
+  useEffect(() => {
+    if (!reportRenderCount) return
+    return () => {
+      analytics.trackMetric(`render_count_${label}`, renderCountRef.current, {
+        label,
+        renderCount: renderCountRef.current,
+      })
+    }
+  }, [reportRenderCount, label])
+
+  return useMemo(
+    () => ({
+      get renderCount() {
+        return renderCountRef.current
+      },
+      getRecentMetrics: (limit = 50) => analytics.getMetrics(limit),
+      getStats: () => analytics.getStats(),
+    }),
+    []
+  )
 }

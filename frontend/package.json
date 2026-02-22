@@ -9,7 +9,9 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.28.0",
@@ -27,6 +29,15 @@
     "zustand": "^4.4.0"
   },
   "devDependencies": {
+    "@storybook/addon-essentials": "^8.4.0",
+    "@storybook/addon-interactions": "^8.4.0",
+    "@storybook/addon-links": "^8.4.0",
+    "@storybook/addon-onboarding": "^8.4.0",
+    "@storybook/blocks": "^8.4.0",
+    "@storybook/nextjs": "^8.4.0",
+    "@storybook/react": "^8.4.0",
+    "@storybook/test": "^8.4.0",
+    "storybook": "^8.4.0",
     "@testing-library/jest-dom": "^6.1.4",
     "@testing-library/react": "^14.0.0",
     "@types/jest": "^29.5.8",
