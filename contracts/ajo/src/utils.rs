@@ -1,6 +1,6 @@
 use soroban_sdk::{Address, Env, Vec};
 
-use crate::types::Group;
+use crate::types::{Group, GroupMetadata, MAX_NAME_LENGTH, MAX_DESCRIPTION_LENGTH, MAX_RULES_LENGTH};
 
 /// Check if an address is a member of the group
 pub fn is_member(members: &Vec<Address>, address: &Address) -> bool {
@@ -72,3 +72,22 @@ pub fn is_within_cycle_window(group: &Group, current_time: u64) -> bool {
     current_time >= cycle_start && current_time < cycle_end
 }
 
+/// Validate metadata fields against size limits
+pub fn validate_metadata(metadata: &GroupMetadata) -> Result<(), crate::errors::AjoError> {
+    // Validate name length
+    if metadata.name.len() > MAX_NAME_LENGTH {
+        return Err(crate::errors::AjoError::MetadataNameTooLong);
+    }
+    
+    // Validate description length
+    if metadata.description.len() > MAX_DESCRIPTION_LENGTH {
+        return Err(crate::errors::AjoError::MetadataDescriptionTooLong);
+    }
+    
+    // Validate rules length
+    if metadata.rules.len() > MAX_RULES_LENGTH {
+        return Err(crate::errors::AjoError::MetadataRulesTooLong);
+    }
+    
+    Ok(())
+}

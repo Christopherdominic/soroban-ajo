@@ -1,4 +1,4 @@
-use soroban_sdk::{symbol_short, Address, Env};
+use soroban_sdk::{symbol_short, Address, Env, String};
 
 /// Emit an event when a group is created
 pub fn emit_group_created(
@@ -52,4 +52,10 @@ pub fn emit_group_completed(env: &Env, group_id: u64) {
 pub fn emit_cycle_advanced(env: &Env, group_id: u64, new_cycle: u32, cycle_start_time: u64) {
     let topics = (symbol_short!("cycle"), group_id);
     env.events().publish(topics, (new_cycle, cycle_start_time));
+}
+
+/// Emit an event when group metadata is set
+pub fn emit_metadata_set(env: &Env, group_id: u64, name: &String) {
+    let topics = (symbol_short!("metadata"), group_id);
+    env.events().publish(topics, name.clone());
 }

@@ -55,4 +55,13 @@ pub enum AjoError {
     
     /// Negative amounts aren't allowed for contributions.
     ContributionAmountNegative = 17,
+    
+    /// Metadata name exceeds maximum length
+    MetadataNameTooLong = 18,
+    
+    /// Metadata description exceeds maximum length
+    MetadataDescriptionTooLong = 19,
+    
+    /// Metadata rules exceed maximum length
+    MetadataRulesTooLong = 20,
 }

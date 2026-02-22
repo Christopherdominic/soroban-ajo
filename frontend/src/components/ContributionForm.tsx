@@ -13,10 +13,6 @@ interface ContributionFormProps {
   existingContributions?: Array<{ date: string; amount: number }>
 }
 
-interface FormErrors {
-  amount?: string
-}
-
 export const ContributionForm: React.FC<ContributionFormProps> = ({
   groupId,
   contributionAmount,
@@ -53,12 +49,12 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
     } else if (amount < MIN_AMOUNT) {
       validationErrors.push({
         field: 'amount',
-        message: `Amount must be at least $${MIN_AMOUNT}`,
+        message: `Amount must be at least ${MIN_AMOUNT}`,
       })
     } else if (amount !== contributionAmount) {
       validationErrors.push({
         field: 'amount',
-        message: `Amount must match the required contribution of $${contributionAmount}`,
+        message: `Amount must match the required contribution of ${contributionAmount}`,
       })
     }
 
@@ -67,7 +63,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
     if (userBalance !== undefined && totalRequired > userBalance) {
       validationErrors.push({
         field: 'balance',
-        message: `Insufficient balance. You need $${totalRequired.toFixed(2)} but have $${userBalance.toFixed(2)}`,
+        message: `Insufficient balance. You need ${totalRequired.toFixed(2)} but have ${userBalance.toFixed(2)}`,
       })
     }
 
@@ -192,60 +188,12 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Amount Input */}
         <div>
-          <label className="block text-sm font-semibold mb-2">
-            Amount to Contribute ($)
-  const networkFee = 0.01
-  const total = amount + networkFee
-  const hasError = !!formErrors.amount
-
-  return (
-    <div className="bg-white rounded-lg shadow p-6 max-w-md">
-      <h1 className="text-2xl font-bold mb-2">Make a Contribution</h1>
-      <p className="text-sm text-gray-600 mb-6">
-        Enter the amount you'd like to contribute to this group. Fields marked with <span className="text-red-600 font-semibold">*</span> are required.
-      </p>
-
-      {hasError && (
-        <div
-          ref={errorSummaryRef}
-          role="alert"
-          aria-live="assertive"
-          aria-atomic="true"
-          className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
-          tabIndex={-1}
-        >
-          <h2 className="text-sm font-semibold text-red-800 mb-2">Please fix this error:</h2>
-          <ul className="text-sm text-red-700 space-y-1">
-            {formErrors.amount && (
-              <li>
-                <a href="#amount" className="underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-red-600 rounded px-1">
-                  {formErrors.amount}
-                </a>
-              </li>
-            )}
-          </ul>
-        </div>
-      )}
-
-      {error && (
-        <div
-          role="alert"
-          aria-live="assertive"
-          className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg text-sm font-medium"
-        >
-          ⚠️ {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-        <div>
           <label htmlFor="amount" className="block text-sm font-semibold mb-2">
             Amount to Contribute ($) <span className="text-red-600 font-semibold" aria-label="required">*</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-3 text-gray-600" aria-hidden="true">$</span>
             <input
-              ref={amountInputRef}
               id="amount"
               type="number"
               value={amount || ''}

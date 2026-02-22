@@ -1,4 +1,28 @@
-use soroban_sdk::{contracttype, Address, Vec};
+use soroban_sdk::{contracttype, Address, String, Vec};
+
+/// Metadata size limits (in characters)
+pub const MAX_NAME_LENGTH: u32 = 64;
+pub const MAX_DESCRIPTION_LENGTH: u32 = 256;
+pub const MAX_RULES_LENGTH: u32 = 512;
+
+/// Metadata for a group with size constraints
+/// 
+/// Size limits are enforced to ensure efficient storage and prevent abuse:
+/// - name: max 64 characters
+/// - description: max 256 characters  
+/// - rules: max 512 characters
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GroupMetadata {
+    /// Human-readable name for the group
+    pub name: String,
+    
+    /// Detailed description of the group's purpose
+    pub description: String,
+    
+    /// Rules and guidelines for group members
+    pub rules: String,
+}
 
 /// Represents an Ajo group configuration and state
 #[contracttype]

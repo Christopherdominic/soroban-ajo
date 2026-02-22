@@ -15,7 +15,7 @@ mod contract;
 mod errors;
 mod events;
 mod storage;
-mod types;
+pub mod types;
 mod utils;
 
 pub use contract::AjoContract;

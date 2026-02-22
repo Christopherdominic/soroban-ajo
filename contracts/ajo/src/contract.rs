@@ -3,7 +3,7 @@ use soroban_sdk::{contract, contractimpl, Address, Env, Vec};
 use crate::errors::AjoError;
 use crate::events;
 use crate::storage;
-use crate::types::{Group, GroupStatus};
+use crate::types::{Group, GroupMetadata, GroupStatus};
 use crate::utils;
 
 /// The main Ajo contract
@@ -402,5 +402,69 @@ impl AjoContract {
             current_time,
             is_cycle_active,
         })
+    }
+    
+    /// Set metadata for a group
+    ///
+    /// Only the group creator can set metadata. Metadata includes:
+    /// - name: Human-readable group name (max 64 chars)
+    /// - description: Detailed purpose description (max 256 chars)
+    /// - rules: Group rules and guidelines (max 512 chars)
+    ///
+    /// # Arguments
+    /// * `creator` - The group creator (must match group creator)
+    /// * `group_id` - The group to set metadata for
+    /// * `metadata` - The metadata to store
+    ///
+    /// # Errors
+    /// * `GroupNotFound` - If the group does not exist
+    /// * `Unauthorized` - If caller is not the group creator
+    /// * `MetadataNameTooLong` - If name exceeds 64 characters
+    /// * `MetadataDescriptionTooLong` - If description exceeds 256 characters
+    /// * `MetadataRulesTooLong` - If rules exceed 512 characters
+    pub fn set_group_metadata(
+        env: Env,
+        creator: Address,
+        group_id: u64,
+        metadata: GroupMetadata,
+    ) -> Result<(), AjoError> {
+        // Require authentication
+        creator.require_auth();
+        
+        // Get group and verify creator
+        let group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
+        
+        if group.creator != creator {
+            return Err(AjoError::Unauthorized);
+        }
+        
+        // Validate metadata size limits
+        utils::validate_metadata(&metadata)?;
+        
+        // Store metadata
+        storage::store_metadata(&env, group_id, &metadata);
+        
+        // Emit event
+        events::emit_metadata_set(&env, group_id, &metadata.name);
+        
+        Ok(())
+    }
+    
+    /// Get metadata for a group
+    ///
+    /// # Arguments
+    /// * `group_id` - The group to get metadata for
+    ///
+    /// # Returns
+    /// The group metadata if it exists, None otherwise
+    ///
+    /// # Errors
+    /// * `GroupNotFound` - If the group does not exist
+    pub fn get_group_metadata(env: Env, group_id: u64) -> Result<Option<GroupMetadata>, AjoError> {
+        // Verify group exists
+        let _group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
+        
+        // Return metadata (may be None if never set)
+        Ok(storage::get_metadata(&env, group_id))
     }
 }

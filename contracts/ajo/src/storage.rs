@@ -8,6 +8,9 @@ pub enum StorageKey {
     /// Group data: Group(group_id) -> Group
     Group(u64),
     
+    /// Group metadata: Metadata(group_id) -> GroupMetadata
+    Metadata(u64),
+    
     /// Contribution record: Contribution(group_id, cycle, member) -> bool
     Contribution(u64, u32, Address),
     
@@ -24,6 +27,7 @@ impl StorageKey {
                 // For complex keys, we use a tuple-like approach
                 symbol_short!("GROUP")
             }
+            StorageKey::Metadata(_) => symbol_short!("METADATA"),
             StorageKey::Contribution(_, _, _) => symbol_short!("CONTRIB"),
             StorageKey::PayoutReceived(_, _) => symbol_short!("PAYOUT"),
         }
@@ -90,4 +94,16 @@ pub fn get_cycle_contributions(
     }
     
     results
+}
+
+/// Store metadata for a group
+pub fn store_metadata(env: &Env, group_id: u64, metadata: &crate::types::GroupMetadata) {
+    let key = (symbol_short!("METADATA"), group_id);
+    env.storage().persistent().set(&key, metadata);
+}
+
+/// Get metadata for a group
+pub fn get_metadata(env: &Env, group_id: u64) -> Option<crate::types::GroupMetadata> {
+    let key = (symbol_short!("METADATA"), group_id);
+    env.storage().persistent().get(&key)
 }
