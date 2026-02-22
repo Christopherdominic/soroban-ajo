@@ -73,6 +73,29 @@ cargo test
 stellar contract deploy --wasm target/wasm32-unknown-unknown/release/ajo.wasm
 ```
 
+### Testnet Deployment (recommended)
+
+Use the helper script to deploy the contract to Stellar testnet:
+
+```bash
+# From repo root
+scripts/deploy_testnet.sh
+```
+
+What it does:
+- Ensures Soroban CLI, Rust, and testnet network config exist
+- Generates a `deployer` identity (if missing) and prompts you to fund it via friendbot
+- Builds and optimizes the contract
+- Deploys to testnet and writes the contract ID to `contract-id.txt`
+- Prints next steps and an explorer link
+
+See the full walkthrough in `demo/demo-script.md`.
+
+**Troubleshooting**
+- If deployment fails with funding errors: fund the deployer shown in the script output via `https://friendbot.stellar.org?addr=<address>`, then re-run.
+- If `soroban` can't find `testnet`: the script re-adds it, or you can run  
+  `soroban network add --global testnet --rpc-url https://soroban-testnet.stellar.org:443 --network-passphrase "Test SDF Network ; September 2015"`.
+
 ### Backend API (Node.js/Express)
 
 ```bash
