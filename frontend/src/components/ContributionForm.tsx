@@ -2,7 +2,7 @@
 // Complexity: Trivial (100 pts)
 // Status: Implemented with comprehensive validation
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { ValidationError, ContributionValidation } from '../types'
 
 interface ContributionFormProps {
@@ -17,7 +17,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
   groupId,
   contributionAmount,
   userBalance = 1000, // Mock balance
-  userAddress,
+  userAddress: _userAddress,
   existingContributions = [],
 }) => {
   const [amount, setAmount] = useState(contributionAmount)
@@ -30,14 +30,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
   const MIN_AMOUNT = 0.01
   const CONTRIBUTION_COOLDOWN_HOURS = 24
 
-  // Validate form on amount change
-  useEffect(() => {
-    if (touched) {
-      validateForm()
-    }
-  }, [amount, touched])
-
-  const validateForm = (): ContributionValidation => {
+  const validateForm = useCallback((): ContributionValidation => {
     const validationErrors: ValidationError[] = []
 
     // Validate amount input
@@ -71,7 +64,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
     if (existingContributions.length > 0) {
       const lastContribution = existingContributions[existingContributions.length - 1]
       const lastContributionDate = new Date(lastContribution.date)
-      const hoursSinceLastContribution = 
+      const hoursSinceLastContribution =
         (Date.now() - lastContributionDate.getTime()) / (1000 * 60 * 60)
 
       if (hoursSinceLastContribution < CONTRIBUTION_COOLDOWN_HOURS) {
@@ -97,7 +90,14 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
       isValid: validationErrors.length === 0,
       errors: validationErrors,
     }
-  }
+  }, [amount, contributionAmount, userBalance, existingContributions])
+
+  // Validate form on amount change
+  useEffect(() => {
+    if (touched) {
+      validateForm()
+    }
+  }, [amount, touched, validateForm])
 
   const handleAmountChange = (value: string) => {
     setTouched(true)
@@ -114,16 +114,16 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setTouched(true)
-    
+
     const validation = validateForm()
-    
+
     if (!validation.isValid) {
       return
     }
 
     setLoading(true)
     setErrors([])
-    
+
     try {
       // TODO: Validate amount
       // TODO: Call contribute function on smart contract
@@ -136,11 +136,11 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
 
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500))
-      
+
       setSuccessMessage('Contribution successful! Transaction confirmed.')
       setAmount(contributionAmount)
       setTouched(false)
-      
+
       // Clear success message after 5 seconds
       setTimeout(() => setSuccessMessage(''), 5000)
     } catch (err) {
@@ -154,21 +154,25 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
   }
 
   const getErrorByField = (field: string): string | undefined => {
-    return errors.find(err => err.field === field)?.message
+    return errors.find((e) => e.field === field)?.message
   }
 
   const hasError = (field: string): boolean => {
-    return errors.some(err => err.field === field)
+    return errors.some((e) => e.field === field)
   }
 
   const totalAmount = amount + NETWORK_FEE
   const isFormValid = errors.length === 0 && amount > 0
 
-  return (
-    <div className="bg-white rounded-lg shadow-md p-6 max-w-md">
-      <h3 className="text-2xl font-bold mb-4">Make a Contribution</h3>
+  const errorSummaryRef = useRef<HTMLDivElement>(null)
+  const amountInputRef = useRef<HTMLInputElement>(null)
+  const formErrors = { amount: getErrorByField('amount') }
+  const error = getErrorByField('submit') || getErrorByField('duplicate')
 
-      {/* Success Message */}
+  return (
+    <div className="bg-white rounded-lg shadow p-6 max-w-md">
+      <h1 className="text-2xl font-bold mb-2">Make a Contribution</h1>
+
       {successMessage && (
         <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm flex items-center">
           <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -210,7 +214,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
               required
             />
           </div>
-          
+
           {/* Amount Validation Errors */}
           {hasError('amount') && (
             <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -283,7 +287,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
         </button>
 
         <p className="text-xs text-gray-600 text-center">
-          You'll be prompted to confirm this transaction in your wallet.
+          You&apos;ll be prompted to confirm this transaction in your wallet.
         </p>
       </form>
 

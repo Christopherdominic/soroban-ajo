@@ -1,0 +1,266 @@
+name: Issue Resolution Tracking
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  issues:
+    types: [opened, edited, closed, reopened]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+jobs:
+  # Track issue resolution in PRs
+  track-resolution:
+    name: Track Issue Resolution
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract and Verify Issues
+        id: extract-issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const prTitle = context.payload.pull_request.title || '';
+
+            // Extract issue numbers
+            const patterns = [
+              /(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#(\d+)/gi,
+              /(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+https:\/\/github\.com\/[^\/]+\/[^\/]+\/issues\/(\d+)/gi
+            ];
+
+            let issueNumbers = new Set();
+
+            for (const pattern of patterns) {
+              const bodyMatches = [...prBody.matchAll(pattern)];
+              const titleMatches = [...prTitle.matchAll(pattern)];
+              [...bodyMatches, ...titleMatches].forEach(match => issueNumbers.add(match[1]));
+            }
+
+            if (issueNumbers.size === 0) {
+              core.setFailed('❌ No linked issue found. Please reference an issue using "Fixes #123"');
+              return { issues: [], valid: false };
+            }
+
+            // Verify and collect issue details
+            const issues = [];
+            let allValid = true;
+
+            for (const issueNumber of Array.from(issueNumbers)) {
+              try {
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: parseInt(issueNumber)
+                });
+                
+                issues.push({
+                  number: issueNumber,
+                  title: issue.title,
+                  state: issue.state,
+                  labels: issue.labels.map(l => l.name),
+                  assignees: issue.assignees.map(a => a.login),
+                  created_at: issue.created_at,
+                  updated_at: issue.updated_at
+                });
+                
+                console.log(`✅ Issue #${issueNumber}: "${issue.title}" (${issue.state})`);
+                
+                if (issue.state !== 'open') {
+                  core.warning(`⚠️ Issue #${issueNumber} is ${issue.state}`);
+                }
+              } catch (error) {
+                core.setFailed(`❌ Issue #${issueNumber} not found`);
+                allValid = false;
+              }
+            }
+
+            core.setOutput('issues', JSON.stringify(issues));
+            core.setOutput('valid', allValid);
+
+            return { issues, valid: allValid };
+
+      - name: Check Issue Requirements
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = JSON.parse('${{ steps.extract-issues.outputs.issues }}' || '[]');
+
+            if (issues.length === 0) return;
+
+            let report = '## 📋 Issue Resolution Report\n\n';
+
+            for (const issue of issues) {
+              report += `### Issue #${issue.number}: ${issue.title}\n\n`;
+              report += `- **State**: ${issue.state === 'open' ? '🟢 Open' : '🔴 Closed'}\n`;
+              report += `- **Labels**: ${issue.labels.length > 0 ? issue.labels.join(', ') : 'None'}\n`;
+              report += `- **Assignees**: ${issue.assignees.length > 0 ? issue.assignees.join(', ') : 'Unassigned'}\n`;
+              report += `- **Created**: ${new Date(issue.created_at).toLocaleDateString()}\n`;
+              report += `- **Updated**: ${new Date(issue.updated_at).toLocaleDateString()}\n\n`;
+              
+              // Check for acceptance criteria
+              const { data: issueDetails } = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: parseInt(issue.number)
+              });
+              
+              const hasAcceptanceCriteria = issueDetails.body && (
+                issueDetails.body.includes('Acceptance Criteria') ||
+                issueDetails.body.includes('acceptance criteria') ||
+                issueDetails.body.includes('- [ ]') ||
+                issueDetails.body.includes('- [x]')
+              );
+              
+              if (hasAcceptanceCriteria) {
+                report += '✅ Issue has acceptance criteria\n\n';
+              } else {
+                report += '⚠️ Issue lacks clear acceptance criteria\n\n';
+              }
+            }
+
+            report += '---\n\n';
+            report += '**Verification Checklist:**\n';
+            report += '- [ ] All linked issues are open\n';
+            report += '- [ ] Issues have clear acceptance criteria\n';
+            report += '- [ ] PR addresses all requirements in the issue\n';
+            report += '- [ ] Tests cover the issue requirements\n';
+            report += '- [ ] Documentation updated if needed\n';
+
+            // Post comment
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+
+      - name: Verify Test Coverage for Issue
+        run: |
+          echo "🧪 Verifying test coverage for issue resolution..."
+
+          # Check if tests were added/modified
+          TEST_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.test.*' '*.spec.*')
+
+          if [ -z "$TEST_FILES" ]; then
+            echo "⚠️ No test files modified. Consider adding tests to verify issue resolution."
+          else
+            echo "✅ Test files modified:"
+            echo "$TEST_FILES"
+          fi
+
+      - name: Check for Breaking Changes
+        run: |
+          echo "🔍 Checking for breaking changes..."
+
+          # Check for removed exports
+          git diff origin/${{ github.base_ref }}...HEAD | grep -E '^\-.*export' && echo "⚠️ Exports removed - potential breaking change" || echo "✅ No exports removed"
+
+          # Check for changed function signatures
+          git diff origin/${{ github.base_ref }}...HEAD | grep -E '^\-.*function.*\(' && echo "⚠️ Function signatures changed - review for breaking changes" || echo "✅ No function signature changes"
+
+  # Validate issue closure
+  validate-closure:
+    name: Validate Issue Closure
+    if: >
+      github.event_name == 'issues' && 
+      github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if closed by PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+
+            // Search for PRs that reference this issue
+            const { data: prs } = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} is:pr is:merged ${issue.number}`
+            });
+
+            if (prs.total_count === 0) {
+              core.warning(`⚠️ Issue #${issue.number} closed without a merged PR`);
+              
+              await github.rest.issues.createComment({
+                issue_number: issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '⚠️ This issue was closed without a linked merged PR. If this was intentional, please ignore this message.'
+              });
+            } else {
+              console.log(`✅ Issue #${issue.number} closed by ${prs.total_count} PR(s)`);
+            }
+
+  # Generate resolution metrics
+  resolution-metrics:
+    name: Resolution Metrics
+    if: >
+      github.event_name == 'pull_request' && 
+      github.event.action == 'closed' && 
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculate Resolution Time
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const prBody = pr.body || '';
+
+            // Extract issue numbers
+            const issuePattern = /(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#(\d+)/gi;
+            const matches = [...prBody.matchAll(issuePattern)];
+
+            if (matches.length === 0) return;
+
+            for (const match of matches) {
+              const issueNumber = match[1];
+              
+              try {
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: parseInt(issueNumber)
+                });
+                
+                const issueCreated = new Date(issue.created_at);
+                const prMerged = new Date(pr.merged_at);
+                const resolutionTime = Math.floor((prMerged - issueCreated) / (1000 * 60 * 60 * 24));
+                
+                console.log(`📊 Issue #${issueNumber} resolution time: ${resolutionTime} days`);
+                
+                // Add label based on resolution time
+                let timeLabel = '';
+                if (resolutionTime <= 1) timeLabel = 'resolved-quickly';
+                else if (resolutionTime <= 7) timeLabel = 'resolved-normal';
+                else timeLabel = 'resolved-slowly';
+                
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: parseInt(issueNumber),
+                  labels: [timeLabel, 'resolved']
+                });
+                
+                // Comment on issue
+                await github.rest.issues.createComment({
+                  issue_number: parseInt(issueNumber),
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: `✅ Resolved by PR #${pr.number} in ${resolutionTime} days`
+                });
+              } catch (error) {
+                console.error(`Error processing issue #${issueNumber}:`, error.message);
+              }
+            }

@@ -16,7 +16,7 @@ interface MemberListProps {
   groupId: string
 }
 
-export const MemberList: React.FC<MemberListProps> = ({ members, groupId }) => {
+export const MemberList: React.FC<MemberListProps> = ({ members, groupId: _groupId }) => {
   // TODO: Fetch members from smart contract
   // TODO: Display real member data with avatars
   // TODO: Add ability to remove members (creator only)

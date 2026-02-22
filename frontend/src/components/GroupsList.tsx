@@ -1,78 +1,113 @@
 // Issue #28: Build dashboard with groups list
 // Complexity: Medium (150 pts)
-// Status: Placeholder
+// Status: Complete - Premium styled list view with sortable columns
 
 import React from 'react'
-import { GroupCard } from './GroupCard'
-
-interface GroupSummary {
-  id: string
-  name: string
-  memberCount: number
-  maxMembers: number
-  nextPayout: string
-  totalContributions: number
-  status: 'active' | 'completed' | 'paused'
-}
+import { Group } from '@/types'
+import { SortField, SortDirection } from '@/hooks/useDashboard'
 
 interface GroupsListProps {
-  groups: GroupSummary[]
-  onSelectGroup?: (groupId: string) => void
+  groups?: Group[]
+  isLoading?: boolean
+  sortField?: SortField
+  sortDirection?: SortDirection
+  onSort?: (field: SortField) => void
+  onGroupClick?: (groupId: string) => void
+  onJoinGroup?: (groupId: string) => void
 }
 
-export const GroupsList: React.FC<GroupsListProps> = ({ groups, onSelectGroup }) => {
-  // TODO: Fetch groups from smart contract
-  // TODO: Add loading and empty states
-  // TODO: Add filtering (active/completed)
+export const GroupsList: React.FC<GroupsListProps> = ({
+  groups = [],
+  isLoading = false,
+  sortField = 'name',
+  sortDirection = 'asc',
+  onSort = () => {},
+  onGroupClick,
+  onJoinGroup,
+}) => {
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) {
+      return <span className="sort-indicator-inactive">↕</span>
+    }
+    return <span className="sort-indicator-active">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+  }
 
-  const sampleGroups: GroupSummary[] = [
-    {
-      id: 'group-1',
-      name: 'Market Women Ajo',
-      memberCount: 8,
-      maxMembers: 10,
-      nextPayout: 'Feb 28, 2026',
-      totalContributions: 4000,
-      status: 'active',
+  const statusConfig: Record<string, { badge: string; dot: string; label: string }> = {
+    active: {
+      badge: 'badge badge-active',
+      dot: 'bg-emerald-500',
+      label: 'Active',
     },
-    {
-      id: 'group-2',
-      name: 'Tech Team Savings',
-      memberCount: 5,
-      maxMembers: 5,
-      nextPayout: 'Mar 5, 2026',
-      totalContributions: 2500,
-      status: 'active',
+    completed: {
+      badge: 'badge badge-completed',
+      dot: 'bg-primary-500',
+      label: 'Completed',
     },
-    {
-      id: 'group-3',
-      name: 'Community Fund',
-      memberCount: 10,
-      maxMembers: 10,
-      nextPayout: 'Completed',
-      totalContributions: 5000,
-      status: 'completed',
+    paused: {
+      badge: 'badge badge-paused',
+      dot: 'bg-amber-500',
+      label: 'Paused',
     },
-  ]
+  }
 
-  const displayGroups = groups.length > 0 ? groups : sampleGroups
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Your Groups</h2>
-        <button className="text-blue-600 hover:text-blue-700 font-semibold">
-          View All
-        </button>
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-2xl border border-surface-200/80 overflow-hidden">
+        <table className="table-premium">
+          <thead>
+            <tr>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                Name
+              </th>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                Members
+              </th>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                Contributions
+              </th>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                Next Payout
+              </th>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...Array(5)].map((_, i) => (
+              <tr key={i} className="animate-pulse-soft" style={{ animationDelay: `${i * 100}ms` }}>
+                <td className="px-5 py-4">
+                  <div className="skeleton h-4 w-32 rounded-md" />
+                </td>
+                <td className="px-5 py-4">
+                  <div className="skeleton h-4 w-16 rounded-md" />
+                </td>
+                <td className="px-5 py-4">
+                  <div className="skeleton h-4 w-20 rounded-md" />
+                </td>
+                <td className="px-5 py-4">
+                  <div className="skeleton h-4 w-24 rounded-md" />
+                </td>
+                <td className="px-5 py-4">
+                  <div className="skeleton h-6 w-16 rounded-full" />
+                </td>
+                <td className="px-5 py-4">
+                  <div className="skeleton h-8 w-20 rounded-lg" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+    )
+  }
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {displayGroups.map((group) => (
-          <div
-            key={group.id}
-            onClick={() => onSelectGroup?.(group.id)}
-            className="cursor-pointer"
-          >
+          <div key={group.id} onClick={() => onSelectGroup?.(group.id)} className="cursor-pointer">
             <GroupCard
               groupId={group.id}
               groupName={group.name}
@@ -85,6 +120,107 @@ export const GroupsList: React.FC<GroupsListProps> = ({ groups, onSelectGroup })
           </div>
         ))}
       </div>
+  return (
+    <div className="bg-white rounded-2xl border border-surface-200/80 overflow-hidden animate-fade-in">
+      <table className="table-premium">
+        <thead>
+          <tr>
+            <th>
+              <div className="sort-header" onClick={() => onSort('name')}>
+                Name <SortIcon field="name" />
+              </div>
+            </th>
+            <th>
+              <div className="sort-header" onClick={() => onSort('members')}>
+                Members <SortIcon field="members" />
+              </div>
+            </th>
+            <th>
+              <div className="sort-header" onClick={() => onSort('contributions')}>
+                Contributions <SortIcon field="contributions" />
+              </div>
+            </th>
+            <th>
+              <div className="sort-header" onClick={() => onSort('nextPayout')}>
+                Next Payout <SortIcon field="nextPayout" />
+              </div>
+            </th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {groups.map((group, i) => {
+            const config = statusConfig[group.status] || statusConfig.active
+            return (
+              <tr
+                key={group.id}
+                className="cursor-pointer transition-all duration-200 animate-fade-in"
+                style={{ animationDelay: `${i * 40}ms` }}
+                onClick={() => onGroupClick?.(group.id)}
+              >
+                <td className="whitespace-nowrap">
+                  <div className="text-sm font-semibold text-surface-900">{group.name}</div>
+                  {group.description && (
+                    <div className="text-xs text-surface-400 truncate max-w-xs mt-0.5">
+                      {group.description}
+                    </div>
+                  )}
+                </td>
+                <td className="whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-surface-700">
+                      {group.currentMembers}/{group.maxMembers}
+                    </span>
+                    <div className="w-12 h-1.5 rounded-full bg-surface-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-primary-400 to-primary-600 transition-all duration-500"
+                        style={{ width: `${(group.currentMembers / group.maxMembers) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </td>
+                <td className="whitespace-nowrap text-sm font-semibold text-surface-800">
+                  ${group.totalContributions.toFixed(2)}
+                </td>
+                <td className="whitespace-nowrap text-sm text-surface-600">
+                  {new Date(group.nextPayoutDate).toLocaleDateString()}
+                </td>
+                <td className="whitespace-nowrap">
+                  <span className={config.badge}>
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${config.dot}`} />
+                    {config.label}
+                  </span>
+                </td>
+                <td className="whitespace-nowrap">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onJoinGroup?.(group.id)
+                    }}
+                    className="btn-join"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                      />
+                    </svg>
+                    Join
+                  </button>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   )
 }

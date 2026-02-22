@@ -1,35 +1,53 @@
 // Issue #22: Create group card component
 // Complexity: Trivial (100 pts)
-// Status: Enhanced with variants and consistent styling
+// Status: Enhanced with premium styling, gradients, and animations
+// TASK: Issue #62 Added Skeleton Loading State
 
 import React from 'react'
 
 interface GroupCardProps {
-  groupId: string
-  groupName: string
-  memberCount: number
-  maxMembers: number
-  nextPayout: string
-  totalContributions: number
-  status: 'active' | 'completed' | 'paused'
+  groupId?: string
+  groupName?: string
+  memberCount?: number
+  maxMembers?: number
+  nextPayout?: string
+  totalContributions?: number
+  status?: 'active' | 'completed' | 'paused'
   variant?: 'default' | 'elevated' | 'outlined' | 'interactive' | 'compact' | 'spacious'
   onClick?: () => void
+  isLoading?: boolean
 }
 
 export const GroupCard: React.FC<GroupCardProps> = ({
-  groupName,
-  memberCount,
-  maxMembers,
-  nextPayout,
-  totalContributions,
-  status,
+  groupName = '',
+  memberCount = 0,
+  maxMembers = 1,
+  nextPayout = '',
+  totalContributions = 0,
+  status = 'active',
   variant = 'interactive',
   onClick,
+  isLoading = false,
 }) => {
-  const statusColors = {
-    active: 'bg-green-100 text-green-800 border-green-200',
-    completed: 'bg-blue-100 text-blue-800 border-blue-200',
-    paused: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  const statusConfig = {
+    active: {
+      badge: 'badge badge-active',
+      label: 'Active',
+      dot: 'bg-emerald-500',
+      accent: 'from-emerald-400 to-teal-500',
+    },
+    completed: {
+      badge: 'badge badge-completed',
+      label: 'Completed',
+      dot: 'bg-primary-500',
+      accent: 'from-primary-400 to-accent-500',
+    },
+    paused: {
+      badge: 'badge badge-paused',
+      label: 'Paused',
+      dot: 'bg-amber-500',
+      accent: 'from-amber-400 to-orange-500',
+    },
   }
 
   const cardVariants = {
@@ -44,62 +62,116 @@ export const GroupCard: React.FC<GroupCardProps> = ({
   const cardClass = cardVariants[variant]
   const isCompact = variant === 'compact'
   const isSpaciousOrElevated = variant === 'spacious' || variant === 'elevated'
+  const memberPercent = Math.round((memberCount / maxMembers) * 100)
+  const config = statusConfig[status]
 
+  // --- SKELETON LOADING STATE ---
+  if (isLoading) {
+    return (
+      <div className={`${cardClass} pointer-events-none relative overflow-hidden`}>
+        {/* Top Accent Bar Skeleton */}
+        <div className="absolute top-0 left-0 right-0 h-1 skeleton" />
+
+        {/* Header Skeleton */}
+        <div className={`flex justify-between items-start ${isCompact ? 'mb-3' : 'mb-5'} pt-1`}>
+          <div className={`skeleton rounded-lg ${isCompact ? 'h-5 w-1/2' : isSpaciousOrElevated ? 'h-7 w-2/3' : 'h-6 w-1/2'}`} />
+          <div className="skeleton h-6 w-16 rounded-full" />
+        </div>
+
+        {/* Body Skeleton */}
+        <div className={`${isCompact ? 'space-y-3' : 'space-y-4'}`}>
+          <div className="flex justify-between items-center">
+            <div className="skeleton h-3.5 w-14 rounded" />
+            <div className="skeleton h-3.5 w-10 rounded" />
+          </div>
+
+          <div className="progress-bar">
+            <div className="skeleton h-full w-full rounded-full" />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <div className="skeleton h-3.5 w-24 rounded" />
+            <div className="skeleton h-3.5 w-16 rounded" />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <div className="skeleton h-3.5 w-20 rounded" />
+            <div className="skeleton h-3.5 w-24 rounded" />
+          </div>
+        </div>
+
+        {/* Button Skeleton */}
+        <div className={`skeleton w-full rounded-xl ${isCompact ? 'mt-4 h-9' : 'mt-5 h-10'}`} />
+      </div>
+    )
+  }
+
+  // --- RENDER STATE ---
   return (
-    <div 
-      className={cardClass}
+    <div
+      className={`${cardClass} relative overflow-hidden group`}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
     >
-      <div className={`flex justify-between items-start ${isCompact ? 'mb-3' : 'mb-4'}`}>
-        <h3 className={`font-bold text-gray-900 ${isCompact ? 'text-lg' : isSpaciousOrElevated ? 'text-2xl' : 'text-xl'}`}>
+      {/* Top Accent Bar */}
+      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${config.accent} opacity-80 group-hover:opacity-100 transition-opacity duration-300`} />
+
+      {/* Header */}
+      <div className={`flex justify-between items-start ${isCompact ? 'mb-3' : 'mb-5'} pt-1`}>
+        <h3 className={`font-bold text-surface-900 leading-tight ${isCompact ? 'text-base' : isSpaciousOrElevated ? 'text-xl' : 'text-lg'}`}>
           {groupName}
         </h3>
-        <span 
-          className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusColors[status]}`}
-        >
-          {status.charAt(0).toUpperCase() + status.slice(1)}
+        <span className={config.badge}>
+          <span className={`inline-block w-1.5 h-1.5 rounded-full ${config.dot}`} />
+          {config.label}
         </span>
       </div>
 
-      <div className={`card-body ${isCompact ? 'space-y-2' : 'space-y-3'}`}>
+      {/* Body */}
+      <div className={`${isCompact ? 'space-y-3' : 'space-y-4'}`}>
+        {/* Members */}
         <div className="flex justify-between items-center">
-          <span className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>Members</span>
-          <span className={`font-semibold ${isCompact ? 'text-sm' : 'text-base'}`}>
+          <span className={`text-surface-500 font-medium ${isCompact ? 'text-xs' : 'text-sm'}`}>Members</span>
+          <span className={`font-semibold text-surface-800 ${isCompact ? 'text-xs' : 'text-sm'}`}>
             {memberCount}/{maxMembers}
           </span>
         </div>
 
-        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+        {/* Progress Bar */}
+        <div className="progress-bar">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${(memberCount / maxMembers) * 100}%` }}
+            className="progress-bar-fill"
+            style={{ width: `${memberPercent}%` }}
           />
         </div>
 
+        {/* Contributions */}
         <div className={`flex justify-between items-center ${isCompact ? 'text-xs' : 'text-sm'}`}>
-          <span className="text-gray-600">Total Contributed</span>
-          <span className="font-semibold text-gray-900">${totalContributions.toFixed(2)}</span>
+          <span className="text-surface-500 font-medium">Contributed</span>
+          <span className="font-bold text-surface-900">${totalContributions.toFixed(2)}</span>
         </div>
 
+        {/* Next Payout */}
         <div className={`flex justify-between items-center ${isCompact ? 'text-xs' : 'text-sm'}`}>
-          <span className="text-gray-600">Next Payout</span>
-          <span className="text-blue-600 font-semibold">{nextPayout}</span>
+          <span className="text-surface-500 font-medium">Next Payout</span>
+          <span className="font-semibold text-primary-600">{nextPayout}</span>
         </div>
       </div>
 
-      <button 
-        className={`w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md ${
-          isCompact ? 'mt-3 py-1.5 text-sm' : 'mt-4 py-2 text-base'
-        }`}
+      {/* Action Button */}
+      <button
+        className={`btn-primary w-full ${isCompact ? 'mt-4 py-2 text-xs' : 'mt-5 py-2.5 text-sm'}`}
         onClick={(e) => {
           e.stopPropagation()
-          // Handle view details action
+          onClick?.()
         }}
       >
         View Details
+        <svg className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+        </svg>
       </button>
     </div>
   )

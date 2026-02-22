@@ -1,18 +1,27 @@
 // Issue #25: Integrate Stellar SDK for contract interaction
 // Complexity: Medium (150 pts)
-// Status: Enhanced with retry mechanisms and error handling
+// Status: Enhanced with retry mechanisms, error handling, and intelligent caching
 
-import { Keypair, SorobanRpc, Contract } from 'stellar-sdk'
 import { analytics, trackUserAction } from './analytics'
 import { showNotification } from '../utils/notifications'
+import { cacheService, CacheKeys, CacheTags } from './cache'
 
-const RPC_URL = import.meta.env.VITE_SOROBAN_RPC_URL
-const CONTRACT_ID = import.meta.env.VITE_SOROBAN_CONTRACT_ID
+// Cache TTL configurations (in milliseconds)
+const CACHE_TTL = {
+  GROUP_STATUS: 30 * 1000, // 30 seconds - frequently changing
+  GROUP_MEMBERS: 60 * 1000, // 1 minute - changes less often
+  GROUP_LIST: 45 * 1000, // 45 seconds - moderate changes
+  TRANSACTIONS: 2 * 60 * 1000, // 2 minutes - historical data
+} as const
 
 // Retry configuration
 const MAX_RETRIES = 3
 const INITIAL_RETRY_DELAY = 1000
 const RETRY_BACKOFF_MULTIPLIER = 2
+
+// Circuit breaker configuration
+const CIRCUIT_BREAKER_THRESHOLD = 5 // failures before opening circuit
+const CIRCUIT_BREAKER_TIMEOUT = 60000 // 1 minute before trying again
 
 interface RetryOptions {
   maxRetries?: number
@@ -21,7 +30,48 @@ interface RetryOptions {
   shouldRetry?: (error: any) => boolean
 }
 
-// Retry wrapper with exponential backoff
+// Circuit breaker state
+class CircuitBreaker {
+  private failures: number = 0
+  private lastFailureTime: number = 0
+  private state: 'closed' | 'open' | 'half-open' = 'closed'
+
+  isOpen(): boolean {
+    if (this.state === 'open') {
+      // Check if timeout has passed
+      if (Date.now() - this.lastFailureTime > CIRCUIT_BREAKER_TIMEOUT) {
+        this.state = 'half-open'
+        return false
+      }
+      return true
+    }
+    return false
+  }
+
+  recordSuccess(): void {
+    this.failures = 0
+    this.state = 'closed'
+  }
+
+  recordFailure(): void {
+    this.failures++
+    this.lastFailureTime = Date.now()
+    
+    if (this.failures >= CIRCUIT_BREAKER_THRESHOLD) {
+      this.state = 'open'
+      console.warn('[Circuit Breaker] Circuit opened due to repeated failures')
+    }
+  }
+
+  reset(): void {
+    this.failures = 0
+    this.state = 'closed'
+  }
+}
+
+const circuitBreaker = new CircuitBreaker()
+
+// Retry wrapper with exponential backoff and circuit breaker
 async function withRetry<T>(
   operation: () => Promise<T>,
   operationName: string,
@@ -34,12 +84,22 @@ async function withRetry<T>(
     shouldRetry = isRetryableError,
   } = options
 
+  // Check circuit breaker
+  if (circuitBreaker.isOpen()) {
+    throw new Error(`Circuit breaker is open for ${operationName}. Service temporarily unavailable.`)
+  }
+
   let lastError: any
   let delay = initialDelay
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await operation()
+      const result = await operation()
+      
+      // Record success in circuit breaker
+      circuitBreaker.recordSuccess()
+      
+      return result
     } catch (error) {
       lastError = error
 
@@ -71,6 +131,9 @@ async function withRetry<T>(
       }
     }
   }
+
+  // Record failure in circuit breaker
+  circuitBreaker.recordFailure()
 
   // All retries exhausted
   throw lastError
@@ -145,8 +208,44 @@ export interface SorobanService {
   createGroup: (params: CreateGroupParams) => Promise<string>
   joinGroup: (groupId: string) => Promise<void>
   contribute: (groupId: string, amount: number) => Promise<void>
-  getGroupStatus: (groupId: string) => Promise<any>
-  getGroupMembers: (groupId: string) => Promise<any[]>
+  getGroupStatus: (groupId: string, useCache?: boolean) => Promise<any>
+  getGroupMembers: (groupId: string, useCache?: boolean) => Promise<any[]>
+  getUserGroups: (userId: string, useCache?: boolean) => Promise<any[]>
+  invalidateGroupCache: (groupId: string) => void
+  invalidateUserCache: (userId: string) => void
+  clearCache: () => void
+}
+
+/**
+ * Cached fetch wrapper with stale-while-revalidate
+ */
+async function cachedFetch<T>(
+  cacheKey: string,
+  fetcher: () => Promise<T>,
+  options: {
+    ttl?: number
+    tags?: string[]
+    forceRefresh?: boolean
+    version?: string
+  } = {}
+): Promise<T> {
+  const { ttl, tags, forceRefresh = false, version } = options
+
+  // Check cache first (unless force refresh)
+  if (!forceRefresh) {
+    const cached = cacheService.get<T>(cacheKey)
+    if (cached !== null) {
+      return cached
+    }
+  }
+
+  // Fetch fresh data
+  const data = await fetcher()
+
+  // Store in cache
+  cacheService.set(cacheKey, data, { ttl, tags, version })
+
+  return data
 }
 
 export const initializeSoroban = (): SorobanService => {
@@ -181,11 +280,14 @@ export const initializeSoroban = (): SorobanService => {
           trackUserAction.groupCreated(groupId, params)
           showNotification.success('Group created successfully!')
           
+          // Invalidate groups list cache
+          cacheService.invalidateByTag(CacheTags.groups)
+          
           return groupId
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { message: _message, severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'createGroup', params }, severity)
-          showNotification.error(message)
+          showNotification.error(_message)
           throw error
         }
       })
@@ -204,10 +306,14 @@ export const initializeSoroban = (): SorobanService => {
           
           trackUserAction.groupJoined(groupId)
           showNotification.success('Successfully joined group!')
+          
+          // Invalidate group-specific and groups list cache
+          cacheService.invalidateByTag(CacheTags.group(groupId))
+          cacheService.invalidateByTag(CacheTags.groups)
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { message: _message, severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'joinGroup', groupId }, severity)
-          showNotification.error(message)
+          showNotification.error(_message)
           throw error
         }
       })
@@ -233,50 +339,141 @@ export const initializeSoroban = (): SorobanService => {
           
           trackUserAction.contributionMade(groupId, amount)
           showNotification.success(`Contribution of ${amount} XLM successful!`)
+          
+          // Invalidate group status and transaction caches
+          cacheService.invalidateByTag(CacheTags.group(groupId))
+          cacheService.invalidateByTag(CacheTags.transactions)
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { message: _message, severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'contribute', groupId, amount }, severity)
-          showNotification.error(message)
+          showNotification.error(_message)
           throw error
         }
       })
     },
 
-    getGroupStatus: async (groupId: string) => {
+    getGroupStatus: async (groupId: string, useCache: boolean = true) => {
       return analytics.measureAsync('get_group_status', async () => {
         try {
-          return await withRetry(
+          const cacheKey = CacheKeys.groupStatus(groupId)
+          
+          return await cachedFetch(
+            cacheKey,
             async () => {
-              console.log('TODO: Implement getGroupStatus', groupId)
-              return {}
+              return await withRetry(
+                async () => {
+                  console.log('TODO: Implement getGroupStatus', groupId)
+                  return {
+                    groupId,
+                    status: 'active',
+                    currentCycle: 1,
+                    totalContributions: 0,
+                    // ... other status fields
+                  }
+                },
+                'getGroupStatus'
+              )
             },
-            'getGroupStatus'
+            {
+              ttl: CACHE_TTL.GROUP_STATUS,
+              tags: [CacheTags.groups, CacheTags.group(groupId)],
+              forceRefresh: !useCache,
+            }
           )
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'getGroupStatus', groupId }, severity)
-          // Don't show notification for read operations
           throw error
         }
       })
     },
 
-    getGroupMembers: async (groupId: string) => {
+    getGroupMembers: async (groupId: string, useCache: boolean = true) => {
       return analytics.measureAsync('get_group_members', async () => {
         try {
-          return await withRetry(
+          const cacheKey = CacheKeys.groupMembers(groupId)
+          
+          return await cachedFetch(
+            cacheKey,
             async () => {
-              console.log('TODO: Implement getGroupMembers', groupId)
-              return []
+              return await withRetry(
+                async () => {
+                  console.log('TODO: Implement getGroupMembers', groupId)
+                  return []
+                },
+                'getGroupMembers'
+              )
             },
-            'getGroupMembers'
+            {
+              ttl: CACHE_TTL.GROUP_MEMBERS,
+              tags: [CacheTags.groups, CacheTags.group(groupId)],
+              forceRefresh: !useCache,
+            }
           )
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'getGroupMembers', groupId }, severity)
-          // Don't show notification for read operations
           throw error
         }
+      })
+    },
+
+    getUserGroups: async (userId: string, useCache: boolean = true) => {
+      return analytics.measureAsync('get_user_groups', async () => {
+        try {
+          const cacheKey = CacheKeys.userGroups(userId)
+          
+          return await cachedFetch(
+            cacheKey,
+            async () => {
+              return await withRetry(
+                async () => {
+                  console.log('TODO: Implement getUserGroups', userId)
+                  return []
+                },
+                'getUserGroups'
+              )
+            },
+            {
+              ttl: CACHE_TTL.GROUP_LIST,
+              tags: [CacheTags.groups, CacheTags.user(userId)],
+              forceRefresh: !useCache,
+            }
+          )
+        } catch (error) {
+          const { severity } = classifyError(error)
+          analytics.trackError(error as Error, { operation: 'getUserGroups', userId }, severity)
+          throw error
+        }
+      })
+    },
+
+    invalidateGroupCache: (groupId: string) => {
+      cacheService.invalidateByTag(CacheTags.group(groupId))
+      analytics.trackEvent({
+        category: 'Cache',
+        action: 'Invalidation',
+        label: 'group',
+        metadata: { groupId },
+      })
+    },
+
+    invalidateUserCache: (userId: string) => {
+      cacheService.invalidateByTag(CacheTags.user(userId))
+      analytics.trackEvent({
+        category: 'Cache',
+        action: 'Invalidation',
+        label: 'user',
+        metadata: { userId },
+      })
+    },
+
+    clearCache: () => {
+      cacheService.clear()
+      analytics.trackEvent({
+        category: 'Cache',
+        action: 'Invalidation',
+        label: 'full_clear',
       })
     },
   }

@@ -23,7 +23,11 @@ interface FormErrors {
   maxMembers?: string
 }
 
-export const GroupCreationForm: React.FC = () => {
+interface GroupCreationFormProps {
+  onSuccess?: () => void
+}
+
+export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess }) => {
   const [formData, setFormData] = useState<GroupFormData>({
     groupName: '',
     description: '',
@@ -43,6 +47,8 @@ export const GroupCreationForm: React.FC = () => {
   const errorSummaryRef = useRef<HTMLDivElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const groupNameRef = useRef<HTMLInputElement>(null)
+  
+  const hasErrors = Object.keys(errors).length > 0
 
   // Focus on error summary when errors occur after submission
   useEffect(() => {
@@ -95,7 +101,10 @@ export const GroupCreationForm: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData({ ...formData, [name]: name === 'groupName' || name === 'description' ? value : parseFloat(value) || value })
+    setFormData({
+      ...formData,
+      [name]: name === 'groupName' || name === 'description' ? value : parseFloat(value) || value,
+    })
 
     // Clear error if field was touched and now has valid input
     if (touched[name]) {
@@ -112,6 +121,23 @@ export const GroupCreationForm: React.FC = () => {
     })
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
+  }
+
+  const handleAddMember = () => {
+    if (memberInput.trim() && !formData.invitedMembers.includes(memberInput.trim())) {
+      setFormData({
+        ...formData,
+        invitedMembers: [...formData.invitedMembers, memberInput.trim()]
+      })
+      setMemberInput('')
+    }
+  }
+
+  const handleRemoveMember = (member: string) => {
+    setFormData({
+      ...formData,
+      invitedMembers: formData.invitedMembers.filter(m => m !== member)
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -133,6 +159,7 @@ export const GroupCreationForm: React.FC = () => {
       // 3. Show success notification
       // 4. Redirect to group detail page
       console.log('Create group:', formData)
+      onSuccess?.()
     } catch (err) {
       console.error('Failed to create group:', err)
     } finally {
@@ -140,13 +167,12 @@ export const GroupCreationForm: React.FC = () => {
     }
   }
 
-
-
   return (
     <div className="bg-white rounded-lg shadow p-6 max-w-2xl">
       <h1 className="text-2xl font-bold mb-2">Create a New Group</h1>
       <p className="text-sm text-gray-600 mb-6">
-        Fill out the form below to create a new Ajo group. Fields marked with <span className="text-red-600 font-semibold">*</span> are required.
+        Fill out the form below to create a new Ajo group. Fields marked with{' '}
+        <span className="text-red-600 font-semibold">*</span> are required.
       </p>
 
       {hasErrors && (
@@ -159,18 +185,24 @@ export const GroupCreationForm: React.FC = () => {
           tabIndex={-1}
         >
           <h2 className="text-sm font-semibold text-red-800 mb-2">
-            {Object.keys(errors).length === 1 ? 'Please fix this error:' : `Please fix ${Object.keys(errors).length} errors:`}
+            {Object.keys(errors).length === 1
+              ? 'Please fix this error:'
+              : `Please fix ${Object.keys(errors).length} errors:`}
           </h2>
           <ul className="text-sm text-red-700 space-y-1">
-            {Object.entries(errors).map(([field, error]) => (
-              error && (
-                <li key={field}>
-                  <a href={`#${field}`} className="underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-red-600 rounded px-1">
-                    {error}
-                  </a>
-                </li>
-              )
-            ))}
+            {Object.entries(errors).map(
+              ([field, error]) =>
+                error && (
+                  <li key={field}>
+                    <a
+                      href={`#${field}`}
+                      className="underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-red-600 rounded px-1"
+                    >
+                      {error}
+                    </a>
+                  </li>
+                )
+            )}
           </ul>
         </div>
       )}
@@ -178,7 +210,10 @@ export const GroupCreationForm: React.FC = () => {
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" noValidate>
         <div>
           <label htmlFor="groupName" className="block text-sm font-semibold mb-2">
-            Group Name <span className="text-red-600 font-semibold" aria-label="required">*</span>
+            Group Name{' '}
+            <span className="text-red-600 font-semibold" aria-label="required">
+              *
+            </span>
           </label>
           <input
             ref={groupNameRef}
@@ -219,17 +254,23 @@ export const GroupCreationForm: React.FC = () => {
             onBlur={handleBlur}
             placeholder="Describe your group's purpose..."
             className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-              touched.description && errors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              touched.description && errors.description
+                ? 'border-red-500 bg-red-50'
+                : 'border-gray-300'
             }`}
             rows={3}
             aria-invalid={touched.description && !!errors.description}
             aria-describedby={`description-help${touched.description && errors.description ? ' description-error' : ''}`}
           />
           <p id="description-help" className="mt-2 text-xs text-gray-600">
-            Provide context about your group's goals and purpose (max 500 characters)
+            Provide context about your group&apos;s goals and purpose (max 500 characters)
           </p>
           {touched.description && errors.description && (
-            <p id="description-error" className="mt-1 text-sm text-red-600 font-medium" role="alert">
+            <p
+              id="description-error"
+              className="mt-1 text-sm text-red-600 font-medium"
+              role="alert"
+            >
               ⚠️ {errors.description}
             </p>
           )}
@@ -238,7 +279,10 @@ export const GroupCreationForm: React.FC = () => {
         <div className="grid grid-cols-2 gap-6">
           <div>
             <label htmlFor="cycleLength" className="block text-sm font-semibold mb-2">
-              Cycle Length (days) <span className="text-red-600 font-semibold" aria-label="required">*</span>
+              Cycle Length (days){' '}
+              <span className="text-red-600 font-semibold" aria-label="required">
+                *
+              </span>
             </label>
             <input
               id="cycleLength"
@@ -248,7 +292,9 @@ export const GroupCreationForm: React.FC = () => {
               onChange={handleChange}
               onBlur={handleBlur}
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                touched.cycleLength && errors.cycleLength ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                touched.cycleLength && errors.cycleLength
+                  ? 'border-red-500 bg-red-50'
+                  : 'border-gray-300'
               }`}
               min="1"
               max="365"
@@ -261,7 +307,11 @@ export const GroupCreationForm: React.FC = () => {
               How many days between each payout cycle (1-365)
             </p>
             {touched.cycleLength && errors.cycleLength && (
-              <p id="cycleLength-error" className="mt-1 text-sm text-red-600 font-medium" role="alert">
+              <p
+                id="cycleLength-error"
+                className="mt-1 text-sm text-red-600 font-medium"
+                role="alert"
+              >
                 ⚠️ {errors.cycleLength}
               </p>
             )}
@@ -269,7 +319,10 @@ export const GroupCreationForm: React.FC = () => {
 
           <div>
             <label htmlFor="contributionAmount" className="block text-sm font-semibold mb-2">
-              Contribution Amount ($) <span className="text-red-600 font-semibold" aria-label="required">*</span>
+              Contribution Amount ($){' '}
+              <span className="text-red-600 font-semibold" aria-label="required">
+                *
+              </span>
             </label>
             <input
               id="contributionAmount"
@@ -280,7 +333,9 @@ export const GroupCreationForm: React.FC = () => {
               onChange={handleChange}
               onBlur={handleBlur}
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                touched.contributionAmount && errors.contributionAmount ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                touched.contributionAmount && errors.contributionAmount
+                  ? 'border-red-500 bg-red-50'
+                  : 'border-gray-300'
               }`}
               min="0"
               max="1000000"
@@ -293,7 +348,11 @@ export const GroupCreationForm: React.FC = () => {
               Amount each member must contribute per cycle
             </p>
             {touched.contributionAmount && errors.contributionAmount && (
-              <p id="contributionAmount-error" className="mt-1 text-sm text-red-600 font-medium" role="alert">
+              <p
+                id="contributionAmount-error"
+                className="mt-1 text-sm text-red-600 font-medium"
+                role="alert"
+              >
                 ⚠️ {errors.contributionAmount}
               </p>
             )}
@@ -302,7 +361,10 @@ export const GroupCreationForm: React.FC = () => {
 
         <div>
           <label htmlFor="maxMembers" className="block text-sm font-semibold mb-2">
-            Max Members <span className="text-red-600 font-semibold" aria-label="required">*</span>
+            Max Members{' '}
+            <span className="text-red-600 font-semibold" aria-label="required">
+              *
+            </span>
           </label>
           <input
             id="maxMembers"
@@ -312,7 +374,9 @@ export const GroupCreationForm: React.FC = () => {
             onChange={handleChange}
             onBlur={handleBlur}
             className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-              touched.maxMembers && errors.maxMembers ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              touched.maxMembers && errors.maxMembers
+                ? 'border-red-500 bg-red-50'
+                : 'border-gray-300'
             }`}
             min="2"
             max="50"
@@ -336,7 +400,9 @@ export const GroupCreationForm: React.FC = () => {
             <label className="block text-sm font-semibold mb-2">Frequency</label>
             <select
               value={formData.frequency}
-              onChange={(e) => setFormData({ ...formData, frequency: e.target.value as 'weekly' | 'monthly' })}
+              onChange={(e) =>
+                setFormData({ ...formData, frequency: e.target.value as 'weekly' | 'monthly' })
+              }
               className="w-full px-4 py-2 border rounded-lg"
               required
             >

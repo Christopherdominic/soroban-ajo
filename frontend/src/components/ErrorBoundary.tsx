@@ -70,7 +70,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     }, 'critical')
 
     // Log to console in development
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === 'development') {
       console.group('🚨 ErrorBoundary caught error')
       console.error('Error:', error)
       console.error('Component Stack:', errorInfo.componentStack)
@@ -253,7 +253,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               {errorMessage}
             </p>
 
-            {import.meta.env.DEV && error && (
+            {process.env.NODE_ENV === 'development' && error && (
               <details className="text-left mb-4">
                 <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700 mb-2">
                   Technical Details

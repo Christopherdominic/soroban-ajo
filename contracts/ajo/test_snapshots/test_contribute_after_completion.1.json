@@ -2157,36 +2157,6 @@
       "event": {
         "ext": "v0",
         "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
-        "type_": "contract",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "cycle"
-              },
-              {
-                "u64": 1
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "u32": 2
-                },
-                {
-                  "u64": 0
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
         "type_": "diagnostic",
         "body": {
           "v0": {
@@ -2528,36 +2498,6 @@
                     "hi": 0,
                     "lo": 300000000
                   }
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
-        "type_": "contract",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "cycle"
-              },
-              {
-                "u64": 1
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "u32": 3
-                },
-                {
-                  "u64": 0
                 }
               ]
             }
@@ -3064,7 +3004,7 @@
             "data": {
               "vec": [
                 {
-                  "string": "contract try_call failed"
+                  "string": "contract call failed"
                 },
                 {
                   "symbol": "contribute"
@@ -3080,6 +3020,31 @@
                   ]
                 }
               ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "error"
+              },
+              {
+                "error": {
+                  "contract": 8
+                }
+              }
+            ],
+            "data": {
+              "string": "escalating error to panic"
             }
           }
         }

@@ -38,6 +38,9 @@ pub enum AjoError {
     /// Groups need at least 2 members to work.
     MaxMembersBelowMinimum = 11,
     
+    /// Max members exceeds reasonable limit.
+    MaxMembersAboveLimit = 18,
+    
     /// Member doesn't have enough balance.
     InsufficientBalance = 12,
     

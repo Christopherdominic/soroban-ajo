@@ -1,197 +1,320 @@
-# 🪙 Soroban Ajo (Esusu) — Rotational Savings on Stellar
+# Drips - Decentralized Savings Groups
 
-[![CI](https://github.com/yourusername/soroban-ajo/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/soroban-ajo/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-**A decentralized rotational savings and credit association (ROSCA) built on Stellar Soroban smart contracts.**
-
-Ajo (also known as Esusu in West Africa) is a traditional community-based savings system where members contribute a fixed amount regularly, and each member receives the total pool on a rotating basis. This project brings this time-tested financial mechanism to the blockchain, making it transparent, trustless, and accessible globally.
-
-## 🎯 What is Ajo?
-
-Ajo is a rotating savings and credit association (ROSCA) common in Nigeria and across Africa. Members:
-- Form a group with a fixed contribution amount
-- Contribute the same amount each cycle (e.g., weekly or monthly)
-- Take turns receiving the full pool of contributions
-- Build trust and financial discipline within communities
-
-**This Soroban implementation makes Ajo:**
-- ✅ Trustless (no central coordinator needed)
-- ✅ Transparent (all transactions on-chain)
-- ✅ Accessible (anyone with a Stellar wallet can join)
-- ✅ Programmable (automated payouts, no manual coordination)
-
-## 🚀 Features
-
-- **Create Groups**: Set contribution amount, cycle duration, and max members
-- **Join & Participate**: Members join and contribute each cycle
-- **Automatic Payouts**: When all members contribute, payout executes automatically to the next recipient
-- **Native XLM Support**: Built-in support for Stellar Lumens (XLM)
-- **Token Ready**: Architecture supports custom Stellar tokens (roadmap item)
-- **Transparent**: All contributions and payouts are verifiable on-chain
-
-## 📁 Repository Structure
-
-```
-soroban-ajo/
-├── contracts/ajo/          # Core Soroban smart contract
-├── docs/                   # Architecture, storage, threat model
-├── grants/                 # Drips Wave proposal & milestones
-├── demo/                   # Demo scripts and video outline
-├── scripts/                # Build, test, deploy scripts
-├── frontend/               # Future UI (placeholder)
-└── .github/                # CI/CD and issue templates
-```
-
-## 🛠️ Quick Start
-
-### Prerequisites
-
-- [Rust](https://www.rust-lang.org/tools/install) (1.70+)
-- [Soroban CLI](https://soroban.stellar.org/docs/getting-started/setup)
-- [Stellar CLI](https://developers.stellar.org/docs/tools/stellar-cli)
-
-### Build
-
-```bash
-./scripts/build.sh
-```
-
-### Test
-
-```bash
-./scripts/test.sh
-```
-
-### Deploy to Testnet
-
-```bash
-# Configure your testnet identity first
-stellar keys generate deployer --network testnet
-
-# Deploy
-./scripts/deploy_testnet.sh
-```
-
-### Run Demo
-
-Follow the step-by-step guide in [demo/demo-script.md](demo/demo-script.md)
+A blockchain-based savings group platform built on Stellar/Soroban, enabling communities to create and manage traditional "Ajo" or "Rotating Savings and Credit Associations" (ROSCAs) with full transparency and security.
 
 ## 📖 Documentation
 
-- [Architecture Overview](docs/architecture.md)
-- [Storage Layout](docs/storage-layout.md)
-- [Threat Model & Security](docs/threat-model.md)
-- [Roadmap](docs/roadmap.md)
+**Interactive documentation site**: Run `npm run dev:docs` and visit http://localhost:3000
 
-## 🎓 Smart Contract API
+- [Getting Started Guide](http://localhost:3000/docs/getting-started)
+- [API Reference](http://localhost:3001/api-docs) - Interactive Swagger UI
+- [Architecture Overview](http://localhost:3000/docs/architecture)
+- [Smart Contracts](http://localhost:3000/docs/contracts)
 
-### Group Management
-```rust
-create_group(contribution_amount, cycle_duration, max_members) -> u64
-get_group(group_id) -> Group
-list_members(group_id) -> Vec<Address>
+## 🏗 Project Structure
+
+```
+drips_maintener/
+├── frontend/          # Next.js web application
+│   └── src/
+│       ├── app/       # Next.js pages (App Router)
+│       ├── components/
+│       ├── hooks/
+│       └── services/
+├── backend/           # Node.js/Express API server
+│   └── src/
+│       ├── routes/    # API routes
+│       ├── controllers/
+│       ├── services/  # Soroban integration
+│       └── middleware/
+├── contracts/         # Soroban smart contracts (Rust)
+│   └── ajo/          # Main Ajo contract
+├── documentation/     # All project documentation
+└── package.json      # Monorepo root config
 ```
 
-### Membership
-```rust
-join_group(group_id)
-is_member(group_id, address) -> bool
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- Rust 1.70+
+- Stellar CLI
+- Git
+
+### Monorepo Setup
+
+```bash
+# Clone repository
+git clone <repo-url>
+cd drips_maintener
+
+# Install all dependencies (frontend + backend)
+npm run install:all
+
+# Or install individually:
+npm install           # Root dependencies
+cd frontend && npm install
+cd ../backend && npm install
 ```
 
-### Contributions
-```rust
-contribute(group_id)
-get_contribution_status(group_id, cycle_number) -> Vec<(Address, bool)>
+### Smart Contracts (Rust/Soroban)
+
+```bash
+cd contracts/ajo
+
+# Build contract
+stellar contract build
+
+# Run tests
+cargo test
+
+# Deploy (with Stellar CLI configured)
+stellar contract deploy --wasm target/wasm32-unknown-unknown/release/ajo.wasm
 ```
 
-### Payouts
-```rust
-execute_payout(group_id)
-is_complete(group_id) -> bool
+### Backend API (Node.js/Express)
+
+```bash
+cd backend
+
+# Set up environment
+cp .env.example .env
+# Edit .env with your Stellar RPC URL and contract ID
+
+# Run development server
+npm run dev
+```
+
+Runs on http://localhost:3001
+
+### Frontend (Next.js)
+
+```bash
+cd frontend
+
+# Set up environment
+cp .env.example .env.local
+# Edit .env.local with your configuration
+
+# Run development server
+npm run dev
+```
+
+Visit http://localhost:3000
+
+### Run Everything Together
+
+```bash
+# From root directory
+npm run dev
+```
+
+This starts both frontend and backend concurrently.
+
+## 📚 Documentation
+
+- [Frontend README](frontend/README.md) - Next.js setup and development
+- [Backend README](backend/README.md) - API server setup and endpoints
+- [Next.js Migration Guide](documentation/NEXTJS_MIGRATION.md) - Migration from Vite
+- [Migration Summary](documentation/MIGRATION_SUMMARY.md) - Recent migration details
+- [Monorepo Guide](documentation/MONOREPO_GUIDE.md) - Monorepo workflow
+- [Architecture](documentation/architecture.md) - System design
+- [Security](documentation/SECURITY.md) - Security considerations
+- [Contributing](CONTRIBUTING.md) - Contribution guidelines
+
+## 🛠 Technology Stack
+
+### Smart Contracts
+- **Blockchain**: Stellar (Soroban)
+- **Language**: Rust
+- **Testing**: Rust test framework
+
+### Backend API
+- **Runtime**: Node.js 18+
+- **Framework**: Express.js 4.18
+- **Language**: TypeScript 5.2
+- **Blockchain SDK**: Stellar SDK 12.0
+- **Security**: Helmet, CORS
+- **Validation**: Zod
+
+### Frontend
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript 5.2
+- **Styling**: Tailwind CSS 3.3
+- **State**: React Query + Zustand
+- **Blockchain SDK**: Stellar SDK 12.0
+- **Charts**: Recharts
+
+## 🎯 Features
+
+- ✅ Create savings groups with custom rules
+- ✅ Member onboarding and management
+- ✅ Scheduled contributions tracking
+- ✅ Transparent fund distribution
+- ✅ Transaction history on-chain
+- ✅ Group analytics and insights
+- ✅ Wallet integration (Freighter)
+
+## 🔧 Development
+
+### Prerequisites
+
+- Node.js 18+
+- Rust 1.70+
+- Stellar CLI
+- Git
+
+### Setup
+
+```bash
+# Clone repository
+git clone <repo-url>
+cd drips_maintener
+
+# Install all dependencies
+npm run install:all
+
+# Set up contracts
+cd contracts/ajo
+cargo build
+
+# Set up backend
+cd ../../backend
+cp .env.example .env
+# Edit .env
+
+# Set up frontend
+cd ../frontend
+cp .env.example .env.local
+# Edit .env.local
+```
+
+### Development Workflow
+
+```bash
+# From root - run everything
+npm run dev
+
+# Or run individually:
+npm run dev:frontend    # Next.js on :3000
+npm run dev:backend     # Express on :3001
+
+# Build everything
+npm run build
+
+# Run tests
+npm run test:contracts  # Rust tests
+npm run type-check      # TypeScript checks
+npm run lint           # ESLint
+```
+
+## 📝 Environment Variables
+
+### Backend (`backend/.env`)
+```env
+NODE_ENV=development
+PORT=3001
+FRONTEND_URL=http://localhost:3000
+SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
+SOROBAN_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
+SOROBAN_CONTRACT_ID=<your_contract_id>
+```
+
+### Frontend (`frontend/.env.local`)
+```env
+NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
+NEXT_PUBLIC_SOROBAN_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
+NEXT_PUBLIC_SOROBAN_CONTRACT_ID=<your_contract_id>
+NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
 ## 🧪 Testing
 
-Comprehensive test suite covering:
-- ✅ Group creation and configuration
-- ✅ Member joining and validation
-- ✅ Contribution flow and tracking
-- ✅ Payout rotation and distribution
-- ✅ Group completion lifecycle
-- ✅ Error handling and edge cases
-
-Run tests:
+### Contracts
 ```bash
+cd contracts/ajo
 cargo test
 ```
 
-## 🌍 Why This Matters
+### Backend
+```bash
+cd backend
+npm run type-check
+npm run lint
+npm test  # (when tests are added)
+```
 
-**Financial Inclusion**: Over 1.7 billion adults globally are unbanked. Ajo/Esusu has served African communities for generations as a trusted savings mechanism.
+### Frontend
+```bash
+cd frontend
+npm run type-check
+npm run lint
+```
 
-**Blockchain Benefits**:
-- No need for a trusted coordinator
-- Transparent contribution and payout history
-- Programmable rules enforced by smart contracts
-- Accessible to anyone with a Stellar wallet
+### All at Once
+```bash
+# From root
+npm run type-check
+npm run lint
+npm run test:contracts
+```
 
-**Target Users**:
-- African diaspora communities
-- Unbanked/underbanked populations
-- Small business owners needing working capital
-- Communities building financial discipline
+## 🚢 Deployment
 
+### Contracts
+Deploy to Stellar testnet/mainnet using Stellar CLI:
+```bash
+cd contracts/ajo
+stellar contract build
+stellar contract deploy --wasm target/wasm32-unknown-unknown/release/ajo.wasm --network testnet
+```
 
-## 🗺️ Roadmap
+### Backend
+Deploy to Railway, Render, Heroku, or any Node.js hosting:
+```bash
+cd backend
+npm run build
+npm start
+```
 
-- **v1.0** (Current): XLM-only groups, basic functionality
-- **v1.1**: Custom token support (USDC, EURC, etc.)
-- **v2.0**: Flexible payout schedules, penalty mechanisms
-- **v3.0**: Frontend UI with wallet integration
-- **v4.0**: Mobile app, fiat on/off-ramps
+Recommended platforms:
+- Railway (easiest)
+- Render
+- DigitalOcean App Platform
+- Heroku
+- AWS/GCP/Azure
 
-See [docs/roadmap.md](docs/roadmap.md) for details.
+### Frontend
+Deploy to Vercel (recommended for Next.js):
+```bash
+cd frontend
+npm run build
+npm start
+```
+
+Or one-click deploy:
+- Vercel (recommended)
+- Netlify
+- Cloudflare Pages
+
+### Environment Variables
+Remember to set all required environment variables in your hosting platform.
 
 ## 🤝 Contributing
 
-We welcome contributions! Please:
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-See our [Code of Conduct](CODE_OF_CONDUCT.md) and [Contributing Guidelines](CONTRIBUTING.md).
-
-### 🌊 Drips Wave Contributors
-
-This project participates in **Drips Wave** - a contributor funding program! Check out:
-- **[Wave Contributor Guide](docs/wave-guide.md)** - How to earn funding for contributions
-- **[Wave-Ready Issues](docs/wave-ready-issues.md)** - 12 funded issues ready to tackle
-- **GitHub Issues** labeled with `wave-ready` - Earn 100-200 points per issue
-
-Issues are categorized as:
-- `trivial` (100 points) - Documentation, simple tests, minor fixes
-- `medium` (150 points) - Helper functions, validation logic, moderate features  
-- `high` (200 points) - Core features, complex integrations, security enhancements
+See [CONTRIBUTING.md](documentation/CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+See [LICENSE](LICENSE) file.
 
-## 🙏 Acknowledgments
+## 🔗 Resources
 
-- Stellar Development Foundation for Soroban
-- African communities that have practiced Ajo/Esusu for centuries
-- Drips Wave for supporting public goods funding
+- [Stellar Documentation](https://developers.stellar.org/)
+- [Soroban Docs](https://soroban.stellar.org/docs)
+- [Next.js Documentation](https://nextjs.org/docs)
 
-## 📞 Contact
+## 📧 Support
 
-- **Issues**: [GitHub Issues](https://github.com/Christopherdominic/soroban-ajo/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/Christopherdominic/soroban-ajo/discussions)
-- **Email**: [your-email@example.com](mailto:Chriseze0@gmail.com)
-
----
-
-**Built with ❤️ for financial inclusion on Stellar**
+For questions and support, please open an issue on GitHub.

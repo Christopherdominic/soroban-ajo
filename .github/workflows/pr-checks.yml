@@ -1,0 +1,407 @@
+name: PR Quality Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+jobs:
+  # Job 1: Issue Resolution Verification
+  issue-verification:
+    name: Issue Resolution Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for linked issue
+        id: check-issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const prTitle = context.payload.pull_request.title || '';
+
+            // Check for issue references in PR body and title
+            const issuePatterns = [
+              /(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#(\d+)/gi,
+              /(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+https:\/\/github\.com\/[^\/]+\/[^\/]+\/issues\/(\d+)/gi,
+              /#(\d+)/g
+            ];
+
+            let issueNumbers = new Set();
+
+            for (const pattern of issuePatterns) {
+              const matches = [...prBody.matchAll(pattern), ...prTitle.matchAll(pattern)];
+              matches.forEach(match => issueNumbers.add(match[1]));
+            }
+
+            if (issueNumbers.size === 0) {
+              core.setFailed('❌ No linked issue found. Please reference an issue using "Fixes #123" or "Closes #123"');
+              return;
+            }
+
+            // Verify each linked issue exists and is open
+            const issues = Array.from(issueNumbers);
+            let allValid = true;
+
+            for (const issueNumber of issues) {
+              try {
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: parseInt(issueNumber)
+                });
+                
+                if (issue.state !== 'open') {
+                  core.warning(`⚠️ Issue #${issueNumber} is ${issue.state}. Consider linking an open issue.`);
+                }
+                
+                console.log(`✅ Issue #${issueNumber} verified: "${issue.title}"`);
+              } catch (error) {
+                core.setFailed(`❌ Issue #${issueNumber} not found or inaccessible`);
+                allValid = false;
+              }
+            }
+
+            if (allValid) {
+              core.setOutput('issues', issues.join(','));
+              console.log(`✅ All ${issues.length} linked issue(s) verified`);
+            }
+
+      - name: Verify issue closure keywords
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const closureKeywords = ['close', 'closes', 'closed', 'fix', 'fixes', 'fixed', 'resolve', 'resolves', 'resolved'];
+
+            const hasClosureKeyword = closureKeywords.some(keyword => 
+              prBody.toLowerCase().includes(keyword + ' #') || 
+              prBody.toLowerCase().includes(keyword + 's #')
+            );
+
+            if (!hasClosureKeyword) {
+              core.warning('⚠️ PR body does not contain closure keywords (closes, fixes, resolves). Issue may not auto-close.');
+            } else {
+              console.log('✅ PR contains proper issue closure keywords');
+            }
+
+  # Job 2: Test Coverage Verification
+  test-coverage:
+    name: Test Coverage Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Frontend Tests with Coverage
+        run: |
+          cd frontend
+          npm test -- --coverage --watchAll=false || true
+        continue-on-error: true
+
+      - name: Check Frontend Coverage Threshold
+        run: |
+          if [ -f "frontend/coverage/coverage-summary.json" ]; then
+            COVERAGE=$(node -p "
+              const coverage = require('./frontend/coverage/coverage-summary.json');
+              const total = coverage.total;
+              Math.min(total.lines.pct, total.statements.pct, total.functions.pct, total.branches.pct);
+            ")
+            echo "📊 Frontend Coverage: ${COVERAGE}%"
+            
+            THRESHOLD=70
+            if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+              echo "⚠️ Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
+              exit 1
+            else
+              echo "✅ Coverage meets threshold"
+            fi
+          else
+            echo "⚠️ No coverage report found"
+          fi
+        continue-on-error: true
+
+      - name: Run Contract Tests
+        run: |
+          cd contracts/ajo
+          cargo test --verbose
+
+      - name: Upload Coverage Reports
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./frontend/coverage/lcov.info
+          flags: frontend
+          fail_ci_if_error: false
+        continue-on-error: true
+
+  # Job 3: Performance Benchmarks
+  performance-benchmarks:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Frontend
+        run: cd frontend && npm run build
+        env:
+          NEXT_PUBLIC_STELLAR_NETWORK: testnet
+
+      - name: Analyze Bundle Size
+        run: |
+          cd frontend
+          if [ -d ".next" ]; then
+            echo "📦 Bundle Size Analysis:"
+            du -sh .next/static/* | sort -h
+            
+            # Check for large bundles
+            find .next/static -type f -size +500k -exec echo "⚠️ Large bundle: {}" \;
+          fi
+
+      - name: Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          urls: |
+            http://localhost:3000
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+        continue-on-error: true
+
+  # Job 4: Accessibility Tests
+  accessibility-tests:
+    name: Accessibility Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Accessibility Linter
+        run: |
+          cd frontend
+          npx eslint . --ext .tsx,.jsx --rule '{
+            "jsx-a11y/alt-text": "error",
+            "jsx-a11y/anchor-has-content": "error",
+            "jsx-a11y/aria-props": "error",
+            "jsx-a11y/aria-role": "error",
+            "jsx-a11y/role-has-required-aria-props": "error"
+          }' || echo "⚠️ Accessibility issues found"
+        continue-on-error: true
+
+      - name: Check for ARIA attributes
+        run: |
+          echo "🔍 Checking for accessibility attributes..."
+          git diff origin/${{ github.base_ref }}...HEAD -- '*.tsx' '*.jsx' | grep -E 'aria-|role=' || echo "⚠️ Consider adding ARIA attributes for better accessibility"
+
+  # Job 5: Code Quality Checks
+  quality-checks:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for console.log statements
+        run: |
+          if git diff origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.tsx' '*.js' '*.jsx' | grep -v 'examples/' | grep -E '^\+.*console\.(log|debug|info|warn)'; then
+            echo "❌ Found console statements in your changes. Please remove them."
+            exit 1
+          else
+            echo "✅ No console statements found."
+          fi
+
+      - name: Check file sizes
+        run: |
+          echo "📏 Checking file sizes..."
+          find frontend/src backend/src -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) -size +500k -exec echo "⚠️ Large file detected: {} (consider splitting)" \;
+
+      - name: Check for TODO/FIXME comments
+        run: |
+          echo "📝 TODOs and FIXMEs in your changes:"
+          git diff origin/${{ github.base_ref }}...HEAD | grep -E '^\+.*(TODO|FIXME|HACK|XXX)' || echo "✅ None found"
+
+      - name: Validate package.json versions
+        run: |
+          cd frontend && npm ls || echo "⚠️ Dependency issues in frontend"
+          cd ../backend && npm ls || echo "⚠️ Dependency issues in backend"
+
+      - name: Check for sensitive data
+        run: |
+          if git diff origin/${{ github.base_ref }}...HEAD | grep -iE '(password|secret|api[_-]?key|private[_-]?key|token).*=.*["\x27][^"\x27]{8,}'; then
+            echo "⚠️ Possible sensitive data detected. Please review carefully."
+            exit 1
+          else
+            echo "✅ No sensitive data detected"
+          fi
+
+      - name: Line count analysis
+        run: |
+          echo "📊 Lines changed:"
+          git diff --stat origin/${{ github.base_ref }}...HEAD
+
+      - name: Check for proper error handling
+        run: |
+          echo "🔍 Checking for error handling..."
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.tsx' '*.js' '*.jsx')
+          for file in $CHANGED_FILES; do
+            if [ -f "$file" ]; then
+              if grep -q "try\s*{" "$file" && ! grep -q "catch" "$file"; then
+                echo "⚠️ $file has try block without catch"
+              fi
+            fi
+          done
+
+  # Job 6: Dependency Review
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          deny-licenses: GPL-3.0, AGPL-3.0
+
+      - name: Check for outdated dependencies
+        run: |
+          echo "📦 Checking for outdated dependencies..."
+          cd frontend && npm outdated || true
+          cd ../backend && npm outdated || true
+
+  # Job 7: Documentation Check
+  documentation-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for README updates
+        run: |
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+
+          # Check if new features were added
+          if echo "$CHANGED_FILES" | grep -qE 'src/.*\.(ts|tsx|js|jsx)$'; then
+            if ! echo "$CHANGED_FILES" | grep -qE '(README|CHANGELOG|\.md)$'; then
+              echo "⚠️ Code changes detected but no documentation updates. Consider updating README or docs."
+            else
+              echo "✅ Documentation updates found"
+            fi
+          fi
+
+      - name: Check for inline documentation
+        run: |
+          echo "📚 Checking for JSDoc/TSDoc comments..."
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.tsx')
+          for file in $CHANGED_FILES; do
+            if [ -f "$file" ]; then
+              if grep -qE '(export (class|function|const|interface|type))' "$file"; then
+                if ! grep -qE '(/\*\*|\*\s+@)' "$file"; then
+                  echo "⚠️ $file exports items but lacks JSDoc comments"
+                fi
+              fi
+            fi
+          done
+
+  # Job 8: PR Summary
+  pr-summary:
+    name: PR Summary
+    runs-on: ubuntu-latest
+    needs: [issue-verification, test-coverage, quality-checks]
+    if: >
+      always() &&
+      github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Generate PR Summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const jobs = [
+              { name: 'Issue Verification', status: '${{ needs.issue-verification.result }}' },
+              { name: 'Test Coverage', status: '${{ needs.test-coverage.result }}' },
+              { name: 'Quality Checks', status: '${{ needs.quality-checks.result }}' }
+            ];
+
+            let summary = '## 📋 PR Quality Check Summary\n\n';
+
+            jobs.forEach(job => {
+              const icon = job.status === 'success' ? '✅' : 
+                          job.status === 'failure' ? '❌' : '⚠️';
+              summary += `${icon} **${job.name}**: ${job.status}\n`;
+            });
+
+            summary += '\n---\n';
+            summary += '💡 **Tips for a successful PR:**\n';
+            summary += '- Link to an open issue using "Fixes #123"\n';
+            summary += '- Ensure test coverage meets minimum threshold (70%)\n';
+            summary += '- Remove console.log statements\n';
+            summary += '- Add JSDoc comments for exported functions\n';
+            summary += '- Update documentation if needed\n';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });

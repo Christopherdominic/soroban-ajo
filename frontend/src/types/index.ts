@@ -88,3 +88,6 @@ export interface ContributionFormData {
   hasExistingContribution?: boolean
   lastContributionDate?: string
 }
+
+// Re-export profile types
+export type { UserProfile, UserPreferences, UserStats, ActivityItem } from './profile'
