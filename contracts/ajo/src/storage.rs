@@ -28,6 +28,10 @@ pub enum StorageKey {
     /// Stored in persistent storage under `("PAYOUT", group_id, member)`.
     /// Value is `bool` — `true` means the payout has been distributed.
     PayoutReceived(u64, Address),
+
+    /// Optional metadata for a group (name, description, rules).
+    /// Stored in persistent storage under `("METADATA", group_id)`.
+    Metadata(u64),
 }
 
 impl StorageKey {
@@ -43,6 +47,7 @@ impl StorageKey {
             StorageKey::Group(_) => symbol_short!("GROUP"),
             StorageKey::Contribution(_, _, _) => symbol_short!("CONTRIB"),
             StorageKey::PayoutReceived(_, _) => symbol_short!("PAYOUT"),
+            StorageKey::Metadata(_) => symbol_short!("METADATA"),
         }
     }
 }
@@ -186,4 +191,37 @@ pub fn store_admin(env: &Env, admin: &Address) {
 pub fn get_admin(env: &Env) -> Option<Address> {
     let key = symbol_short!("ADMIN");
     env.storage().instance().get(&key)
+}
+
+/// Stores optional metadata for a group.
+///
+/// Metadata includes human-readable information like name, description, and rules.
+/// This is stored separately from the core group data to keep the main Group
+/// struct lean and to allow metadata to be optional.
+///
+/// # Arguments
+/// * `group_id` - The group to store metadata for
+/// * `metadata` - The metadata to store
+///
+/// # Note
+/// Overwrites any existing metadata for the group. Validation of size limits
+/// should be performed before calling this function.
+pub fn store_metadata(env: &Env, group_id: u64, metadata: &crate::types::GroupMetadata) {
+    let key = (symbol_short!("METADATA"), group_id);
+    env.storage().persistent().set(&key, metadata);
+}
+
+/// Retrieves optional metadata for a group.
+///
+/// Returns `None` if no metadata has been set for the group. Groups can
+/// exist without metadata, so this is not an error condition.
+///
+/// # Arguments
+/// * `group_id` - The group to retrieve metadata for
+///
+/// # Returns
+/// The group's metadata if it exists, or `None` if no metadata has been set.
+pub fn get_metadata(env: &Env, group_id: u64) -> Option<crate::types::GroupMetadata> {
+    let key = (symbol_short!("METADATA"), group_id);
+    env.storage().persistent().get(&key)
 }

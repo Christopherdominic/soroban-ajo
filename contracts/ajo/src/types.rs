@@ -144,3 +144,41 @@ pub struct GroupStatus {
     /// The ledger timestamp at the moment this status was queried.
     pub current_time: u64,
 }
+
+/// Optional metadata for a group providing user-facing information.
+///
+/// This metadata enhances group discoverability and provides context for
+/// members and potential joiners. All fields are optional and have size
+/// limits to prevent storage abuse.
+///
+/// # Size Limits
+/// - `name`: Maximum 64 characters
+/// - `description`: Maximum 256 characters
+/// - `rules`: Maximum 512 characters
+///
+/// # Example
+/// ```ignore
+/// let metadata = GroupMetadata {
+///     name: Some(String::from_str(&env, "Monthly Savings Circle")),
+///     description: Some(String::from_str(&env, "A group for monthly savings")),
+///     rules: Some(String::from_str(&env, "Contribute by the 1st of each month")),
+/// };
+/// ```
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GroupMetadata {
+    /// Human-readable name for the group.
+    /// Maximum length: 64 characters.
+    /// Example: "Monthly Savings Circle", "Tech Workers Ajo"
+    pub name: Option<soroban_sdk::String>,
+
+    /// Detailed description of the group's purpose and goals.
+    /// Maximum length: 256 characters.
+    /// Example: "A savings group for tech professionals to build emergency funds"
+    pub description: Option<soroban_sdk::String>,
+
+    /// Custom rules or guidelines for group members.
+    /// Maximum length: 512 characters.
+    /// Example: "1. Contribute by the 1st of each month\n2. No late payments\n3. Respect payout order"
+    pub rules: Option<soroban_sdk::String>,
+}
