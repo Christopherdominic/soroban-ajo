@@ -34,7 +34,7 @@ export default function Dashboard() {
 
   const handleJoinGroup = (groupId: string) => {
     // TODO: Implement join group logic
-    console.log('Join group:', groupId)
+    // Join group: groupId
   }
 
   const EmptyState = () => (

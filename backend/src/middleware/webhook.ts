@@ -376,7 +376,7 @@ export const webhookController = {
   /**
    * Get webhook statistics
    */
-  getStats: (req: Request, res: Response) => {
+  getStats: (_req: Request, res: Response) => {
     const stats = webhookService.getStats()
     res.json({
       success: true,

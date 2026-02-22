@@ -74,7 +74,7 @@ class AnalyticsService {
     }
 
     this.events.push(enrichedEvent)
-    console.log('[Analytics]', enrichedEvent)
+    // Analytics event tracked
 
     // Send to analytics backend (placeholder)
     this.sendToBackend('event', enrichedEvent)
@@ -90,7 +90,7 @@ class AnalyticsService {
     }
 
     this.metrics.push(metric)
-    console.log('[Performance]', metric)
+    // Performance metric recorded
 
     // Send to monitoring backend
     this.sendToBackend('metric', metric)

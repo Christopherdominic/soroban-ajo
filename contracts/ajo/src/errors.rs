@@ -5,66 +5,69 @@ use soroban_sdk::contracterror;
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[repr(u32)]
 pub enum AjoError {
+    /// Contract has already been initialized
+    AlreadyInitialized = 1,
+    
     /// The specified group wasn't found in storage.
-    GroupNotFound = 1,
+    GroupNotFound = 2,
     
     /// Can't join because the group is already at its member limit.
-    MaxMembersExceeded = 2,
+    MaxMembersExceeded = 3,
     
     /// This account is already part of the group.
-    AlreadyMember = 3,
+    AlreadyMember = 4,
     
     /// Address isn't a member of the group.
-    NotMember = 4,
+    NotMember = 5,
     
     /// You've already made your contribution for this cycle.
-    AlreadyContributed = 5,
+    AlreadyContributed = 6,
     
     /// We can't move forward until everyone has contributed.
-    IncompleteContributions = 6,
+    IncompleteContributions = 7,
     
     /// Member has already been paid out.
-    AlreadyReceivedPayout = 7,
+    AlreadyReceivedPayout = 8,
     
     /// All cycles for this group are finished.
-    GroupComplete = 8,
+    GroupComplete = 9,
     
     /// Contribution amount can't be zero.
-    ContributionAmountZero = 9,
+    ContributionAmountZero = 10,
     
     /// Cycle duration must be greater than zero.
-    CycleDurationZero = 10,
+    CycleDurationZero = 11,
     
     /// Groups need at least 2 members to work.
-    MaxMembersBelowMinimum = 11,
+    MaxMembersBelowMinimum = 12,
     
     /// Max members exceeds reasonable limit.
-    MaxMembersAboveLimit = 18,
+    MaxMembersAboveLimit = 13,
     
     /// Member doesn't have enough balance.
-    InsufficientBalance = 12,
+    InsufficientBalance = 14,
     
     /// The token transfer didn't go through.
-    TransferFailed = 13,
+    TransferFailed = 15,
     
     /// This group has no members initialized.
-    NoMembers = 14,
+    NoMembers = 16,
     
     /// Only the creator or authorized members can do this.
-    Unauthorized = 15,
+    Unauthorized = 17,
     
     /// Contribution outside active cycle window
-    OutsideCycleWindow = 16,
+    OutsideCycleWindow = 18,
     
     /// Negative amounts aren't allowed for contributions.
-    ContributionAmountNegative = 17,
+    ContributionAmountNegative = 19,
     
     /// Metadata name exceeds maximum length
-    MetadataNameTooLong = 18,
+    MetadataNameTooLong = 20,
     
     /// Metadata description exceeds maximum length
-    MetadataDescriptionTooLong = 19,
+    MetadataDescriptionTooLong = 21,
     
     /// Metadata rules exceed maximum length
-    MetadataRulesTooLong = 20,
+    MetadataRulesTooLong = 22,
 }

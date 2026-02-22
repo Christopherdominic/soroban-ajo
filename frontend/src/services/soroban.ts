@@ -263,7 +263,7 @@ export const initializeSoroban = (): SorobanService => {
           // Wrap in retry logic
           const groupId = await withRetry(
             async () => {
-              console.log('TODO: Implement createGroup', params)
+              // TODO: Implement createGroup
               // Placeholder - would call contract.invoke()
               return 'group_id_placeholder'
             },
@@ -298,7 +298,7 @@ export const initializeSoroban = (): SorobanService => {
         try {
           await withRetry(
             async () => {
-              console.log('TODO: Implement joinGroup', groupId)
+              // TODO: Implement joinGroup
               // Placeholder
             },
             'joinGroup'
@@ -324,7 +324,7 @@ export const initializeSoroban = (): SorobanService => {
         try {
           await withRetry(
             async () => {
-              console.log('TODO: Implement contribute', groupId, amount)
+              // TODO: Implement contribute
               // Placeholder
             },
             'contribute',
@@ -362,7 +362,7 @@ export const initializeSoroban = (): SorobanService => {
             async () => {
               return await withRetry(
                 async () => {
-                  console.log('TODO: Implement getGroupStatus', groupId)
+                  // TODO: Implement getGroupStatus
                   return {
                     groupId,
                     status: 'active',
@@ -398,7 +398,7 @@ export const initializeSoroban = (): SorobanService => {
             async () => {
               return await withRetry(
                 async () => {
-                  console.log('TODO: Implement getGroupMembers', groupId)
+                  // TODO: Implement getGroupMembers
                   return []
                 },
                 'getGroupMembers'
@@ -428,7 +428,7 @@ export const initializeSoroban = (): SorobanService => {
             async () => {
               return await withRetry(
                 async () => {
-                  console.log('TODO: Implement getUserGroups', userId)
+                  // TODO: Implement getUserGroups
                   return []
                 },
                 'getUserGroups'

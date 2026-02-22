@@ -3,13 +3,7 @@
 // Status: Placeholder
 
 import React from 'react'
-
-interface Member {
-  address: string
-  joinedDate: string
-  contributions: number
-  status: 'active' | 'inactive' | 'completed'
-}
+import { Member } from '@/types'
 
 interface MemberListProps {
   members: Member[]
@@ -24,6 +18,7 @@ export const MemberList: React.FC<MemberListProps> = ({ members, groupId: _group
   const mockMembers: Member[] = [
     {
       address: 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      groupId: 'mock-group-1',
       joinedDate: '2024-01-15',
       contributions: 1500,
       status: 'active',

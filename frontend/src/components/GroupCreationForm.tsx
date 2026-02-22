@@ -158,7 +158,7 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
       // 2. Call create_group on Soroban contract
       // 3. Show success notification
       // 4. Redirect to group detail page
-      console.log('Create group:', formData)
+      // Create group with formData
       onSuccess?.()
     } catch (err) {
       console.error('Failed to create group:', err)

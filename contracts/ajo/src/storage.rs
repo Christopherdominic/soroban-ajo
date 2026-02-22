@@ -37,11 +37,11 @@ impl StorageKey {
     /// Note: composite keys (e.g., [`StorageKey::Group`]) pair this symbol
     /// with additional fields in a tuple at the storage call site; this
     /// method returns only the symbol portion.
-    pub fn to_symbol(&self, env: &Env) -> Symbol {
+    pub fn to_symbol(&self, _env: &Env) -> Symbol {
         match self {
             StorageKey::Admin => symbol_short!("ADMIN"),
             StorageKey::GroupCounter => symbol_short!("GCOUNTER"),
-            StorageKey::Group(id) => {
+            StorageKey::Group(_id) => {
                 // For complex keys, we use a tuple-like approach
                 symbol_short!("GROUP")
             }
@@ -50,6 +50,16 @@ impl StorageKey {
             StorageKey::PayoutReceived(_, _) => symbol_short!("PAYOUT"),
         }
     }
+}
+
+/// Store the admin address in instance storage
+pub fn store_admin(env: &Env, admin: &Address) {
+    env.storage().instance().set(&symbol_short!("ADMIN"), admin);
+}
+
+/// Retrieve the admin address from instance storage
+pub fn get_admin(env: &Env) -> Option<Address> {
+    env.storage().instance().get(&symbol_short!("ADMIN"))
 }
 
 /// Returns the next available group ID and atomically increments the counter.

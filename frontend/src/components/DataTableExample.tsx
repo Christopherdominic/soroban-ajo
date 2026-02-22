@@ -123,7 +123,7 @@ export const DataTableExample: React.FC = () => {
       header: 'Name',
       accessor: 'name',
       sortable: true,
-      render: (value, row) => (
+      render: (value, _row) => (
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
             {value.charAt(0)}
@@ -156,13 +156,13 @@ export const DataTableExample: React.FC = () => {
       accessor: 'status',
       sortable: true,
       render: (value) => {
-        const statusColors = {
+        const statusColors: Record<string, string> = {
           active: 'bg-green-100 text-green-800',
           inactive: 'bg-gray-100 text-gray-800',
           pending: 'bg-yellow-100 text-yellow-800',
         }
         return (
-          <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[value]}`}>
+          <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[value as string]}`}>
             {value.charAt(0).toUpperCase() + value.slice(1)}
           </span>
         )
@@ -323,7 +323,9 @@ export const DataTableExample: React.FC = () => {
           onSelectionChange={setSelectedRows}
           getRowId={(row) => row.id}
           emptyMessage="No members found matching your filters"
-          onRowClick={(row) => console.log('Row clicked:', row)}
+          onRowClick={(_row) => {
+            // Handle row click - navigate to detail page or show modal
+          }}
         />
 
         {/* Pagination */}

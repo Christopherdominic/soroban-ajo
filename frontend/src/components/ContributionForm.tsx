@@ -2,7 +2,7 @@
 // Complexity: Trivial (100 pts)
 // Status: Implemented with comprehensive validation
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { ValidationError, ContributionValidation } from '../types'
 
 interface ContributionFormProps {
@@ -132,7 +132,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
       // TODO: Update contributions in UI
 
       // Placeholder for contract call
-      console.log('Contributing to group:', groupId, 'Amount:', amount)
+      // Contributing to group with amount
 
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500))
@@ -163,11 +163,6 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
 
   const totalAmount = amount + NETWORK_FEE
   const isFormValid = errors.length === 0 && amount > 0
-
-  const errorSummaryRef = useRef<HTMLDivElement>(null)
-  const amountInputRef = useRef<HTMLInputElement>(null)
-  const formErrors = { amount: getErrorByField('amount') }
-  const error = getErrorByField('submit') || getErrorByField('duplicate')
 
   return (
     <div className="bg-white rounded-lg shadow p-6 max-w-md">

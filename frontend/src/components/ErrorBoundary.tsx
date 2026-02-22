@@ -98,7 +98,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     }
 
     // Placeholder for monitoring service integration
-    console.log('[Monitoring Service] Error logged:', errorData)
+    // Error logged to monitoring service
   }
 
   private attemptRecovery(error: Error) {
@@ -112,7 +112,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       const delay = RETRY_DELAY * Math.pow(2, retryCount)
 
       this.retryTimeout = setTimeout(() => {
-        console.log(`[ErrorBoundary] Attempting recovery (${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`)
+        // Attempting recovery
         
         this.setState({
           hasError: false,

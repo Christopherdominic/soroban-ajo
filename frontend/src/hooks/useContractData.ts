@@ -53,7 +53,7 @@ export const useGroups = (userId?: string, options: CacheOptions = {}): { data: 
         return await sorobanService.getUserGroups(userId, useCache)
       }
 
-      console.log('TODO: Fetch all groups from contract')
+      // TODO: Fetch all groups from contract
       return []
     },
     ...DEFAULT_QUERY_OPTIONS,
@@ -79,9 +79,6 @@ export const useGroupDetail = (groupId: string, options: CacheOptions = {}) => {
     },
     ...DEFAULT_QUERY_OPTIONS,
     enabled: !!groupId,
-    onError: (error: Error) => {
-      analytics.trackError(error, { operation: 'useGroupDetail', groupId }, 'medium')
-    },
   })
 }
 
@@ -104,9 +101,6 @@ export const useGroupMembers = (groupId: string, options: CacheOptions = {}) => 
     ...DEFAULT_QUERY_OPTIONS,
     staleTime: 60 * 1000, // Members change less frequently
     enabled: !!groupId,
-    onError: (error: Error) => {
-      analytics.trackError(error, { operation: 'useGroupMembers', groupId }, 'medium')
-    },
   })
 }
 

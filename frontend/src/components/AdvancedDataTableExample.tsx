@@ -110,12 +110,12 @@ export const AdvancedDataTableExample: React.FC = () => {
       accessor: 'status',
       sortable: true,
       render: (value) => {
-        const statusConfig = {
+        const statusConfig: Record<string, { color: string; icon: string }> = {
           active: { color: 'bg-green-100 text-green-800', icon: '●' },
           inactive: { color: 'bg-gray-100 text-gray-800', icon: '○' },
           pending: { color: 'bg-yellow-100 text-yellow-800', icon: '◐' },
         }
-        const config = statusConfig[value]
+        const config = statusConfig[value as string]
         return (
           <span className={`px-2 py-1 rounded text-xs font-semibold ${config.color}`}>
             {config.icon} {value.charAt(0).toUpperCase() + value.slice(1)}

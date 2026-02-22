@@ -36,7 +36,7 @@ export function DataTable<T extends Record<string, any>>({
   data,
   columns,
   density = 'comfortable',
-  onDensityChange,
+  onDensityChange: _onDensityChange,
   selectable = false,
   selectedRows = new Set(),
   onSelectionChange,

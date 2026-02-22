@@ -2,7 +2,7 @@
 // Features: Card view on mobile, table view on desktop, touch-friendly controls
 
 import React from 'react'
-import { DataTable, DataTableProps, DensityOption } from './DataTable'
+import { DataTable, DataTableProps } from './DataTable'
 
 export interface ResponsiveDataTableProps<T> extends DataTableProps<T> {
   mobileBreakpoint?: number

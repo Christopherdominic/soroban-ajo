@@ -7,13 +7,9 @@ import { MemberList } from './MemberList'
 import { ContributionForm } from './ContributionForm'
 import { TransactionHistory } from './TransactionHistory'
 import { EmptyMemberState } from './EmptyMemberState'
+import { Member } from '@/types'
 
 type TabKey = 'overview' | 'members' | 'history' | 'settings'
-
-interface Member {
-  id: string
-  address: string
-}
 
 interface GroupDetailPageProps {
   groupId: string
