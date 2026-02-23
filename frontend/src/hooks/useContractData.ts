@@ -15,6 +15,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { initializeSoroban } from '../services/soroban'
 import { cacheService, CacheKeys, CacheTags } from '../services/cache'
 import { analytics } from '../services/analytics'
+import { useWallet } from './useWallet'
 import { Group } from '@/types'
 
 // Initialize Soroban service
@@ -79,9 +80,6 @@ export const useGroupDetail = (groupId: string, options: CacheOptions = {}) => {
     },
     ...DEFAULT_QUERY_OPTIONS,
     enabled: !!groupId,
-    onError: (error: Error) => {
-      analytics.trackError(error, { operation: 'useGroupDetail', groupId }, 'medium')
-    },
   })
 }
 
@@ -104,9 +102,6 @@ export const useGroupMembers = (groupId: string, options: CacheOptions = {}) => 
     ...DEFAULT_QUERY_OPTIONS,
     staleTime: 60 * 1000, // Members change less frequently
     enabled: !!groupId,
-    onError: (error: Error) => {
-      analytics.trackError(error, { operation: 'useGroupMembers', groupId }, 'medium')
-    },
   })
 }
 
@@ -130,10 +125,16 @@ interface CreateGroupContext {
  */
 export const useCreateGroup = () => {
   const queryClient = useQueryClient()
+  const { signTransaction } = useWallet()
 
   return useMutation<CreateGroupResult, Error, CreateGroupParams, CreateGroupContext>({
     mutationFn: async (params: CreateGroupParams) => {
-      const groupId = await sorobanService.createGroup(params)
+      const groupId = await sorobanService.createGroup(params, async (xdr) => {
+        const result = await signTransaction(xdr)
+        if (result.error) throw new Error(result.error.message)
+        if (!result.signedXdr) throw new Error('Failed to sign transaction')
+        return result.signedXdr
+      })
       return { groupId }
     },
     onMutate: async (params: CreateGroupParams) => {
@@ -153,10 +154,10 @@ export const useCreateGroup = () => {
     onSuccess: (_data: CreateGroupResult) => {
       // Invalidate and refetch groups
       queryClient.invalidateQueries({ queryKey: ['groups'] })
-      
+
       // Invalidate custom cache
       cacheService.invalidateByTag(CacheTags.groups)
-      
+
       analytics.trackEvent({
         category: 'Cache',
         action: 'Group Created',
@@ -167,7 +168,7 @@ export const useCreateGroup = () => {
       if (context?.previousGroups) {
         queryClient.setQueryData(['groups'], context.previousGroups)
       }
-      
+
       analytics.trackError(error, { operation: 'createGroup' }, 'high')
     },
     onSettled: () => {
@@ -186,10 +187,16 @@ interface JoinGroupResult {
  */
 export const useJoinGroup = () => {
   const queryClient = useQueryClient()
+  const { signTransaction } = useWallet()
 
   return useMutation<JoinGroupResult, Error, string>({
     mutationFn: async (groupId: string) => {
-      await sorobanService.joinGroup(groupId)
+      await sorobanService.joinGroup(groupId, async (xdr) => {
+        const result = await signTransaction(xdr)
+        if (result.error) throw new Error(result.error.message)
+        if (!result.signedXdr) throw new Error('Failed to sign transaction')
+        return result.signedXdr
+      })
       return { groupId }
     },
     onSuccess: (_data: JoinGroupResult) => {
@@ -197,10 +204,10 @@ export const useJoinGroup = () => {
       queryClient.invalidateQueries({ queryKey: ['group', _data.groupId] })
       queryClient.invalidateQueries({ queryKey: ['groupMembers', _data.groupId] })
       queryClient.invalidateQueries({ queryKey: ['groups'] })
-      
+
       // Invalidate custom cache
       sorobanService.invalidateGroupCache(_data.groupId)
-      
+
       analytics.trackEvent({
         category: 'Cache',
         action: 'Group Joined',
@@ -226,10 +233,16 @@ interface ContributeContext {
  */
 export const useContribute = () => {
   const queryClient = useQueryClient()
+  const { signTransaction } = useWallet()
 
   return useMutation<ContributeParams, Error, ContributeParams, ContributeContext>({
     mutationFn: async (params: ContributeParams) => {
-      await sorobanService.contribute(params.groupId, params.amount)
+      await sorobanService.contribute(params.groupId, params.amount, async (xdr) => {
+        const result = await signTransaction(xdr)
+        if (result.error) throw new Error(result.error.message)
+        if (!result.signedXdr) throw new Error('Failed to sign transaction')
+        return result.signedXdr
+      })
       return params
     },
     onMutate: async (params: ContributeParams) => {
@@ -255,10 +268,10 @@ export const useContribute = () => {
       queryClient.invalidateQueries({ queryKey: ['group', data.groupId] })
       queryClient.invalidateQueries({ queryKey: ['groupMembers', data.groupId] })
       queryClient.invalidateQueries({ queryKey: ['transactions', data.groupId] })
-      
+
       // Invalidate custom cache
       sorobanService.invalidateGroupCache(data.groupId)
-      
+
       analytics.trackEvent({
         category: 'Cache',
         action: 'Contribution Made',
@@ -271,7 +284,7 @@ export const useContribute = () => {
       if (context?.previousGroup) {
         queryClient.setQueryData(['group', variables.groupId], context.previousGroup)
       }
-      
+
       analytics.trackError(error, { operation: 'contribute' }, 'high')
     },
   })
@@ -314,7 +327,7 @@ export const useCacheMetrics = () => {
       const metrics = cacheService.getMetrics()
       const hitRate = cacheService.getHitRate()
       const state = cacheService.exportState()
-      
+
       return {
         ...metrics,
         hitRate,

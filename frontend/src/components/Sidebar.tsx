@@ -23,13 +23,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => 
           <button
             key={item.id}
             onClick={() => onNavigate?.(item.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition ${
-              currentView === item.id
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition ${currentView === item.id
                 ? 'bg-blue-50 text-blue-600 font-medium'
                 : 'text-gray-700 hover:bg-gray-50'
-            }`}
+              }`}
+            aria-label={`Navigate to ${item.label}`}
+            aria-current={currentView === item.id ? 'page' : undefined}
           >
-            <span className="text-xl">{item.icon}</span>
+            <span className="text-xl" aria-hidden="true">{item.icon}</span>
             <span>{item.label}</span>
           </button>
         ))}

@@ -3,7 +3,7 @@
 // Status: Implemented with filtering and sorting
 
 import React, { useState, useMemo } from 'react'
-import { TransactionFilters, TransactionSort, TransactionSortField, SortDirection } from '../types'
+import { TransactionFilters, TransactionSort, TransactionSortField } from '../types'
 
 interface Transaction {
   id: string
@@ -28,7 +28,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     member: '',
     status: 'all',
   })
-  
+
   const [sort, setSort] = useState<TransactionSort>({
     field: 'date',
     direction: 'desc',
@@ -98,7 +98,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   // Sort transactions
   const sortedTransactions = useMemo(() => {
     const sorted = [...filteredTransactions]
-    
+
     sorted.sort((a, b) => {
       let comparison = 0
 
@@ -273,13 +273,12 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-semibold ${
-                        tx.status === 'completed'
+                      className={`px-2 py-1 rounded text-xs font-semibold ${tx.status === 'completed'
                           ? 'bg-green-100 text-green-800'
                           : tx.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
                     >
                       {tx.status}
                     </span>

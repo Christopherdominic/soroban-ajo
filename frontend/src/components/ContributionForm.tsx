@@ -182,7 +182,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
         </div>
       )}
       <p className="text-sm text-gray-600 mb-6">
-        Enter the amount you'd like to contribute to this group. Fields marked with <span className="text-red-600 font-semibold">*</span> are required.
+        Enter the amount you&apos;d like to contribute to this group. Fields marked with <span className="text-red-600 font-semibold">*</span> are required.
       </p>
 
       {formErrors.amount && (
@@ -233,11 +233,10 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
               onBlur={handleBlur}
               step="0.01"
               min="0"
-              className={`w-full pl-8 pr-4 py-2 border rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 transition-colors ${
-                hasError('amount')
+              className={`w-full pl-8 pr-4 py-2 border rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 transition-colors ${hasError('amount')
                   ? 'border-red-500 focus:ring-red-500'
                   : 'border-gray-300 focus:ring-blue-500'
-              }`}
+                }`}
               placeholder="0.00"
               required
             />
@@ -295,11 +294,10 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
         <button
           type="submit"
           disabled={loading || !isFormValid || !touched}
-          className={`w-full font-semibold py-3 rounded-lg transition-all duration-200 ${
-            loading || !isFormValid || !touched
+          className={`w-full font-semibold py-3 rounded-lg transition-all duration-200 ${loading || !isFormValid || !touched
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md'
-          } text-white`}
+            } text-white`}
         >
           {loading ? (
             <span className="flex items-center justify-center">
@@ -315,7 +313,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
         </button>
 
         <p className="text-xs text-gray-600 text-center">
-          You'll be prompted to confirm this transaction in your wallet.
+          You&apos;ll be prompted to confirm this transaction in your wallet.
         </p>
       </form>
 

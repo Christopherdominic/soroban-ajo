@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-    WalletType,
     WalletState,
     WalletError,
     ConnectWalletParams,
@@ -65,7 +64,7 @@ export const useWallet = () => {
 
     // Connect to Freighter wallet
     const connectFreighter = useCallback(
-        async (network: string = 'testnet'): Promise<WalletConnectionResult> => {
+        async (_network: string = 'testnet'): Promise<WalletConnectionResult> => {
             if (!window.freighter) {
                 return {
                     success: false,
@@ -193,6 +192,47 @@ export const useWallet = () => {
         [connectFreighter, connectAlbedo]
     );
 
+    // Sign transaction
+    const signTransaction = useCallback(
+        async (xdr: string, opts?: { network?: string; networkPassphrase?: string }): Promise<{ signedXdr?: string; error?: WalletError }> => {
+            if (!walletState.isConnected || !walletState.walletType) {
+                return { error: { code: 'NOT_CONNECTED', message: 'Wallet not connected' } };
+            }
+
+            try {
+                let signedXdr: string;
+                if (walletState.walletType === 'freighter') {
+                    if (!window.freighter) throw new Error('Freighter not found');
+                    signedXdr = await window.freighter.signTransaction(xdr, {
+                        network: opts?.network || walletState.network.toUpperCase(),
+                        networkPassphrase: opts?.networkPassphrase,
+                    });
+                } else if (walletState.walletType === 'albedo') {
+                    if (!window.albedo) throw new Error('Albedo not found');
+                    const result = await window.albedo.tx({
+                        xdr,
+                        network: opts?.network || walletState.network,
+                        submit: false,
+                    });
+                    signedXdr = result.signed_envelope_xdr;
+                } else {
+                    throw new Error('Unsupported wallet type');
+                }
+
+                return { signedXdr };
+            } catch (err: any) {
+                return {
+                    error: {
+                        code: err.code || 'SIGNING_FAILED',
+                        message: err.message || 'Failed to sign transaction',
+                        walletType: walletState.walletType,
+                    },
+                };
+            }
+        },
+        [walletState]
+    );
+
     // Disconnect wallet
     const disconnect = useCallback(() => {
         setWalletState(initialState);
@@ -214,6 +254,7 @@ export const useWallet = () => {
         connect,
         disconnect,
         detectWallets,
+        signTransaction,
 
         // Computed
         isConnected: walletState.isConnected,

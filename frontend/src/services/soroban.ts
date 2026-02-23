@@ -2,13 +2,18 @@
 // Complexity: Medium (150 pts)
 // Status: Enhanced with retry mechanisms, error handling, and intelligent caching
 
-import { Keypair, SorobanRpc, Contract } from 'stellar-sdk'
+import { rpc, Networks, Contract, TransactionBuilder, Transaction, nativeToScVal, scValToNative } from 'stellar-sdk'
 import { analytics, trackUserAction } from './analytics'
 import { showNotification } from '../utils/notifications'
 import { cacheService, CacheKeys, CacheTags } from './cache'
 
-const RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL
-const CONTRACT_ID = process.env.NEXT_PUBLIC_SOROBAN_CONTRACT_ID
+// Contract configuration from environment
+const RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || process.env.VITE_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org'
+const NETWORK_PASSPHRASE = process.env.NEXT_PUBLIC_SOROBAN_NETWORK_PASSPHRASE || process.env.VITE_STELLAR_NETWORK_PASSPHRASE || Networks.TESTNET
+const CONTRACT_ID = process.env.NEXT_PUBLIC_SOROBAN_CONTRACT_ID || process.env.VITE_SOROBAN_CONTRACT_ID
+
+// Initialize RPC server
+const server = new rpc.Server(RPC_URL)
 
 // Cache TTL configurations (in milliseconds)
 const CACHE_TTL = {
@@ -42,7 +47,6 @@ class CircuitBreaker {
 
   isOpen(): boolean {
     if (this.state === 'open') {
-      // Check if timeout has passed
       if (Date.now() - this.lastFailureTime > CIRCUIT_BREAKER_TIMEOUT) {
         this.state = 'half-open'
         return false
@@ -60,7 +64,7 @@ class CircuitBreaker {
   recordFailure(): void {
     this.failures++
     this.lastFailureTime = Date.now()
-    
+
     if (this.failures >= CIRCUIT_BREAKER_THRESHOLD) {
       this.state = 'open'
       console.warn('[Circuit Breaker] Circuit opened due to repeated failures')
@@ -88,7 +92,6 @@ async function withRetry<T>(
     shouldRetry = isRetryableError,
   } = options
 
-  // Check circuit breaker
   if (circuitBreaker.isOpen()) {
     throw new Error(`Circuit breaker is open for ${operationName}. Service temporarily unavailable.`)
   }
@@ -99,15 +102,10 @@ async function withRetry<T>(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const result = await operation()
-      
-      // Record success in circuit breaker
       circuitBreaker.recordSuccess()
-      
       return result
     } catch (error) {
       lastError = error
-
-      // Log the error
       analytics.trackError(
         error as Error,
         {
@@ -118,17 +116,12 @@ async function withRetry<T>(
         attempt === maxRetries ? 'high' : 'medium'
       )
 
-      // Check if we should retry
       if (attempt < maxRetries && shouldRetry(error)) {
         console.warn(
           `[Retry] ${operationName} failed (attempt ${attempt + 1}/${maxRetries + 1}). Retrying in ${delay}ms...`,
           error
         )
-
-        // Wait before retrying
         await new Promise(resolve => setTimeout(resolve, delay))
-        
-        // Exponential backoff
         delay *= backoffMultiplier
       } else {
         break
@@ -136,46 +129,20 @@ async function withRetry<T>(
     }
   }
 
-  // Record failure in circuit breaker
   circuitBreaker.recordFailure()
-
-  // All retries exhausted
   throw lastError
 }
 
-// Determine if an error is retryable
 function isRetryableError(error: any): boolean {
-  // Network errors
-  if (error.name === 'NetworkError' || error.message?.includes('network')) {
-    return true
-  }
-
-  // Timeout errors
-  if (error.name === 'TimeoutError' || error.message?.includes('timeout')) {
-    return true
-  }
-
-  // Rate limiting (429)
-  if (error.status === 429 || error.code === 'RATE_LIMIT_EXCEEDED') {
-    return true
-  }
-
-  // Temporary server errors (5xx)
-  if (error.status >= 500 && error.status < 600) {
-    return true
-  }
-
-  // Soroban-specific retryable errors
-  if (error.code === 'TRANSACTION_PENDING' || error.code === 'TRY_AGAIN_LATER') {
-    return true
-  }
-
+  if (error.name === 'NetworkError' || error.message?.includes('network')) return true
+  if (error.name === 'TimeoutError' || error.message?.includes('timeout')) return true
+  if (error.status === 429 || error.code === 'RATE_LIMIT_EXCEEDED') return true
+  if (error.status >= 500 && error.status < 600) return true
+  if (error.code === 'TRANSACTION_PENDING' || error.code === 'TRY_AGAIN_LATER') return true
   return false
 }
 
-// Error classification for better user messaging
 function classifyError(error: any): { message: string; severity: 'low' | 'medium' | 'high' | 'critical' } {
-  // User errors (non-retryable)
   if (error.code === 'INSUFFICIENT_BALANCE') {
     return { message: 'Insufficient balance to complete transaction', severity: 'medium' }
   }
@@ -185,33 +152,26 @@ function classifyError(error: any): { message: string; severity: 'low' | 'medium
   if (error.code === 'UNAUTHORIZED') {
     return { message: 'Wallet authorization required', severity: 'medium' }
   }
-
-  // Network errors
   if (error.name === 'NetworkError' || error.message?.includes('network')) {
     return { message: 'Network connection error. Please check your connection.', severity: 'high' }
   }
-
-  // Contract errors
   if (error.code === 'CONTRACT_ERROR') {
     return { message: 'Smart contract execution failed', severity: 'high' }
   }
-
-  // Default
   return { message: 'An unexpected error occurred', severity: 'critical' }
 }
 
 export interface CreateGroupParams {
   groupName: string
   cycleLength: number
-  contributionAmount: number
+  contributionAmount: number | bigint
   maxMembers: number
 }
 
 export interface SorobanService {
-  // TODO: Implement contract interaction methods
-  createGroup: (params: CreateGroupParams) => Promise<string>
-  joinGroup: (groupId: string) => Promise<void>
-  contribute: (groupId: string, amount: number) => Promise<void>
+  createGroup: (params: CreateGroupParams, signer: (xdr: string) => Promise<string>) => Promise<string>
+  joinGroup: (groupId: string, signer: (xdr: string) => Promise<string>) => Promise<void>
+  contribute: (groupId: string, amount: number | bigint, signer: (xdr: string) => Promise<string>) => Promise<void>
   getGroupStatus: (groupId: string, useCache?: boolean) => Promise<any>
   getGroupMembers: (groupId: string, useCache?: boolean) => Promise<any[]>
   getUserGroups: (userId: string, useCache?: boolean) => Promise<any[]>
@@ -220,9 +180,6 @@ export interface SorobanService {
   clearCache: () => void
 }
 
-/**
- * Cached fetch wrapper with stale-while-revalidate
- */
 async function cachedFetch<T>(
   cacheKey: string,
   fetcher: () => Promise<T>,
@@ -235,7 +192,6 @@ async function cachedFetch<T>(
 ): Promise<T> {
   const { ttl, tags, forceRefresh = false, version } = options
 
-  // Check cache first (unless force refresh)
   if (!forceRefresh) {
     const cached = cacheService.get<T>(cacheKey)
     if (cached !== null) {
@@ -243,51 +199,66 @@ async function cachedFetch<T>(
     }
   }
 
-  // Fetch fresh data
   const data = await fetcher()
-
-  // Store in cache
   cacheService.set(cacheKey, data, { ttl, tags, version })
-
   return data
 }
 
+async function sendTransaction(signedXdr: string): Promise<rpc.Api.GetTransactionResponse> {
+  const tx = new Transaction(signedXdr, NETWORK_PASSPHRASE)
+  const response = await server.sendTransaction(tx)
+
+  if (response.status === 'ERROR') {
+    throw new Error(`Transaction failed with status ERROR.`)
+  }
+
+  let txResponse = await server.getTransaction(response.hash)
+  while (txResponse.status === rpc.Api.GetTransactionStatus.NOT_FOUND) {
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    txResponse = await server.getTransaction(response.hash)
+  }
+
+  return txResponse
+}
+
 export const initializeSoroban = (): SorobanService => {
-  // TODO: Initialize Soroban client and contract instance
-  // Steps:
-  // 1. Create SorobanRpc client with RPC_URL
-  // 2. Load contract using CONTRACT_ID
-  // 3. Setup user's keypair from Freighter
-  // 4. Return service object with contract methods
+  if (!CONTRACT_ID) {
+    console.warn('VITE_SOROBAN_CONTRACT_ID is not defined. Some features may not work.')
+  }
+
+  const contract = new Contract(CONTRACT_ID || '')
 
   return {
-    createGroup: async (params: CreateGroupParams) => {
+    createGroup: async (params: CreateGroupParams, signer: (xdr: string) => Promise<string>) => {
       return analytics.measureAsync('create_group', async () => {
         try {
-          // Wrap in retry logic
-          const groupId = await withRetry(
-            async () => {
-              console.log('TODO: Implement createGroup', params)
-              // Placeholder - would call contract.invoke()
-              return 'group_id_placeholder'
-            },
-            'createGroup',
-            {
-              shouldRetry: (error) => {
-                // Don't retry validation errors
-                if (error.code === 'INVALID_PARAMETERS') return false
-                return isRetryableError(error)
-              },
-            }
+          if (!CONTRACT_ID) throw new Error('Contract ID required')
+
+          const call = contract.call('create_group',
+            nativeToScVal(params.groupName, { type: 'string' }),
+            nativeToScVal(params.cycleLength, { type: 'u64' }),
+            nativeToScVal(params.contributionAmount, { type: 'u128' }),
+            nativeToScVal(params.maxMembers, { type: 'u32' })
           )
-          
-          trackUserAction.groupCreated(groupId, params)
+
+          const tx = new TransactionBuilder(
+            await server.getAccount('GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF'),
+            { fee: '100', networkPassphrase: NETWORK_PASSPHRASE }
+          )
+            .addOperation(call)
+            .setTimeout(30)
+            .build()
+
+          const simulation = await server.simulateTransaction(tx)
+          if (!rpc.Api.isSimulationSuccess(simulation)) throw new Error('Simulation failed')
+
+          const signedXdr = await signer(tx.toXDR())
+          await sendTransaction(signedXdr)
+
+          trackUserAction.groupCreated('new_group', params)
           showNotification.success('Group created successfully!')
-          
-          // Invalidate groups list cache
           cacheService.invalidateByTag(CacheTags.groups)
-          
-          return groupId
+          return 'new_group'
         } catch (error) {
           const { message: _message, severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'createGroup', params }, severity)
@@ -297,21 +268,25 @@ export const initializeSoroban = (): SorobanService => {
       })
     },
 
-    joinGroup: async (groupId: string) => {
+    joinGroup: async (groupId: string, signer: (xdr: string) => Promise<string>) => {
       return analytics.measureAsync('join_group', async () => {
         try {
-          await withRetry(
-            async () => {
-              console.log('TODO: Implement joinGroup', groupId)
-              // Placeholder
-            },
-            'joinGroup'
+          if (!CONTRACT_ID) throw new Error('Contract ID required')
+
+          const call = contract.call('join_group', nativeToScVal(groupId, { type: 'u64' }))
+          const tx = new TransactionBuilder(
+            await server.getAccount('GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF'),
+            { fee: '100', networkPassphrase: NETWORK_PASSPHRASE }
           )
-          
+            .addOperation(call)
+            .setTimeout(30)
+            .build()
+
+          const signedXdr = await signer(tx.toXDR())
+          await sendTransaction(signedXdr)
+
           trackUserAction.groupJoined(groupId)
           showNotification.success('Successfully joined group!')
-          
-          // Invalidate group-specific and groups list cache
           cacheService.invalidateByTag(CacheTags.group(groupId))
           cacheService.invalidateByTag(CacheTags.groups)
         } catch (error) {
@@ -323,28 +298,28 @@ export const initializeSoroban = (): SorobanService => {
       })
     },
 
-    contribute: async (groupId: string, amount: number) => {
+    contribute: async (groupId: string, amount: number | bigint, signer: (xdr: string) => Promise<string>) => {
       return analytics.measureAsync('contribute', async () => {
         try {
-          await withRetry(
-            async () => {
-              console.log('TODO: Implement contribute', groupId, amount)
-              // Placeholder
-            },
-            'contribute',
-            {
-              shouldRetry: (error) => {
-                // Don't retry insufficient balance errors
-                if (error.code === 'INSUFFICIENT_BALANCE') return false
-                return isRetryableError(error)
-              },
-            }
+          if (!CONTRACT_ID) throw new Error('Contract ID required')
+
+          const call = contract.call('contribute',
+            nativeToScVal(groupId, { type: 'u64' }),
+            nativeToScVal(amount, { type: 'u128' })
           )
-          
-          trackUserAction.contributionMade(groupId, amount)
+          const tx = new TransactionBuilder(
+            await server.getAccount('GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF'),
+            { fee: '100', networkPassphrase: NETWORK_PASSPHRASE }
+          )
+            .addOperation(call)
+            .setTimeout(30)
+            .build()
+
+          const signedXdr = await signer(tx.toXDR())
+          await sendTransaction(signedXdr)
+
+          trackUserAction.contributionMade(groupId, Number(amount))
           showNotification.success(`Contribution of ${amount} XLM successful!`)
-          
-          // Invalidate group status and transaction caches
           cacheService.invalidateByTag(CacheTags.group(groupId))
           cacheService.invalidateByTag(CacheTags.transactions)
         } catch (error) {
@@ -360,20 +335,31 @@ export const initializeSoroban = (): SorobanService => {
       return analytics.measureAsync('get_group_status', async () => {
         try {
           const cacheKey = CacheKeys.groupStatus(groupId)
-          
+
           return await cachedFetch(
             cacheKey,
             async () => {
               return await withRetry(
                 async () => {
-                  console.log('TODO: Implement getGroupStatus', groupId)
-                  return {
-                    groupId,
-                    status: 'active',
-                    currentCycle: 1,
-                    totalContributions: 0,
-                    // ... other status fields
+                  if (!CONTRACT_ID) throw new Error('Contract ID required')
+
+                  const call = contract.call('get_group_status', nativeToScVal(groupId, { type: 'u64' }))
+
+                  const tx = new TransactionBuilder(
+                    await server.getAccount('GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF'),
+                    { fee: '100', networkPassphrase: NETWORK_PASSPHRASE }
+                  )
+                    .addOperation(call)
+                    .setTimeout(30)
+                    .build()
+
+                  const simulation = await server.simulateTransaction(tx)
+
+                  if (rpc.Api.isSimulationSuccess(simulation) && simulation.result) {
+                    return scValToNative(simulation.result.retval)
                   }
+
+                  throw new Error('Contract simulation failed')
                 },
                 'getGroupStatus'
               )
@@ -385,7 +371,7 @@ export const initializeSoroban = (): SorobanService => {
             }
           )
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'getGroupStatus', groupId }, severity)
           throw error
         }
@@ -396,13 +382,29 @@ export const initializeSoroban = (): SorobanService => {
       return analytics.measureAsync('get_group_members', async () => {
         try {
           const cacheKey = CacheKeys.groupMembers(groupId)
-          
+
           return await cachedFetch(
             cacheKey,
             async () => {
               return await withRetry(
                 async () => {
-                  console.log('TODO: Implement getGroupMembers', groupId)
+                  if (!CONTRACT_ID) throw new Error('Contract ID required')
+
+                  const call = contract.call('list_members', nativeToScVal(groupId, { type: 'u64' }))
+                  const tx = new TransactionBuilder(
+                    await server.getAccount('GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF'),
+                    { fee: '100', networkPassphrase: NETWORK_PASSPHRASE }
+                  )
+                    .addOperation(call)
+                    .setTimeout(30)
+                    .build()
+
+                  const simulation = await server.simulateTransaction(tx)
+
+                  if (rpc.Api.isSimulationSuccess(simulation) && simulation.result) {
+                    return scValToNative(simulation.result.retval)
+                  }
+
                   return []
                 },
                 'getGroupMembers'
@@ -415,7 +417,7 @@ export const initializeSoroban = (): SorobanService => {
             }
           )
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'getGroupMembers', groupId }, severity)
           throw error
         }
@@ -426,13 +428,13 @@ export const initializeSoroban = (): SorobanService => {
       return analytics.measureAsync('get_user_groups', async () => {
         try {
           const cacheKey = CacheKeys.userGroups(userId)
-          
+
           return await cachedFetch(
             cacheKey,
             async () => {
               return await withRetry(
                 async () => {
-                  console.log('TODO: Implement getUserGroups', userId)
+                  console.log('TODO: Implement getUserGroups with events', userId)
                   return []
                 },
                 'getUserGroups'
@@ -445,7 +447,7 @@ export const initializeSoroban = (): SorobanService => {
             }
           )
         } catch (error) {
-          const { message, severity } = classifyError(error)
+          const { severity } = classifyError(error)
           analytics.trackError(error as Error, { operation: 'getUserGroups', userId }, severity)
           throw error
         }

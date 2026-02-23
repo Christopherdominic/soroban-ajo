@@ -33,11 +33,12 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentView }) => {
                 <button
                   key={item.id}
                   onClick={() => onNavigate?.(item.id)}
-                  className={`px-3 py-2 rounded text-sm font-medium transition ${
-                    currentView === item.id
+                  className={`px-3 py-2 rounded text-sm font-medium transition ${currentView === item.id
                       ? 'text-blue-600 bg-blue-50'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                      : 'text-gray-700 hover:bg-100'
+                    }`}
+                  aria-label={`Navigate to ${item.label}`}
+                  aria-current={currentView === item.id ? 'page' : undefined}
                 >
                   {item.label}
                 </button>

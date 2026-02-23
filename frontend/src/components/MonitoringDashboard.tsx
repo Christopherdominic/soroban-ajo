@@ -28,9 +28,9 @@ export const MonitoringDashboard: React.FC = () => {
         <StatCard title="Total Events" value={stats.totalEvents} />
         <StatCard title="Total Metrics" value={stats.totalMetrics} />
         <StatCard title="Total Errors" value={stats.totalErrors} />
-        <StatCard 
-          title="Avg Duration" 
-          value={`${stats.avgMetricDuration.toFixed(2)}ms`} 
+        <StatCard
+          title="Avg Duration"
+          value={`${stats.avgMetricDuration.toFixed(2)}ms`}
         />
       </div>
 
@@ -74,7 +74,7 @@ export const MonitoringDashboard: React.FC = () => {
                     {event.label && <span className="text-gray-600 ml-2">({event.label})</span>}
                   </div>
                   <span className="text-xs text-gray-500">
-                    {new Date(event.timestamp).toLocaleTimeString()}
+                    {new Date(event.timestamp || Date.now()).toLocaleTimeString()}
                   </span>
                 </div>
                 {event.value !== undefined && (

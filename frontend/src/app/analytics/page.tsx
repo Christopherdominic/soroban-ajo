@@ -1,6 +1,11 @@
 'use client'
 
-import { GroupAnalytics } from '@/components/GroupAnalytics'
+import dynamic from 'next/dynamic'
+
+const GroupAnalytics = dynamic(() => import('@/components/GroupAnalytics').then(mod => mod.GroupAnalytics), {
+  loading: () => <div className="animate-pulse bg-gray-200 h-96 rounded-lg w-full" />,
+  ssr: false
+})
 
 export default function AnalyticsPage() {
   return (

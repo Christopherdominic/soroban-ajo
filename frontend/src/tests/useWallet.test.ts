@@ -1,4 +1,4 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useWallet } from '../hooks/useWallet';
 import type { FreighterAPI, AlbedoAPI } from '../types/wallet';

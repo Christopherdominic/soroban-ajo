@@ -23,7 +23,11 @@ interface FormErrors {
   maxMembers?: string
 }
 
-export const GroupCreationForm: React.FC = () => {
+interface GroupCreationFormProps {
+  onSuccess?: () => void
+}
+
+export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess }) => {
   const [formData, setFormData] = useState<GroupFormData>({
     groupName: '',
     description: '',
@@ -133,6 +137,9 @@ export const GroupCreationForm: React.FC = () => {
       // 3. Show success notification
       // 4. Redirect to group detail page
       console.log('Create group:', formData)
+      if (onSuccess) {
+        onSuccess()
+      }
     } catch (err) {
       console.error('Failed to create group:', err)
     } finally {
@@ -140,7 +147,22 @@ export const GroupCreationForm: React.FC = () => {
     }
   }
 
+  const handleAddMember = () => {
+    if (memberInput.trim() && !formData.invitedMembers.includes(memberInput.trim())) {
+      setFormData({
+        ...formData,
+        invitedMembers: [...formData.invitedMembers, memberInput.trim()]
+      })
+      setMemberInput('')
+    }
+  }
 
+  const handleRemoveMember = (memberToRemove: string) => {
+    setFormData({
+      ...formData,
+      invitedMembers: formData.invitedMembers.filter(m => m !== memberToRemove)
+    })
+  }
 
   return (
     <div className="bg-white rounded-lg shadow p-6 max-w-2xl">
@@ -149,7 +171,7 @@ export const GroupCreationForm: React.FC = () => {
         Fill out the form below to create a new Ajo group. Fields marked with <span className="text-red-600 font-semibold">*</span> are required.
       </p>
 
-      {hasErrors && (
+      {Object.keys(errors).length > 0 && (
         <div
           ref={errorSummaryRef}
           role="alert"
@@ -189,9 +211,8 @@ export const GroupCreationForm: React.FC = () => {
             onChange={handleChange}
             onBlur={handleBlur}
             placeholder="e.g., Market Women Ajo"
-            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-              touched.groupName && errors.groupName ? 'border-red-500 bg-red-50' : 'border-gray-300'
-            }`}
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${touched.groupName && errors.groupName ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              }`}
             aria-required="true"
             aria-invalid={touched.groupName && !!errors.groupName}
             aria-describedby={`groupName-help${touched.groupName && errors.groupName ? ' groupName-error' : ''}`}
@@ -218,15 +239,14 @@ export const GroupCreationForm: React.FC = () => {
             onChange={handleChange}
             onBlur={handleBlur}
             placeholder="Describe your group's purpose..."
-            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-              touched.description && errors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'
-            }`}
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${touched.description && errors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              }`}
             rows={3}
             aria-invalid={touched.description && !!errors.description}
             aria-describedby={`description-help${touched.description && errors.description ? ' description-error' : ''}`}
           />
           <p id="description-help" className="mt-2 text-xs text-gray-600">
-            Provide context about your group's goals and purpose (max 500 characters)
+            Provide context about your group&apos;s goals and purpose (max 500 characters)
           </p>
           {touched.description && errors.description && (
             <p id="description-error" className="mt-1 text-sm text-red-600 font-medium" role="alert">
@@ -247,9 +267,8 @@ export const GroupCreationForm: React.FC = () => {
               value={formData.cycleLength}
               onChange={handleChange}
               onBlur={handleBlur}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                touched.cycleLength && errors.cycleLength ? 'border-red-500 bg-red-50' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${touched.cycleLength && errors.cycleLength ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                }`}
               min="1"
               max="365"
               aria-required="true"
@@ -279,9 +298,8 @@ export const GroupCreationForm: React.FC = () => {
               value={formData.contributionAmount}
               onChange={handleChange}
               onBlur={handleBlur}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                touched.contributionAmount && errors.contributionAmount ? 'border-red-500 bg-red-50' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${touched.contributionAmount && errors.contributionAmount ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                }`}
               min="0"
               max="1000000"
               aria-required="true"
@@ -311,9 +329,8 @@ export const GroupCreationForm: React.FC = () => {
             value={formData.maxMembers}
             onChange={handleChange}
             onBlur={handleBlur}
-            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-              touched.maxMembers && errors.maxMembers ? 'border-red-500 bg-red-50' : 'border-gray-300'
-            }`}
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${touched.maxMembers && errors.maxMembers ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              }`}
             min="2"
             max="50"
             aria-required="true"

@@ -1,4 +1,5 @@
 import React from 'react'
+import Image from 'next/image'
 import type { UserProfile } from '@/types/profile'
 
 interface ProfileCardProps {
@@ -39,10 +40,13 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, isLoading = f
         {/* Avatar */}
         <div className="relative">
           {profile.avatar ? (
-            <img
+            <Image
               src={profile.avatar}
               alt={profile.displayName || 'User avatar'}
-              className="w-24 h-24 rounded-full object-cover border-4 border-blue-100"
+              width={96}
+              height={96}
+              className="rounded-full object-cover border-4 border-blue-100"
+              aria-label={`Avatar for ${profile.displayName || 'user'}`}
             />
           ) : (
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center border-4 border-blue-100">

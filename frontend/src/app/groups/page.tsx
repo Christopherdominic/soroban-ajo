@@ -1,11 +1,22 @@
 'use client'
 
-import { GroupsList } from '@/components/GroupsList'
-import { GroupCreationForm } from '@/components/GroupCreationForm'
-import { useState } from 'react'
+import dynamic from 'next/dynamic'
+import { useState, Suspense } from 'react'
+import { useDashboard } from '@/hooks/useDashboard'
+
+const GroupsList = dynamic(() => import('@/components/GroupsList').then(mod => mod.GroupsList), {
+  loading: () => <div className="animate-pulse space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="bg-gray-200 h-24 rounded-lg" />)}</div>,
+  ssr: true
+})
+
+const GroupCreationForm = dynamic(() => import('@/components/GroupCreationForm').then(mod => mod.GroupCreationForm), {
+  loading: () => <div className="animate-pulse bg-gray-200 h-96 rounded-lg w-full" />,
+  ssr: true
+})
 
 export default function GroupsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const { groups, isLoading, sortField, sortDirection, toggleSort } = useDashboard()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -20,13 +31,15 @@ export default function GroupsPage() {
           </button>
         </div>
 
-        {showCreateForm ? (
-          <div className="max-w-2xl mx-auto">
-            <GroupCreationForm onSuccess={() => setShowCreateForm(false)} />
-          </div>
-        ) : (
-          <GroupsList />
-        )}
+        <Suspense fallback={<div className="animate-pulse bg-gray-200 h-96 rounded-lg w-full" />}>
+          {showCreateForm ? (
+            <div className="max-w-2xl mx-auto">
+              <GroupCreationForm onSuccess={() => setShowCreateForm(false)} />
+            </div>
+          ) : (
+            <GroupsList groups={groups} isLoading={isLoading} sortField={sortField} sortDirection={sortDirection} onSort={toggleSort} />
+          )}
+        </Suspense>
       </div>
     </div>
   )
