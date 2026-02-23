@@ -44,13 +44,17 @@ export const metadata: Metadata = {
   },
 }
 
+import { Toaster } from 'react-hot-toast'
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`}>
-        <Providers>
-          <AppLayout>{children}</AppLayout>
-        </Providers>
+      <body className={inter.className}>
+        <div className="pattern-overlay gradient-mesh min-h-screen">
+          <Providers>
+            <AppLayout>{children}</AppLayout>
+          </Providers>
+        </div>
       </body>
     </html>
   )

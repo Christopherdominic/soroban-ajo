@@ -64,6 +64,103 @@ body {
   min-height: 100vh;
 }
 
+/* Brand Patterns */
+.pattern-grid {
+  background-image: url('/patterns/grid.svg');
+  background-size: 60px 60px;
+  background-repeat: repeat;
+}
+
+.pattern-dots {
+  background-image: url('/patterns/dots.svg');
+  background-size: 20px 20px;
+  background-repeat: repeat;
+}
+
+.pattern-waves {
+  background-image: url('/patterns/waves.svg');
+  background-size: cover;
+  background-position: bottom;
+  background-repeat: no-repeat;
+}
+
+.pattern-mesh {
+  background-image: url('/patterns/mesh.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Gradient Patterns */
+.gradient-stellar {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+}
+
+.gradient-stellar-subtle {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%);
+}
+
+.gradient-radial-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+}
+
+.gradient-mesh {
+  background: 
+    radial-gradient(at 20% 30%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+    radial-gradient(at 80% 70%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
+}
+
+/* Animated Backgrounds */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.gradient-animated {
+  background: linear-gradient(270deg, #6366f1, #8b5cf6, #a855f7);
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+@keyframes float-pattern {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.pattern-float {
+  animation: float-pattern 6s ease-in-out infinite;
+}
+
+/* Pattern Overlays */
+.pattern-overlay {
+  position: relative;
+}
+
+.pattern-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/patterns/grid.svg');
+  background-size: 60px 60px;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.pattern-overlay > * {
+  position: relative;
+  z-index: 1;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { WalletConnector } from './WalletConnector'
-import { PageTransition } from './PageTransition'
+import { NotificationHistory } from './NotificationHistory'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -47,7 +47,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <span className="hidden sm:inline text-gray-600 text-sm">Decentralized Savings</span>
             </Link>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <NotificationHistory />
               <WalletConnector />
             </div>
           </div>
@@ -83,9 +84,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       </header>
 
       {/* Main Content */}
-      <main>
-        <PageTransition>{children}</PageTransition>
-      </main>
+      <main>{children}</main>
 
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 mt-auto">
