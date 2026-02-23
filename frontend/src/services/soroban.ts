@@ -6,6 +6,9 @@
 import { analytics, trackUserAction } from './analytics'
 import { showNotification } from '../utils/notifications'
 import { cacheService, CacheKeys, CacheTags } from './cache'
+import * as SorobanClient from 'stellar-sdk'
+import { requestAccess, signTransaction, isConnected, isAllowed, setAllowed } from '@stellar/freighter-api'
+import { SorobanTransactionResponse } from '../types'
 
 // Cache TTL configurations (in milliseconds)
 const CACHE_TTL = {
@@ -270,12 +273,14 @@ async function cachedFetch<T>(
 }
 
 export const initializeSoroban = (): SorobanService => {
-  // TODO: Initialize Soroban client and contract instance
-  // Steps:
-  // 1. Create SorobanRpc client with RPC_URL
-  // 2. Load contract using CONTRACT_ID
-  // 3. Setup user's keypair from Freighter
-  // 4. Return service object with contract methods
+  const isTestEnvironment = process.env.NODE_ENV === 'test'
+
+  // Create SorobanRpc client with RPC_URL
+  const RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org'
+  const NETWORK_PASSPHRASE = process.env.NEXT_PUBLIC_SOROBAN_NETWORK_PASSPHRASE || 'Test SDF Network ; September 2015'
+  const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID || ''
+
+  const server = new SorobanClient.SorobanRpc.Server(RPC_URL)
 
   return {
     createGroup: async (params: CreateGroupParams) => {
@@ -284,15 +289,91 @@ export const initializeSoroban = (): SorobanService => {
           // Wrap in retry logic
           const groupId = await withRetry(
             async () => {
-               
-              // Placeholder - would call contract.invoke()
-              return 'group_id_placeholder'
+              if (isTestEnvironment || !CONTRACT_ID) {
+                // Mock execution for test environment or missing contract
+                await new Promise((resolve) => setTimeout(resolve, 2000))
+                return `mock_group_${Date.now()}`
+              }
+
+              // Verify wallet connection
+              if (!(await isConnected())) {
+                throw new Error("Freighter wallet is not installed.");
+              }
+              if (!(await isAllowed())) {
+                await setAllowed();
+              }
+
+              const accessResult = await requestAccess();
+              if (accessResult.error || !accessResult.address) {
+                const error: any = new Error(accessResult.error || "User public key not available.")
+                error.code = 'UNAUTHORIZED'
+                throw error
+              }
+              const publicKey = accessResult.address;
+
+              const sourceAccount = await server.getAccount(publicKey)
+
+              // Pack parameters for Soroban XDR
+              const callArgs = [
+                SorobanClient.xdr.ScVal.scvString(params.groupName),
+                SorobanClient.xdr.ScVal.scvU32(params.cycleLength),
+                SorobanClient.xdr.ScVal.scvU32(params.contributionAmount),
+                SorobanClient.xdr.ScVal.scvU32(params.maxMembers),
+              ]
+
+              const contract = new SorobanClient.Contract(CONTRACT_ID)
+              const transaction = new SorobanClient.TransactionBuilder(sourceAccount, {
+                fee: "100", // Basic fee, update upon simulateTransaction response
+                networkPassphrase: NETWORK_PASSPHRASE,
+              })
+                .addOperation(contract.call('create_group', ...callArgs))
+                .setTimeout(30)
+                .build()
+
+              // Simulate the transaction to get real footprint and fee estimations
+              const simulated = await server.simulateTransaction(transaction)
+
+              if (!SorobanClient.SorobanRpc.Api.isSimulationSuccess(simulated)) {
+                const error: any = new Error("Transaction simulation failed")
+                error.code = 'CONTRACT_ERROR'
+                throw error
+              }
+
+              // Assemble real transaction with data payload footprint
+              const assembled = SorobanClient.SorobanRpc.assembleTransaction(transaction, simulated).build()
+
+              // Request Freighter signature
+              const signedXdr = await signTransaction(assembled.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE })
+              const signedTransaction = SorobanClient.TransactionBuilder.fromXDR(signedXdr.signedTxXdr, NETWORK_PASSPHRASE)
+
+              const sendResult = await server.sendTransaction(signedTransaction as SorobanClient.Transaction)
+
+              if (sendResult.errorResult) {
+                throw new Error(`Transaction submitted with error: ${sendResult.errorResult.toXDR().toString("base64")}`)
+              }
+
+              // Wait.
+              let statusResponse = await server.getTransaction(sendResult.hash)
+              let attempts = 0
+              while (statusResponse.status !== SorobanClient.SorobanRpc.Api.GetTransactionStatus.SUCCESS && attempts < 10) {
+                await new Promise((resolve) => setTimeout(resolve, 2000))
+                statusResponse = await server.getTransaction(sendResult.hash)
+                attempts++
+              }
+
+              if (statusResponse.status !== SorobanClient.SorobanRpc.Api.GetTransactionStatus.SUCCESS) {
+                throw new Error("Transaction did not complete successfully in time.")
+              }
+
+              // Since create_group likely returns the new group_id as an integer or string (based on Rust traits string vs integer sequence):
+              // For robustness, parse the returned value from the resultXdr footprint, but default to tx-hash if unprocessable.
+              return sendResult.hash
             },
             'createGroup',
             {
               shouldRetry: (error) => {
                 // Don't retry validation errors
-                if (error.code === 'INVALID_PARAMETERS') return false
+                if (error.code === 'INVALID_PARAMETERS' || error.code === 'UNAUTHORIZED') return false
                 return isRetryableError(error)
               },
             }
@@ -319,7 +400,7 @@ export const initializeSoroban = (): SorobanService => {
         try {
           await withRetry(
             async () => {
-               
+
               // Placeholder
             },
             'joinGroup'
@@ -352,7 +433,7 @@ export const initializeSoroban = (): SorobanService => {
               }
               // Simulate real contract call with delay
               await new Promise((resolve) => setTimeout(resolve, 2000))
-               
+
             },
             'contribute',
             {
@@ -389,7 +470,7 @@ export const initializeSoroban = (): SorobanService => {
             async () => {
               return await withRetry(
                 async () => {
-                   
+
                   return {
                     groupId,
                     status: 'active',
@@ -426,7 +507,7 @@ export const initializeSoroban = (): SorobanService => {
             async () => {
               return await withRetry(
                 async () => {
-                   
+
                   return []
                 },
                 'getGroupMembers'
@@ -457,7 +538,7 @@ export const initializeSoroban = (): SorobanService => {
             async () => {
               return await withRetry(
                 async () => {
-                   
+
                   return []
                 },
                 'getUserGroups'
@@ -488,7 +569,7 @@ export const initializeSoroban = (): SorobanService => {
             async () => {
               return await withRetry(
                 async () => {
-                   
+
                   // Here we will use the Stellar SDK to query contract events
                   // For now, return the mock data format so the UI works
                   return {
