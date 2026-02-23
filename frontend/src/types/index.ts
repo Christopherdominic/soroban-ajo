@@ -90,5 +90,15 @@ export interface ContributionFormData {
   lastContributionDate?: string
 }
 
+export interface SorobanTransactionResponse {
+  hash: string
+  status: 'pending' | 'success' | 'failed'
+}
+
+export interface ContractInvocationResult {
+  returnValue: any
+  simulatedFootprint: any
+}
+
 // Re-export profile types
 export type { UserProfile, UserPreferences, UserStats, ActivityItem } from './profile'
