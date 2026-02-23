@@ -58,3 +58,72 @@ pub fn validate_group_params(
     
     Ok(())
 }
+
+/// Check if a member is eligible for emergency withdrawal
+/// 
+/// Eligibility rules:
+/// - Must be a member of the group
+/// - Must not have already withdrawn
+/// - Must not have received payout yet
+/// - Group must have missed at least one cycle (cycle_duration has passed without payout)
+pub fn is_eligible_for_withdrawal(
+    env: &Env,
+    group: &Group,
+    member: &Address,
+) -> Result<bool, crate::errors::AjoError> {
+    // Check if member
+    if !is_member(&group.members, member) {
+        return Err(crate::errors::AjoError::NotMember);
+    }
+    
+    // Check if already withdrawn
+    if crate::storage::has_withdrawn(env, group.id, member) {
+        return Err(crate::errors::AjoError::AlreadyWithdrawn);
+    }
+    
+    // Check if already received payout
+    if crate::storage::has_received_payout(env, group.id, member) {
+        return Err(crate::errors::AjoError::WithdrawalAfterPayout);
+    }
+    
+    // Check if at least one cycle duration has passed since cycle start
+    let current_time = get_current_timestamp(env);
+    let time_since_cycle_start = current_time.saturating_sub(group.cycle_start_time);
+    
+    // Eligible if cycle duration has passed (indicating a stalled group)
+    if time_since_cycle_start >= group.cycle_duration {
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
+
+/// Calculate refund and penalty for emergency withdrawal
+/// 
+/// Logic:
+/// - Count how many contributions the member has made
+/// - Apply a 10% penalty to the total contributed amount
+/// - Return (refund_amount, penalty_amount)
+pub fn calculate_withdrawal_amounts(
+    env: &Env,
+    group: &Group,
+    member: &Address,
+) -> (i128, i128) {
+    let mut contributions_made = 0u32;
+    
+    // Count contributions across all cycles up to current
+    for cycle in 1..=group.current_cycle {
+        if crate::storage::has_contributed(env, group.id, cycle, member) {
+            contributions_made += 1;
+        }
+    }
+    
+    // Calculate total contributed
+    let total_contributed = group.contribution_amount * (contributions_made as i128);
+    
+    // Apply 10% penalty
+    let penalty_amount = total_contributed / 10;
+    let refund_amount = total_contributed - penalty_amount;
+    
+    (refund_amount, penalty_amount)
+}

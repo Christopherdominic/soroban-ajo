@@ -52,4 +52,13 @@ pub enum AjoError {
     
     /// Only the creator or authorized members can do this.
     Unauthorized = 15,
+    
+    /// Cannot withdraw after payout has been received.
+    WithdrawalAfterPayout = 17,
+    
+    /// Not eligible for emergency withdrawal yet.
+    NotEligibleForWithdrawal = 18,
+    
+    /// Member has already withdrawn from this group.
+    AlreadyWithdrawn = 19,
 }

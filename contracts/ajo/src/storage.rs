@@ -91,3 +91,15 @@ pub fn get_cycle_contributions(
     
     results
 }
+
+/// Mark a member as having withdrawn from the group
+pub fn mark_withdrawn(env: &Env, group_id: u64, member: &Address) {
+    let key = (symbol_short!("WDRAWN"), group_id, member);
+    env.storage().persistent().set(&key, &true);
+}
+
+/// Check if a member has withdrawn from the group
+pub fn has_withdrawn(env: &Env, group_id: u64, member: &Address) -> bool {
+    let key = (symbol_short!("WDRAWN"), group_id, member);
+    env.storage().persistent().get(&key).unwrap_or(false)
+}
