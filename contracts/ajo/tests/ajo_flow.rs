@@ -1,6 +1,6 @@
 #![cfg(test)]
 
-use soroban_sdk::{testutils::Address as _, Address, Env};
+use soroban_sdk::{testutils::{Address as _, Ledger}, Address, Env};
 use soroban_ajo::{AjoContract, AjoContractClient, AjoError};
 
 /// Helper function to create a test environment and contract
@@ -302,4 +302,233 @@ fn test_multiple_groups() {
     assert_eq!(group2.creator, member2);
     assert_eq!(group1.contribution_amount, 100_000_000i128);
     assert_eq!(group2.contribution_amount, 200_000_000i128);
+}
+
+// ============================================================================
+// Emergency Withdrawal Tests
+// ============================================================================
+
+#[test]
+fn test_emergency_withdraw_eligible() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group with 3 members
+    let contribution = 100_000_000i128; // 10 XLM
+    let cycle_duration = 604_800u64; // 1 week
+    let group_id = client.create_group(&creator, &contribution, &cycle_duration, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // All members contribute for cycle 1
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    client.contribute(&member3, &group_id);
+    
+    // Advance time past cycle duration (group stalls)
+    env.ledger().with_mut(|li| {
+        li.timestamp = li.timestamp + cycle_duration + 1;
+    });
+    
+    // Member2 performs emergency withdrawal
+    let (refund, penalty) = client.emergency_withdraw(&member2, &group_id);
+    
+    // Member2 contributed once: 100_000_000
+    // Penalty is 10%: 10_000_000
+    // Refund is 90%: 90_000_000
+    assert_eq!(refund, 90_000_000i128);
+    assert_eq!(penalty, 10_000_000i128);
+}
+
+#[test]
+fn test_emergency_withdraw_multiple_contributions() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group
+    let contribution = 100_000_000i128;
+    let cycle_duration = 604_800u64;
+    let group_id = client.create_group(&creator, &contribution, &cycle_duration, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Complete cycle 1 with payout
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    client.contribute(&member3, &group_id);
+    client.execute_payout(&group_id);
+    
+    // Contribute for cycle 2
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    client.contribute(&member3, &group_id);
+    
+    // Advance time past cycle duration (group stalls)
+    env.ledger().with_mut(|li| {
+        li.timestamp = li.timestamp + cycle_duration + 1;
+    });
+    
+    // Member3 performs emergency withdrawal
+    let (refund, penalty) = client.emergency_withdraw(&member3, &group_id);
+    
+    // Member3 contributed twice: 200_000_000
+    // Penalty is 10%: 20_000_000
+    // Refund is 90%: 180_000_000
+    assert_eq!(refund, 180_000_000i128);
+    assert_eq!(penalty, 20_000_000i128);
+}
+
+#[test]
+fn test_emergency_withdraw_not_eligible_too_early() {
+    let (env, client, creator, member2, _) = setup_test_env();
+    
+    // Create group
+    let cycle_duration = 604_800u64;
+    let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
+    client.join_group(&member2, &group_id);
+    
+    // Contribute
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    
+    // Try to withdraw before cycle duration passes - should fail
+    let result = client.try_emergency_withdraw(&member2, &group_id);
+    assert_eq!(result, Err(Ok(AjoError::NotEligibleForWithdrawal)));
+}
+
+#[test]
+fn test_emergency_withdraw_not_member() {
+    let (env, client, creator, _, _) = setup_test_env();
+    
+    // Create group
+    let cycle_duration = 604_800u64;
+    let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
+    
+    // Advance time
+    env.ledger().with_mut(|li| {
+        li.timestamp = li.timestamp + cycle_duration + 1;
+    });
+    
+    // Try to withdraw as non-member - should fail
+    let non_member = Address::generate(&env);
+    let result = client.try_emergency_withdraw(&non_member, &group_id);
+    assert_eq!(result, Err(Ok(AjoError::NotMember)));
+}
+
+#[test]
+fn test_emergency_withdraw_after_payout() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group
+    let contribution = 100_000_000i128;
+    let cycle_duration = 604_800u64;
+    let group_id = client.create_group(&creator, &contribution, &cycle_duration, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Complete cycle 1 - creator receives payout
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    client.contribute(&member3, &group_id);
+    client.execute_payout(&group_id);
+    
+    // Advance time
+    env.ledger().with_mut(|li| {
+        li.timestamp = li.timestamp + cycle_duration + 1;
+    });
+    
+    // Creator tries to withdraw after receiving payout - should fail
+    let result = client.try_emergency_withdraw(&creator, &group_id);
+    assert_eq!(result, Err(Ok(AjoError::WithdrawalAfterPayout)));
+}
+
+#[test]
+fn test_emergency_withdraw_already_withdrawn() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group
+    let contribution = 100_000_000i128;
+    let cycle_duration = 604_800u64;
+    let group_id = client.create_group(&creator, &contribution, &cycle_duration, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Contribute
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    client.contribute(&member3, &group_id);
+    
+    // Advance time
+    env.ledger().with_mut(|li| {
+        li.timestamp = li.timestamp + cycle_duration + 1;
+    });
+    
+    // First withdrawal succeeds
+    client.emergency_withdraw(&member2, &group_id);
+    
+    // Try to withdraw again - should fail
+    let result = client.try_emergency_withdraw(&member2, &group_id);
+    assert_eq!(result, Err(Ok(AjoError::AlreadyWithdrawn)));
+}
+
+#[test]
+fn test_emergency_withdraw_no_contributions() {
+    let (env, client, creator, member2, _) = setup_test_env();
+    
+    // Create group
+    let cycle_duration = 604_800u64;
+    let group_id = client.create_group(&creator, &100_000_000i128, &cycle_duration, &3u32);
+    client.join_group(&member2, &group_id);
+    
+    // Advance time without contributing
+    env.ledger().with_mut(|li| {
+        li.timestamp = li.timestamp + cycle_duration + 1;
+    });
+    
+    // Member2 withdraws without having contributed
+    let (refund, penalty) = client.emergency_withdraw(&member2, &group_id);
+    
+    // No contributions means no refund or penalty
+    assert_eq!(refund, 0i128);
+    assert_eq!(penalty, 0i128);
+}
+
+#[test]
+fn test_emergency_withdraw_prevents_further_participation() {
+    let (env, client, creator, member2, member3) = setup_test_env();
+    
+    // Create group
+    let contribution = 100_000_000i128;
+    let cycle_duration = 604_800u64;
+    let group_id = client.create_group(&creator, &contribution, &cycle_duration, &3u32);
+    client.join_group(&member2, &group_id);
+    client.join_group(&member3, &group_id);
+    
+    // Contribute for cycle 1
+    client.contribute(&creator, &group_id);
+    client.contribute(&member2, &group_id);
+    client.contribute(&member3, &group_id);
+    
+    // Advance time
+    env.ledger().with_mut(|li| {
+        li.timestamp = li.timestamp + cycle_duration + 1;
+    });
+    
+    // Member2 withdraws
+    client.emergency_withdraw(&member2, &group_id);
+    
+    // Execute payout for cycle 1
+    client.execute_payout(&group_id);
+    
+    // Try to contribute in cycle 2 - member2 should not be able to participate again
+    // (They're still technically a member but have withdrawn)
+    let result = client.try_emergency_withdraw(&member2, &group_id);
+    assert_eq!(result, Err(Ok(AjoError::AlreadyWithdrawn)));
+}
+
+#[test]
+fn test_emergency_withdraw_group_not_found() {
+    let (env, client, _, member2, _) = setup_test_env();
+    
+    // Try to withdraw from non-existent group
+    let result = client.try_emergency_withdraw(&member2, &999u64);
+    assert_eq!(result, Err(Ok(AjoError::GroupNotFound)));
 }

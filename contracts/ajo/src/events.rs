@@ -47,3 +47,15 @@ pub fn emit_group_completed(env: &Env, group_id: u64) {
     let topics = (symbol_short!("complete"), group_id);
     env.events().publish(topics, ());
 }
+
+/// Emit an event when a member performs an emergency withdrawal
+pub fn emit_emergency_withdrawal(
+    env: &Env,
+    group_id: u64,
+    member: &Address,
+    refund_amount: i128,
+    penalty_amount: i128,
+) {
+    let topics = (symbol_short!("withdraw"), group_id);
+    env.events().publish(topics, (member, refund_amount, penalty_amount));
+}

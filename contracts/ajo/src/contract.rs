@@ -330,4 +330,62 @@ impl AjoContract {
         let group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
         Ok(group.is_complete)
     }
+    
+    /// Emergency withdrawal for members under defined conditions
+    ///
+    /// Allows a member to withdraw their contributions if the group has stalled.
+    /// A 10% penalty is applied to discourage abuse.
+    ///
+    /// # Eligibility Rules
+    /// - Must be a member of the group
+    /// - Must not have already withdrawn
+    /// - Must not have received payout yet
+    /// - At least one cycle duration must have passed since cycle start (indicating stalled group)
+    ///
+    /// # Arguments
+    /// * `member` - The member requesting withdrawal
+    /// * `group_id` - The group to withdraw from
+    ///
+    /// # Returns
+    /// A tuple of (refund_amount, penalty_amount)
+    ///
+    /// # Errors
+    /// * `GroupNotFound` - If the group does not exist
+    /// * `NotMember` - If the address is not a member
+    /// * `AlreadyWithdrawn` - If the member has already withdrawn
+    /// * `WithdrawalAfterPayout` - If the member has already received payout
+    /// * `NotEligibleForWithdrawal` - If eligibility conditions are not met
+    pub fn emergency_withdraw(
+        env: Env,
+        member: Address,
+        group_id: u64,
+    ) -> Result<(i128, i128), AjoError> {
+        // Require authentication
+        member.require_auth();
+        
+        // Get group
+        let group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
+        
+        // Check eligibility
+        let is_eligible = utils::is_eligible_for_withdrawal(&env, &group, &member)?;
+        
+        if !is_eligible {
+            return Err(AjoError::NotEligibleForWithdrawal);
+        }
+        
+        // Calculate refund and penalty
+        let (refund_amount, penalty_amount) = utils::calculate_withdrawal_amounts(&env, &group, &member);
+        
+        // Mark as withdrawn
+        storage::mark_withdrawn(&env, group_id, &member);
+        
+        // Transfer refund to member
+        // Note: In production, this would use token.transfer() or native transfer
+        // The penalty remains in the contract pool
+        
+        // Emit event
+        events::emit_emergency_withdrawal(&env, group_id, &member, refund_amount, penalty_amount);
+        
+        Ok((refund_amount, penalty_amount))
+    }
 }

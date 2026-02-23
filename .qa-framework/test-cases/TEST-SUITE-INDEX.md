@@ -3,8 +3,8 @@
 ## Overview
 This document provides an index of all test cases in the Soroban Ajo QA Testing Framework, organized by category. Each test case is documented in detail in its respective file.
 
-**Total Test Cases**: 52
-**Last Updated**: 2024-01-15
+**Total Test Cases**: 59
+**Last Updated**: 2024-02-23
 
 ---
 
@@ -12,17 +12,17 @@ This document provides an index of all test cases in the Soroban Ajo QA Testing 
 
 | Category | Total | Critical | High | Medium | Low | Automated |
 |----------|-------|----------|------|--------|-----|-----------|
-| Smart Contract | 15 | 5 | 7 | 2 | 1 | 14 |
+| Smart Contract | 22 | 5 | 13 | 3 | 1 | 21 |
 | Frontend | 18 | 4 | 8 | 4 | 2 | 16 |
 | Integration | 8 | 4 | 3 | 1 | 0 | 6 |
 | End-to-End | 6 | 6 | 0 | 0 | 0 | 4 |
 | Performance | 3 | 2 | 1 | 0 | 0 | 3 |
 | Security | 2 | 2 | 0 | 0 | 0 | 0 |
-| **TOTAL** | **52** | **23** | **19** | **7** | **3** | **43** |
+| **TOTAL** | **59** | **23** | **25** | **8** | **3** | **50** |
 
 ---
 
-## Smart Contract Test Cases (15)
+## Smart Contract Test Cases (22)
 
 ### Group Creation (6 test cases)
 - **TC-SC-001**: Create Group with Valid Parameters [Critical] [Automated]
@@ -32,20 +32,29 @@ This document provides an index of all test cases in the Soroban Ajo QA Testing 
 - **TC-SC-005**: Create Group with Maximum Values [Medium] [Manual]
 - **TC-SC-006**: Create Multiple Groups [High] [Automated]
 
+### Emergency Withdrawal (7 test cases)
+- **TC-SC-007**: Emergency Withdrawal - Eligible Member [High] [Automated]
+- **TC-SC-008**: Emergency Withdrawal - Multiple Contributions [High] [Automated]
+- **TC-SC-009**: Emergency Withdrawal - Not Eligible (Too Early) [High] [Automated]
+- **TC-SC-010**: Emergency Withdrawal - After Payout Received [High] [Automated]
+- **TC-SC-011**: Emergency Withdrawal - Already Withdrawn [High] [Automated]
+- **TC-SC-012**: Emergency Withdrawal - Not a Member [High] [Automated]
+- **TC-SC-013**: Emergency Withdrawal - No Contributions Made [Medium] [Automated]
+
 ### Member Joining (4 test cases)
-- **TC-SC-007**: Join Group with Valid Member [Critical] [Automated]
-- **TC-SC-008**: Join Group - Duplicate Member Prevention [High] [Automated]
-- **TC-SC-009**: Join Group - Capacity Limit Enforcement [High] [Automated]
-- **TC-SC-010**: Join Group - Already Complete Group [Medium] [Automated]
+- **TC-SC-014**: Join Group with Valid Member [Critical] [Automated]
+- **TC-SC-015**: Join Group - Duplicate Member Prevention [High] [Automated]
+- **TC-SC-016**: Join Group - Capacity Limit Enforcement [High] [Automated]
+- **TC-SC-017**: Join Group - Already Complete Group [Medium] [Automated]
 
 ### Contributions (3 test cases)
-- **TC-SC-011**: Contribute to Group - Valid Contribution [Critical] [Automated]
-- **TC-SC-012**: Contribute - Double Contribution Prevention [High] [Automated]
-- **TC-SC-013**: Contribute - Non-Member Rejection [High] [Automated]
+- **TC-SC-018**: Contribute to Group - Valid Contribution [Critical] [Automated]
+- **TC-SC-019**: Contribute - Double Contribution Prevention [High] [Automated]
+- **TC-SC-020**: Contribute - Non-Member Rejection [High] [Automated]
 
 ### Payouts (2 test cases)
-- **TC-SC-014**: Execute Payout - All Contributed [Critical] [Automated]
-- **TC-SC-015**: Execute Payout - Incomplete Contributions [High] [Automated]
+- **TC-SC-021**: Execute Payout - All Contributed [Critical] [Automated]
+- **TC-SC-022**: Execute Payout - Incomplete Contributions [High] [Automated]
 
 ---
 
@@ -153,8 +162,8 @@ Medium and Low priority test cases (10 total)
 
 ## Automation Status
 
-### Fully Automated (43 test cases)
-- Smart Contract: 14/15 (93%)
+### Fully Automated (50 test cases)
+- Smart Contract: 21/22 (95%)
 - Frontend: 16/18 (89%)
 - Integration: 6/8 (75%)
 - End-to-End: 4/6 (67%)
@@ -183,6 +192,13 @@ Medium and Low priority test cases (10 total)
 │   ├── TC-SC-004-create-group-invalid-max-members.md
 │   ├── TC-SC-005-create-group-maximum-values.md
 │   ├── TC-SC-006-create-multiple-groups.md
+│   ├── TC-SC-007-emergency-withdraw-eligible.md
+│   ├── TC-SC-008-emergency-withdraw-multiple-contributions.md
+│   ├── TC-SC-009-emergency-withdraw-not-eligible.md
+│   ├── TC-SC-010-emergency-withdraw-after-payout.md
+│   ├── TC-SC-011-emergency-withdraw-already-withdrawn.md
+│   ├── TC-SC-012-emergency-withdraw-not-member.md
+│   ├── TC-SC-013-emergency-withdraw-no-contributions.md
 │   └── [9 more files...]
 ├── frontend/
 │   ├── TC-FE-001-group-form-renders.md
@@ -208,10 +224,11 @@ Medium and Low priority test cases (10 total)
 
 ### Requirements Coverage
 - Requirement 2.1 (Group Creation): TC-SC-001 through TC-SC-006
-- Requirement 2.2 (Member Joining): TC-SC-007 through TC-SC-010
-- Requirement 2.3 (Contributions): TC-SC-011 through TC-SC-013
-- Requirement 2.4 (Payouts): TC-SC-014, TC-SC-015
-- Requirement 2.5 (Access Control): TC-SC-013, TC-SEC-001
+- Requirement 2.2 (Emergency Withdrawal): TC-SC-007 through TC-SC-013
+- Requirement 2.3 (Member Joining): TC-SC-014 through TC-SC-017
+- Requirement 2.4 (Contributions): TC-SC-018 through TC-SC-020
+- Requirement 2.5 (Payouts): TC-SC-021, TC-SC-022
+- Requirement 2.6 (Access Control): TC-SC-012, TC-SC-020, TC-SEC-001
 - Requirement 2.6 (Error Handling): TC-SC-002, TC-SC-003, TC-SC-004
 - Requirement 2.7 (Edge Cases): TC-SC-002, TC-SC-003, TC-SC-004, TC-SC-005
 - Requirement 3.1 (Component Rendering): TC-FE-001 through TC-FE-005
