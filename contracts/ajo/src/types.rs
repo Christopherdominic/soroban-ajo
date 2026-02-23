@@ -100,7 +100,7 @@ pub struct PayoutRecord {
 
 /// Comprehensive snapshot of a group's current state.
 ///
-/// Returned by [`AjoContract::get_group_status`] to give callers a single
+/// Returned by [`crate::contract::AjoContract::get_group_status`] to give callers a single
 /// consolidated view without having to make multiple queries.
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]

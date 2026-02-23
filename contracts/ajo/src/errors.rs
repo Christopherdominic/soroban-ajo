@@ -64,7 +64,13 @@ pub enum AjoError {
 
     /// The contract has already been initialized.
     AlreadyInitialized = 20,
-
-    /// One of the metadata fields exceeds the length limit.
-    MetadataTooLong = 21,
+    
+    /// The contract is currently paused and cannot execute this operation.
+    ContractPaused = 21,
+    
+    /// Only the admin can pause the contract.
+    UnauthorizedPause = 22,
+    
+    /// Only the admin can unpause the contract.
+    UnauthorizedUnpause = 23,
 }

@@ -42,7 +42,7 @@ impl StorageKey {
     /// in a tuple at the storage call site; this method returns only the symbol portion.
     ///
     /// # Arguments
-    /// * `env` - The contract environment (needed for symbol creation)
+    /// * `_env` - The contract environment (reserved for future use)
     ///
     /// # Returns
     /// The [`Symbol`] corresponding to this key variant's prefix
