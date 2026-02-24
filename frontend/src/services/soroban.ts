@@ -727,3 +727,254 @@ export const initializeSoroban = (): SorobanService => {
     },
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADD THESE TO THE BOTTOM OF frontend/src/services/soroban.ts
+//
+// Do NOT replace your existing file — paste everything below this comment
+// at the very end of soroban.ts. The existing imports (SorobanClient, server,
+// NETWORK_PASSPHRASE, etc.) are already declared above so we reuse them here.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import * as StellarSdk from 'stellar-sdk'
+
+// ── Types exported for use in hooks and components ───────────────────────────
+
+export interface AccountBalanceInfo {
+  /** Raw XLM balance string from Horizon e.g. "1234.5600000" */
+  nativeBalance: string
+  /** Minimum reserve in XLM the account must keep: (2 + subentries) × 0.5 */
+  minReserve: number
+  /** Number of subentries on the account (trustlines, offers, data, signers) */
+  subentryCount: number
+}
+
+export interface TransactionSimulation {
+  success: boolean
+  /** Fee in stroops */
+  feeStroops: number
+  /** Fee as XLM number */
+  feeXLM: number
+  /** Human-readable description of what will happen */
+  expectedOutcome: string
+  error?: string
+}
+
+export interface RecentTx {
+  id: string
+  type: 'contribution' | 'withdrawal' | 'payout' | 'fee' | 'other'
+  amount: string
+  timestamp: Date
+  status: 'success' | 'pending' | 'failed'
+  groupName?: string
+}
+
+// ── Horizon server (separate from the Soroban RPC server above) ───────────────
+
+const HORIZON_URL =
+  process.env.NEXT_PUBLIC_HORIZON_URL || 'https://horizon-testnet.stellar.org'
+
+const horizonServer = new StellarSdk.Horizon.Server(HORIZON_URL)
+
+// Is this a testnet deployment?
+export const IS_TESTNET =
+  (process.env.NEXT_PUBLIC_SOROBAN_NETWORK_PASSPHRASE ||
+    'Test SDF Network ; September 2015') === StellarSdk.Networks.TESTNET
+
+// ── Balance helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Fetch the native XLM balance and minimum reserve for a Stellar account.
+ * Throws if the account does not exist on-chain.
+ */
+export async function getAccountBalanceInfo(
+  publicKey: string
+): Promise<AccountBalanceInfo> {
+  const account = await horizonServer.loadAccount(publicKey)
+
+  const nativeEntry = account.balances.find(
+    (b): b is StellarSdk.Horizon.HorizonApi.BalanceLine<'native'> =>
+      b.asset_type === 'native'
+  )
+  const nativeBalance = nativeEntry?.balance ?? '0'
+
+  // Stellar minimum reserve formula: (2 + subentries) × base_reserve (0.5 XLM)
+  const BASE_RESERVE = 0.5
+  const subentryCount = account.subentry_count
+  const minReserve = (2 + subentryCount) * BASE_RESERVE
+
+  return { nativeBalance, minReserve, subentryCount }
+}
+
+/**
+ * Return the total XLM locked inside active Ajo groups for this address.
+ *
+ * TODO: Replace the stub below with a real contract call once the contract
+ * exposes a `get_locked_balance(address)` view function. Example pattern:
+ *
+ *   const contract = new SorobanClient.Contract(CONTRACT_ID)
+ *   const sourceAccount = await server.getAccount(publicKey)
+ *   const tx = new SorobanClient.TransactionBuilder(sourceAccount, {
+ *     fee: '100',
+ *     networkPassphrase: NETWORK_PASSPHRASE,
+ *   })
+ *     .addOperation(
+ *       contract.call(
+ *         'get_locked_balance',
+ *         SorobanClient.xdr.ScVal.scvAddress(
+ *           SorobanClient.xdr.ScAddress.scAddressTypeAccount(
+ *             SorobanClient.xdr.AccountID.publicKeyTypeEd25519(
+ *               SorobanClient.StrKey.decodeEd25519PublicKey(publicKey)
+ *             )
+ *           )
+ *         )
+ *       )
+ *     )
+ *     .setTimeout(30)
+ *     .build()
+ *   const sim = await server.simulateTransaction(tx)
+ *   if (SorobanClient.SorobanRpc.Api.isSimulationSuccess(sim)) {
+ *     return SorobanClient.scValToNative(sim.result!.retval) / 10_000_000
+ *   }
+ *   return 0
+ */
+export async function getLockedBalance(_publicKey: string): Promise<number> {
+  // Stub: returns 0 until contract view function is available
+  return 0
+}
+
+// ── Transaction simulation ────────────────────────────────────────────────────
+
+/**
+ * Dry-run a built Soroban transaction to get an accurate fee estimate
+ * and verify it will succeed before asking the user to sign.
+ *
+ * @param builtTxXdr - The XDR string of the transaction built with TransactionBuilder
+ * @param expectedOutcome - Human-readable description for the preview modal
+ */
+export async function simulateSorobanTransaction(
+  builtTxXdr: string,
+  expectedOutcome: string
+): Promise<TransactionSimulation> {
+  try {
+    const transaction = StellarSdk.TransactionBuilder.fromXDR(
+      builtTxXdr,
+      process.env.NEXT_PUBLIC_SOROBAN_NETWORK_PASSPHRASE ||
+        'Test SDF Network ; September 2015'
+    ) as StellarSdk.Transaction
+
+    // Use the existing `server` (SorobanRpc.Server) declared at the top of soroban.ts
+    const simResult = await server.simulateTransaction(transaction)
+
+    if (SorobanClient.SorobanRpc.Api.isSimulationError(simResult)) {
+      return {
+        success: false,
+        feeStroops: 0,
+        feeXLM: 0,
+        expectedOutcome: '',
+        error: simResult.error,
+      }
+    }
+
+    if (SorobanClient.SorobanRpc.Api.isSimulationSuccess(simResult)) {
+      const feeStroops = parseInt(simResult.minResourceFee, 10)
+      const feeXLM = feeStroops / 10_000_000
+
+      return {
+        success: true,
+        feeStroops,
+        feeXLM,
+        expectedOutcome,
+      }
+    }
+
+    return {
+      success: false,
+      feeStroops: 0,
+      feeXLM: 0,
+      expectedOutcome: '',
+      error: 'Unexpected simulation response',
+    }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Simulation failed'
+    return {
+      success: false,
+      feeStroops: 0,
+      feeXLM: 0,
+      expectedOutcome: '',
+      error: message,
+    }
+  }
+}
+
+// ── Recent transactions ───────────────────────────────────────────────────────
+
+/**
+ * Fetch recent Horizon operations for a public key and map them to
+ * the RecentTx shape used by WalletConnector's transaction tab.
+ */
+export async function getRecentTxHistory(
+  publicKey: string,
+  limit = 10
+): Promise<RecentTx[]> {
+  try {
+    const ops = await horizonServer
+      .operations()
+      .forAccount(publicKey)
+      .limit(limit)
+      .order('desc')
+      .call()
+
+    return ops.records.map((op): RecentTx => {
+      const isPayment = op.type === 'payment' || op.type === 'create_account'
+      const amount =
+        isPayment && 'amount' in op ? String((op as any).amount) : '0'
+
+      let type: RecentTx['type'] = 'other'
+      if (op.type === 'payment') {
+        type = (op as any).to === publicKey ? 'payout' : 'contribution'
+      } else if (op.type === 'create_account') {
+        type = 'contribution'
+      }
+
+      return {
+        id: op.id,
+        type,
+        amount,
+        timestamp: new Date(op.created_at),
+        status: 'success',
+      }
+    })
+  } catch {
+    return []
+  }
+}
+
+// ── Testnet funding ───────────────────────────────────────────────────────────
+
+/**
+ * Fund a testnet account via Friendbot.
+ * On mainnet this always returns false.
+ */
+export async function fundWithFriendbot(publicKey: string): Promise<boolean> {
+  if (!IS_TESTNET) return false
+  try {
+    const res = await fetch(
+      `https://friendbot.stellar.org?addr=${encodeURIComponent(publicKey)}`
+    )
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Return the "Add Funds" URL:
+ * - Testnet → Friendbot page
+ * - Mainnet → StellarX exchange
+ */
+export function getAddFundsUrl(publicKey: string): string {
+  return IS_TESTNET
+    ? `https://friendbot.stellar.org?addr=${encodeURIComponent(publicKey)}`
+    : 'https://stellarx.com/markets/XLM'
+}
