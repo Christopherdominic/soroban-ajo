@@ -3,6 +3,9 @@ import { logger } from '../utils/logger'
 import { AppError, ErrorFactory } from '../errors/AppError'
 import { ZodError } from 'zod'
 
+// Re-export AppError for use in other modules
+export { AppError, ErrorFactory } from '../errors/AppError'
+
 /**
  * Global error handling middleware
  * Converts all errors to consistent API responses

@@ -6,7 +6,7 @@ import { z, ZodError, ZodSchema } from 'zod'
  * Creates middleware that validates request data against a Zod schema
  */
 export function validateRequest(schema: ZodSchema, source: 'body' | 'query' | 'params' = 'body') {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const data = req[source]
       const validated = await schema.parseAsync(data)
@@ -17,7 +17,7 @@ export function validateRequest(schema: ZodSchema, source: 'body' | 'query' | 'p
       next()
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           error: 'Validation failed',
           details: error.errors.map((err) => ({
@@ -26,6 +26,7 @@ export function validateRequest(schema: ZodSchema, source: 'body' | 'query' | 'p
             code: err.code,
           })),
         })
+        return
       }
       
       // Pass other errors to error handler

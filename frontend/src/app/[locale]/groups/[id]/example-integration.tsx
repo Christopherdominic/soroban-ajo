@@ -64,7 +64,7 @@ export default function GroupDetailPageExample() {
       <div className="container">
         <div className="error-state">
           <h2>Group not found</h2>
-          <p>The group you&apos;re looking for doesn't exist or has been removed.</p>
+          <p>The group you&apos;re looking for doesn&apos;t exist or has been removed.</p>
         </div>
       </div>
     )
@@ -385,7 +385,7 @@ export function CustomStatusDisplay({ groupId }: { groupId: string }) {
  * Automatically refresh every minute:
  */
 export function AutoRefreshStatus({ groupId }: { groupId: string }) {
-  const { data, refetch } = useGroupStatus(groupId)
+  const { refetch } = useGroupStatus(groupId)
 
   // Auto-refresh every 60 seconds
   React.useEffect(() => {

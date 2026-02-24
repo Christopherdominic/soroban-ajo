@@ -23,7 +23,6 @@ export default function AnalyticsDashboard() {
 
   const {
     metrics,
-    contributionHistory,
     groupDistribution,
     savingsGrowth,
     insights,

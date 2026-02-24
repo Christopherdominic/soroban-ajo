@@ -13,7 +13,7 @@ import { authRouter } from './routes/auth'
 import { analyticsRouter } from './routes/analytics'
 import { emailRouter } from './routes/email'
 import { setupSwagger } from './swagger'
-import { apiLimiter, strictLimiter } from './middleware/ratelimiter'
+import { apiLimiter, strictLimiter } from './middleware/rateLimiter'
 
 dotenv.config()
 

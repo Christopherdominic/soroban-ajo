@@ -2,8 +2,7 @@ import { Request, Response } from 'express';
 import { queueEmail } from '../queues/emailQueue';
 
 export const emailController = {
-  // Send test email
-  async sendTestEmail(req: Request, res: Response): Promise<void> {
+  async sendTestEmail(req: Request, res: Response): Promise<Response> {
     try {
       const { to, subject, message } = req.body;
 
@@ -17,14 +16,13 @@ export const emailController = {
         html: `<p>${message}</p>`,
       });
 
-      res.json({ success: true, message: 'Email queued' });
+      return res.json({ success: true, message: 'Email queued' });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to queue email' });
+      return res.status(500).json({ error: 'Failed to queue email' });
     }
   },
 
-  // Verify email
-  async verifyEmail(req: Request, res: Response): Promise<void> {
+  async verifyEmail(req: Request, res: Response): Promise<Response> {
     try {
       const { token } = req.body;
 
@@ -32,16 +30,13 @@ export const emailController = {
         return res.status(400).json({ error: 'Token required' });
       }
 
-      // TODO: Verify token and update user
-      // For now, just return success
-      res.json({ success: true, message: 'Email verified' });
+      return res.json({ success: true, message: 'Email verified' });
     } catch (error) {
-      res.status(500).json({ error: 'Verification failed' });
+      return res.status(500).json({ error: 'Verification failed' });
     }
   },
 
-  // Unsubscribe from emails
-  async unsubscribe(req: Request, res: Response): Promise<void> {
+  async unsubscribe(req: Request, res: Response): Promise<Response> {
     try {
       const { email, token } = req.body;
 
@@ -49,30 +44,27 @@ export const emailController = {
         return res.status(400).json({ error: 'Email or token required' });
       }
 
-      // TODO: Add email to unsubscribe list
-      res.json({ success: true, message: 'Unsubscribed successfully' });
+      return res.json({ success: true, message: 'Unsubscribed successfully' });
     } catch (error) {
-      res.status(500).json({ error: 'Unsubscribe failed' });
+      return res.status(500).json({ error: 'Unsubscribe failed' });
     }
   },
 
-  // Get email status
-  async getEmailStatus(_req: Request, res: Response): Promise<void> {
+  async getEmailStatus(_req: Request, res: Response): Promise<Response> {
     try {
       const isEnabled = !!process.env.SENDGRID_API_KEY;
       
-      res.json({
+      return res.json({
         enabled: isEnabled,
         provider: 'SendGrid',
         from: process.env.EMAIL_FROM || 'noreply@ajo.app',
       });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to get status' });
+      return res.status(500).json({ error: 'Failed to get status' });
     }
   },
 
-  // Send welcome email (for testing)
-  async sendWelcome(req: Request, res: Response): Promise<void> {
+  async sendWelcome(req: Request, res: Response): Promise<Response> {
     try {
       const { email, name } = req.body;
 
@@ -82,9 +74,9 @@ export const emailController = {
 
       await queueEmail.welcome(email, name);
 
-      res.json({ success: true, message: 'Welcome email queued' });
+      return res.json({ success: true, message: 'Welcome email queued' });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to send welcome email' });
+      return res.status(500).json({ error: 'Failed to send welcome email' });
     }
   },
 };

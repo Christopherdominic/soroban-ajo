@@ -66,7 +66,7 @@ export class GroupsController {
     }
 
     // Phase 2: confirmed on-chain
-    res.status(201).json({ success: true, data: result })
+    return res.status(201).json({ success: true, data: result })
   })
 
   /**

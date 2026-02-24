@@ -8,7 +8,6 @@ export default function DebugFreighterPage() {
 
   const addLog = (message: string) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${message}`])
-    console.log(message)
   }
 
   useEffect(() => {
@@ -212,8 +211,8 @@ export default function DebugFreighterPage() {
         <div className="mt-6 p-4 bg-yellow-900 rounded-lg">
           <h3 className="font-bold mb-2 text-yellow-200">If Freighter is not detected:</h3>
           <ol className="space-y-2 text-sm text-yellow-100 list-decimal list-inside">
-            <li>Go to your browser's extension page (chrome://extensions/)</li>
-            <li>Find Freighter and make sure it's enabled</li>
+            <li>Go to your browser&apos;s extension page (chrome://extensions/)</li>
+            <li>Find Freighter and make sure it&apos;s enabled</li>
             <li>Click the Freighter icon to open it</li>
             <li>Make sure you have an account (create or import one)</li>
             <li>Come back to this page and refresh (F5)</li>

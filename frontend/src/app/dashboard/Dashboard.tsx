@@ -25,9 +25,6 @@ export default function Dashboard() {
     setFilterStatus,
     searchQuery,
     setSearchQuery,
-    sortField,
-    sortDirection,
-    toggleSort,
     currentPage,
     setCurrentPage,
     totalPages,
@@ -44,7 +41,6 @@ export default function Dashboard() {
 
   const handleJoinGroup = (groupId: string) => {
     // TODO: Implement join group logic
-    console.log('Join group:', groupId)
   }
 
   const EmptyState = () => (

@@ -9,14 +9,15 @@ const authSchema = z.object({
 })
 
 // POST /api/auth/token - Generate JWT token
-router.post('/token', (req: Request, res: Response) => {
+router.post('/token', (req: Request, res: Response): void => {
   try {
     const { publicKey } = authSchema.parse(req.body)
     const token = AuthService.generateToken(publicKey)
     res.json({ token })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid public key format' })
+      res.status(400).json({ error: 'Invalid public key format' })
+      return
     }
     res.status(500).json({ error: 'Internal server error' })
   }
