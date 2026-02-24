@@ -1,31 +1,36 @@
 // Issue #27: Create group detail page with tabs
 // Complexity: Medium (150 pts)
-// Status: Enhanced with real member data integration
+// Status: Enhanced with real member data integration and invitation system
 
 import React, { useState } from 'react'
 import { ContributionForm } from './ContributionForm'
 import { MemberList } from './MemberList'
 import { TransactionHistory } from './TransactionHistory'
+import InviteModal from './InviteModal'
 
 type TabKey = 'overview' | 'members' | 'history' | 'settings'
 
 interface GroupDetailPageProps {
   groupId: string
+  groupName?: string
   onShareLink?: () => void
   onCopyLink?: () => void
 }
 
 export const GroupDetailPage: React.FC<GroupDetailPageProps> = ({
   groupId,
+  groupName = 'Market Women Ajo',
   onShareLink,
   onCopyLink,
 }) => {
   const [activeTab, setActiveTab] = useState<TabKey>('overview')
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
 
   // TODO: Fetch group details from smart contract
   // TODO: Fetch member list and transaction history
 
   const handleShareLink = () => {
+    setIsInviteModalOpen(true)
     if (onShareLink) {
       onShareLink()
     }
@@ -43,13 +48,34 @@ export const GroupDetailPage: React.FC<GroupDetailPageProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100">
-              Market Women Ajo
+              {groupName}
             </h2>
             <p className="text-gray-600 dark:text-slate-400">Group ID: {groupId}</p>
           </div>
-          <span className="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 dark:bg-emerald-900/40 text-green-800 dark:text-emerald-300">
-            Active
-          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleShareLink}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Invite Members
+            </button>
+            <span className="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 dark:bg-emerald-900/40 text-green-800 dark:text-emerald-300">
+              Active
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
@@ -71,6 +97,14 @@ export const GroupDetailPage: React.FC<GroupDetailPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Invite Modal */}
+      <InviteModal
+        groupId={groupId}
+        groupName={groupName}
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+      />
 
       {/* Tabs */}
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 border border-gray-100 dark:border-slate-700">
