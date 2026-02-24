@@ -1,0 +1,190 @@
+{
+  "common": {
+    "appName": "Ajo",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "submit": "Enviar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "clear": "Limpiar",
+    "viewDetails": "Ver Detalles",
+    "learnMore": "Saber Más",
+    "getStarted": "Comenzar"
+  },
+  "nav": {
+    "home": "Inicio",
+    "dashboard": "Panel",
+    "groups": "Grupos",
+    "profile": "Perfil",
+    "analytics": "Analíticas",
+    "community": "Comunidad",
+    "settings": "Configuración"
+  },
+  "home": {
+    "hero": {
+      "title": "Ahorra juntos. Crece juntos.",
+      "subtitle": "Ahorros tradicionales, confianza blockchain",
+      "description": "Ajo es un sistema de ahorro comunitario donde los grupos contribuyen juntos y se turnan para recibir pagos. Ahora impulsado por blockchain Stellar para transparencia y seguridad."
+    },
+    "howItWorks": {
+      "title": "Cómo Funciona",
+      "step1": {
+        "title": "Únete o Crea un Grupo",
+        "description": "Inicia tu propio grupo de ahorro o únete a uno existente con amigos, familia o miembros de la comunidad."
+      },
+      "step2": {
+        "title": "Contribuye Regularmente",
+        "description": "Cada miembro contribuye una cantidad fija en cada ciclo. Todas las contribuciones se registran en blockchain."
+      },
+      "step3": {
+        "title": "Recibe tu Pago",
+        "description": "Los miembros se turnan para recibir el fondo completo. Todos tienen su turno hasta que el ciclo se completa."
+      }
+    }
+  },
+  "wallet": {
+    "connect": "Conectar Billetera",
+    "disconnect": "Desconectar",
+    "connecting": "Conectando...",
+    "connected": "Conectado",
+    "notConnected": "No Conectado",
+    "balance": "Saldo",
+    "address": "Dirección",
+    "copyAddress": "Copiar Dirección",
+    "addressCopied": "¡Dirección copiada!",
+    "installFreighter": "Instalar Billetera Freighter",
+    "freighterRequired": "Se requiere la billetera Freighter para usar esta aplicación"
+  },
+  "group": {
+    "create": "Crear Grupo",
+    "join": "Unirse al Grupo",
+    "leave": "Salir del Grupo",
+    "details": "Detalles del Grupo",
+    "members": "Miembros",
+    "status": "Estado",
+    "active": "Activo",
+    "complete": "Completo",
+    "cancelled": "Cancelado",
+    "contributionAmount": "Monto de Contribución",
+    "cycleDuration": "Duración del Ciclo",
+    "maxMembers": "Máximo de Miembros",
+    "currentCycle": "Ciclo Actual",
+    "nextRecipient": "Próximo Receptor",
+    "contributionsReceived": "Contribuciones Recibidas",
+    "pendingContributors": "Contribuyentes Pendientes",
+    "cycleStartTime": "Hora de Inicio del Ciclo",
+    "cycleEndTime": "Hora de Fin del Ciclo",
+    "createdAt": "Creado el",
+    "creator": "Creador",
+    "myGroups": "Mis Grupos",
+    "allGroups": "Todos los Grupos",
+    "noGroups": "No se encontraron grupos",
+    "createFirst": "Crea tu primer grupo para comenzar"
+  },
+  "groupForm": {
+    "title": "Crear Nuevo Grupo",
+    "name": "Nombre del Grupo",
+    "namePlaceholder": "Ingresa el nombre del grupo",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Describe el propósito de este grupo",
+    "rules": "Reglas",
+    "rulesPlaceholder": "Establece reglas y pautas del grupo",
+    "contributionAmount": "Monto de Contribución (XLM)",
+    "contributionAmountPlaceholder": "Cantidad que contribuye cada miembro",
+    "cycleDuration": "Duración del Ciclo (días)",
+    "cycleDurationPlaceholder": "Cuánto dura cada ciclo",
+    "maxMembers": "Máximo de Miembros",
+    "maxMembersPlaceholder": "Número máximo de miembros (2-100)",
+    "creating": "Creando...",
+    "create": "Crear Grupo"
+  },
+  "contribution": {
+    "make": "Hacer Contribución",
+    "amount": "Cantidad",
+    "contribute": "Contribuir",
+    "contributing": "Contribuyendo...",
+    "success": "¡Contribución exitosa!",
+    "alreadyContributed": "Ya has contribuido en este ciclo",
+    "notMember": "No eres miembro de este grupo",
+    "cycleComplete": "Este ciclo está completo",
+    "history": "Historial de Contribuciones"
+  },
+  "transaction": {
+    "history": "Historial de Transacciones",
+    "type": "Tipo",
+    "amount": "Cantidad",
+    "date": "Fecha",
+    "status": "Estado",
+    "pending": "Pendiente",
+    "confirmed": "Confirmado",
+    "failed": "Fallido",
+    "contribution": "Contribución",
+    "payout": "Pago",
+    "noTransactions": "Aún no hay transacciones"
+  },
+  "profile": {
+    "title": "Perfil",
+    "settings": "Configuración del Perfil",
+    "displayName": "Nombre para Mostrar",
+    "email": "Correo Electrónico",
+    "bio": "Biografía",
+    "language": "Idioma",
+    "theme": "Tema",
+    "notifications": "Notificaciones",
+    "save": "Guardar Cambios",
+    "saving": "Guardando..."
+  },
+  "analytics": {
+    "title": "Analíticas",
+    "totalGroups": "Total de Grupos",
+    "totalMembers": "Total de Miembros",
+    "totalContributions": "Total de Contribuciones",
+    "totalPayouts": "Total de Pagos",
+    "activeGroups": "Grupos Activos",
+    "completedGroups": "Grupos Completados"
+  },
+  "language": {
+    "select": "Seleccionar Idioma",
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "pt": "Português",
+    "sw": "Kiswahili"
+  },
+  "errors": {
+    "generic": "Algo salió mal",
+    "networkError": "Error de red. Por favor verifica tu conexión.",
+    "walletNotConnected": "Por favor conecta tu billetera",
+    "insufficientBalance": "Saldo insuficiente",
+    "transactionFailed": "Transacción fallida",
+    "groupNotFound": "Grupo no encontrado",
+    "unauthorized": "No autorizado",
+    "invalidInput": "Entrada inválida",
+    "maxMembersExceeded": "Máximo de miembros excedido",
+    "alreadyMember": "Ya eres miembro",
+    "notMember": "No eres miembro",
+    "alreadyContributed": "Ya contribuiste en este ciclo",
+    "groupComplete": "El grupo está completo",
+    "contractPaused": "El contrato está pausado"
+  },
+  "time": {
+    "seconds": "segundos",
+    "minutes": "minutos",
+    "hours": "horas",
+    "days": "días",
+    "weeks": "semanas",
+    "months": "meses",
+    "years": "años",
+    "ago": "hace",
+    "remaining": "restante"
+  }
+}

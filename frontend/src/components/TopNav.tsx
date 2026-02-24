@@ -8,6 +8,7 @@ import { UserMenu } from './UserMenu'
 import { MobileMenu } from './MobileMenu'
 import Image from 'next/image'
 import { useTheme } from 'next-themes'
+import LanguageSelector from './LanguageSelector'
 
 export const TopNav: React.FC = () => {
   const pathname = usePathname() || ''
@@ -32,12 +33,6 @@ export const TopNav: React.FC = () => {
             </Link>
           </div>
 
-          <div className="flex items-center gap-4">
-
-            <div className="hidden sm:block">
-            </div>
-          </div>
-
           {/* Desktop Nav */}
           <nav className="hidden md:flex gap-2 items-center">
             {navLinks.map((link) => {
@@ -53,6 +48,7 @@ export const TopNav: React.FC = () => {
                 </Link>
               )
             })}
+            <LanguageSelector />
             <UserMenu />
           </nav>
 
