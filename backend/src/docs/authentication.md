@@ -68,15 +68,15 @@ const groupsResponse = await fetch('http://localhost:3001/api/groups', {
 ### cURL
 
 ```bash
-# 1. Get token
-AUTH_TOKEN=$(curl -X POST http://localhost:3001/api/auth/token \
+# 1. Get authentication token
+curl -X POST http://localhost:3001/api/auth/token \
   -H "Content-Type: application/json" \
   -d '{"publicKey":"GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"}' \
-  | jq -r '.token')
+  | jq -r '.token' > auth.txt
 
-# 2. Use token
+# 2. Use the token from file
 curl http://localhost:3001/api/groups \
-  -H "Authorization: Bearer $AUTH_TOKEN"
+  -H "Authorization: Bearer $(cat auth.txt)"
 ```
 
 ## Wallet Integration
