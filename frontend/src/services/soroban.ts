@@ -401,7 +401,79 @@ export const initializeSoroban = (): SorobanService => {
           await withRetry(
             async () => {
 
-              // Placeholder
+              const isTestEnvironment = process.env.NODE_ENV === 'test'
+              if (isTestEnvironment || !CONTRACT_ID) {
+                await new Promise((resolve) => setTimeout(resolve, 2000))
+                return
+              }
+
+              // Verify wallet connection
+              if (!(await isConnected())) {
+                throw new Error("Freighter wallet is not installed.");
+              }
+              if (!(await isAllowed())) {
+                await setAllowed();
+              }
+
+              const accessResult = await requestAccess();
+              if (accessResult.error || !accessResult.address) {
+                const error: any = new Error(accessResult.error || "User public key not available.")
+                error.code = 'UNAUTHORIZED'
+                throw error
+              }
+              const publicKey = accessResult.address;
+
+              const sourceAccount = await server.getAccount(publicKey)
+
+              // Pack parameters for Soroban XDR
+              const callArgs = [
+                SorobanClient.xdr.ScVal.scvString(groupId),
+                SorobanClient.xdr.ScVal.scvAddress(SorobanClient.Address.fromString(publicKey).toScAddress())
+              ]
+
+              const contract = new SorobanClient.Contract(CONTRACT_ID)
+              const transaction = new SorobanClient.TransactionBuilder(sourceAccount, {
+                fee: "100",
+                networkPassphrase: NETWORK_PASSPHRASE,
+              })
+                .addOperation(contract.call('join_group', ...callArgs))
+                .setTimeout(30)
+                .build()
+
+              // Simulate the transaction to get real footprint and fee estimations
+              const simulated = await server.simulateTransaction(transaction)
+
+              if (!SorobanClient.SorobanRpc.Api.isSimulationSuccess(simulated)) {
+                const error: any = new Error("Transaction simulation failed")
+                error.code = 'CONTRACT_ERROR'
+                throw error
+              }
+
+              // Assemble real transaction with data payload footprint
+              const assembled = SorobanClient.SorobanRpc.assembleTransaction(transaction, simulated).build()
+
+              // Request Freighter signature
+              const signedXdr = await signTransaction(assembled.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE })
+              const signedTransaction = SorobanClient.TransactionBuilder.fromXDR(signedXdr.signedTxXdr, NETWORK_PASSPHRASE)
+
+              const sendResult = await server.sendTransaction(signedTransaction as SorobanClient.Transaction)
+
+              if (sendResult.errorResult) {
+                throw new Error(`Transaction submitted with error: ${sendResult.errorResult.toXDR().toString("base64")}`)
+              }
+
+              // Wait for SUCCESS.
+              let statusResponse = await server.getTransaction(sendResult.hash)
+              let attempts = 0
+              while (statusResponse.status !== SorobanClient.SorobanRpc.Api.GetTransactionStatus.SUCCESS && attempts < 10) {
+                await new Promise((resolve) => setTimeout(resolve, 2000))
+                statusResponse = await server.getTransaction(sendResult.hash)
+                attempts++
+              }
+
+              if (statusResponse.status !== SorobanClient.SorobanRpc.Api.GetTransactionStatus.SUCCESS) {
+                throw new Error("Transaction did not complete successfully in time.")
+              }
             },
             'joinGroup'
           )

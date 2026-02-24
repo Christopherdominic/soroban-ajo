@@ -263,11 +263,18 @@ interface JoinGroupResult {
 /**
  * Join group mutation with cache invalidation
  */
-export const useJoinGroup = () => {
+export const useJoinGroup = (userId?: string) => {
   const queryClient = useQueryClient()
 
   return useMutation<JoinGroupResult, Error, string>({
     mutationFn: async (groupId: string) => {
+      // Validate local cache first if userId is present
+      if (userId) {
+        const userGroups = queryClient.getQueryData<Group[]>(QUERY_KEYS.USER_GROUPS(userId));
+        if (userGroups?.some((g) => g.id === groupId)) {
+          throw new Error('You are already a member of this group.');
+        }
+      }
       await sorobanService.joinGroup(groupId)
       return { groupId }
     },
@@ -280,6 +287,9 @@ export const useJoinGroup = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUP_DETAIL(_data.groupId) })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUP_MEMBERS(_data.groupId) })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUPS })
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_GROUPS(userId) })
+      }
 
       // Invalidate custom cache
       sorobanService.invalidateGroupCache(_data.groupId)
