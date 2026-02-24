@@ -49,7 +49,7 @@ export const webhookMiddleware = {
    */
   afterMemberJoined: async (
     req: Request,
-    res: Response,
+    _res: Response,
     next: NextFunction
   ) => {
     try {
@@ -117,7 +117,7 @@ export const webhookMiddleware = {
   /**
    * Trigger webhook after payout is completed
    */
-  afterPayout: async (req: Request, res: Response, next: NextFunction) => {
+  afterPayout: async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const payoutData = res.locals.payoutData
 
@@ -150,7 +150,7 @@ export const webhookMiddleware = {
    * Trigger webhook when group is completed
    */
   afterGroupCompleted: async (
-    req: Request,
+    _req: Request,
     res: Response,
     next: NextFunction
   ) => {
@@ -183,7 +183,7 @@ export const webhookMiddleware = {
    * Trigger webhook when cycle starts
    */
   afterCycleStarted: async (
-    req: Request,
+    _req: Request,
     res: Response,
     next: NextFunction
   ) => {
@@ -215,7 +215,7 @@ export const webhookMiddleware = {
   /**
    * Trigger webhook when cycle ends
    */
-  afterCycleEnded: async (req: Request, res: Response, next: NextFunction) => {
+  afterCycleEnded: async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const cycleData = res.locals.cycleData
 
@@ -246,7 +246,7 @@ export const webhookMiddleware = {
  */
 export const verifyWebhookSignature = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) => {
   try {
@@ -254,12 +254,12 @@ export const verifyWebhookSignature = (
     const webhookId = req.headers['x-webhook-id'] as string
 
     if (!signature || !webhookId) {
-      throw new AppError('Missing webhook signature or ID', 401)
+      throw new AppError('Missing webhook signature or ID', 'WEBHOOK_AUTH_ERROR', 401)
     }
 
     const endpoint = webhookService.getEndpoint(webhookId)
     if (!endpoint) {
-      throw new AppError('Invalid webhook endpoint', 401)
+      throw new AppError('Invalid webhook endpoint', 'WEBHOOK_AUTH_ERROR', 401)
     }
 
     const payload = req.body
@@ -270,7 +270,7 @@ export const verifyWebhookSignature = (
     )
 
     if (!isValid) {
-      throw new AppError('Invalid webhook signature', 401)
+      throw new AppError('Invalid webhook signature', 'WEBHOOK_AUTH_ERROR', 401)
     }
 
     next()
@@ -286,7 +286,7 @@ export const webhookController = {
   /**
    * List all webhook endpoints
    */
-  listEndpoints: (req: Request, res: Response) => {
+  listEndpoints: (_req: Request, res: Response) => {
     const endpoints = webhookService.getEndpoints()
     res.json({
       success: true,
@@ -308,7 +308,7 @@ export const webhookController = {
       const { url, events, secret, headers } = req.body
 
       if (!url || !Array.isArray(events)) {
-        throw new AppError('Invalid webhook configuration', 400)
+        throw new AppError('Invalid webhook configuration', 'VALIDATION_ERROR', 400)
       }
 
       const id = webhookService.registerEndpoint({
@@ -339,7 +339,7 @@ export const webhookController = {
       const success = webhookService.updateEndpoint(id, updates)
 
       if (!success) {
-        throw new AppError('Webhook endpoint not found', 404)
+        throw new AppError('Webhook endpoint not found', 'NOT_FOUND', 404)
       }
 
       res.json({
@@ -361,7 +361,7 @@ export const webhookController = {
       const success = webhookService.unregisterEndpoint(id)
 
       if (!success) {
-        throw new AppError('Webhook endpoint not found', 404)
+        throw new AppError('Webhook endpoint not found', 'NOT_FOUND', 404)
       }
 
       res.json({
@@ -376,7 +376,7 @@ export const webhookController = {
   /**
    * Get webhook statistics
    */
-  getStats: (req: Request, res: Response) => {
+  getStats: (_req: Request, res: Response) => {
     const stats = webhookService.getStats()
     res.json({
       success: true,
@@ -393,7 +393,7 @@ export const webhookController = {
 
       const endpoint = webhookService.getEndpoint(id)
       if (!endpoint) {
-        throw new AppError('Webhook endpoint not found', 404)
+        throw new AppError('Webhook endpoint not found', 'NOT_FOUND', 404)
       }
 
       // Trigger a test event

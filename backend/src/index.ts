@@ -11,8 +11,11 @@ import { healthRouter } from './routes/health'
 import { webhooksRouter } from './routes/webhooks'
 import { authRouter } from './routes/auth'
 import { analyticsRouter } from './routes/analytics'
+import { jobsRouter } from './routes/jobs'
 import { setupSwagger } from './swagger'
-import { apiLimiter, strictLimiter } from './middleware/ratelimiter'
+import { apiLimiter, strictLimiter } from './middleware/rateLimiter'
+import { startWorkers, stopWorkers } from './jobs/jobWorkers'
+import { startScheduler, stopScheduler } from './cron/scheduler'
 
 dotenv.config()
 
@@ -39,6 +42,7 @@ app.use('/api/auth', strictLimiter, authRouter)
 app.use('/api/groups', groupsRouter)
 app.use('/api/webhooks', strictLimiter, webhooksRouter)
 app.use('/api/analytics', analyticsRouter)
+app.use('/api/jobs', jobsRouter)
 
 // Error handling
 app.use(errorHandler)
@@ -46,6 +50,29 @@ app.use(errorHandler)
 // Start server
 app.listen(PORT, () => {
   logger.info(`Server started on port ${PORT}`, { env: process.env.NODE_ENV || 'development' })
+
+  // Start background job workers and cron scheduler
+  try {
+    startWorkers()
+    startScheduler()
+    logger.info('Background jobs and cron scheduler started')
+  } catch (err) {
+    logger.error('Failed to start background jobs', {
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
 })
 
+// Graceful shutdown
+const shutdown = async () => {
+  logger.info('Shutting down gracefully...')
+  stopScheduler()
+  await stopWorkers()
+  process.exit(0)
+}
+
+process.on('SIGTERM', shutdown)
+process.on('SIGINT', shutdown)
+
 export default app
+

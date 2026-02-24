@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { logger } from '../utils/logger'
 import { AppError, ErrorFactory } from '../errors/AppError'
+export { AppError }
 import { ZodError } from 'zod'
 
 /**
@@ -15,7 +16,7 @@ export const errorHandler = (
 ) => {
   // Convert unknown errors to AppError
   let error: AppError
-  
+
   // Handle Zod validation errors
   if (err instanceof ZodError) {
     error = new AppError(
@@ -32,7 +33,7 @@ export const errorHandler = (
   } else {
     error = ErrorFactory.fromUnknown(err)
   }
-  
+
   // Log error with appropriate level
   const logLevel = error.statusCode >= 500 ? 'error' : 'warn'
   logger[logLevel]('Request error:', {
@@ -45,7 +46,7 @@ export const errorHandler = (
     ...(error.details && { details: error.details }),
     ...(error.statusCode >= 500 && { stack: error.stack }),
   })
-  
+
   // Send error response
   res.status(error.statusCode).json({
     success: false,

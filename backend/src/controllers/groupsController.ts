@@ -62,7 +62,8 @@ export class GroupsController {
 
     // Phase 1: return XDR for client signing
     if (result.unsignedXdr) {
-      return res.status(200).json({ success: true, data: result })
+      res.status(200).json({ success: true, data: result })
+      return
     }
 
     // Phase 2: confirmed on-chain
