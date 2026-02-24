@@ -64,7 +64,7 @@ export default function GroupDetailPageExample() {
       <div className="container">
         <div className="error-state">
           <h2>Group not found</h2>
-          <p>The group you're looking for doesn't exist or has been removed.</p>
+          <p>The group you&apos;re looking for doesn't exist or has been removed.</p>
         </div>
       </div>
     )
