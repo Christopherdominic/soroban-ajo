@@ -12,7 +12,7 @@ import { webhooksRouter } from './routes/webhooks'
 import { authRouter } from './routes/auth'
 import { analyticsRouter } from './routes/analytics'
 import { setupSwagger } from './swagger'
-import { apiLimiter, strictLimiter } from './middleware/ratelimiter'
+import { apiLimiter, strictLimiter } from './middleware/rateLimiter'
 
 dotenv.config()
 
