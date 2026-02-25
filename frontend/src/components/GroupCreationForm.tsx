@@ -3,6 +3,7 @@
 // Status: Placeholder
 
 import React, { useState, useRef, useEffect } from 'react'
+import { useFormDraft } from '../hooks/useFormDraft';
 
 interface GroupFormData {
   groupName: string
@@ -49,6 +50,18 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
   const groupNameRef = useRef<HTMLInputElement>(null)
   
   const hasErrors = Object.keys(errors).length > 0
+
+  const isDirty = Object.values(formData).some((value) => {
+    if (Array.isArray(value)) return value.length > 0
+    return value !== '' && value !== 0
+  })
+
+  const { removeDraft } = useFormDraft({
+    key: 'draft_group_creation',
+    data: formData,
+    onRestore: (draft) => setFormData(draft),
+    enabled: isDirty,
+  });
 
   // Focus on error summary when errors occur after submission
   useEffect(() => {
@@ -168,6 +181,8 @@ export const GroupCreationForm: React.FC<GroupCreationFormProps> = ({ onSuccess 
       // 3. Show success notification
       // 4. Redirect to group detail page
       console.log('Create group:', formData)
+      await createGroup(formData);
+      removeDraft();
       onSuccess?.()
     } catch (err) {
       console.error('Failed to create group:', err)

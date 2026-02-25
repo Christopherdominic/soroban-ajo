@@ -10,6 +10,7 @@ import { useWalletBalance } from '../hooks/useWalletBalance'
 import { useAuthContext } from '../context/AuthContext'
 import { ValidationError, ContributionValidation } from '../types'
 import { useContribute } from '../hooks/useContractData'
+import { useFormDraft } from '../hooks/useFormDraft'
 
 interface ContributionFormProps {
   groupId: string
@@ -48,6 +49,17 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
   const [simulation, setSimulation] = useState<TransactionSimulation | null>(null)
   const [isSimulating, setIsSimulating] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const { removeDraft } = useFormDraft({
+    key: `draft_contribution_form_${groupId}`, // IMPORTANT: scope per group
+    data: { amount },
+    onRestore: (draft) => {
+      if (draft.amount !== contributionAmount) {
+        setAmount(draft.amount)
+        setTouched(true)
+      }
+    }
+  });
 
   const NETWORK_FEE = 0.01
   const MIN_AMOUNT = 0.01
@@ -126,7 +138,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
     if (touched && balance.total > 0) {
       validateForm()
     }
-  }, [balance.available, touched, validateForm])
+  }, [balance.available, touched, validateForm, balance.total])
 
   // ── Input handlers ─────────────────────────────────────────────────────────
   const handleAmountChange = (value: string) => {
@@ -174,7 +186,7 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
     setSimulation(result)
     setIsSimulating(false)
   }
-
+  
   // ── Confirm → sign and submit ──────────────────────────────────────────────
   /**
    * Called when the user clicks "Sign & Submit" inside the TransactionPreview modal.
@@ -183,7 +195,8 @@ export const ContributionForm: React.FC<ContributionFormProps> = ({
     setIsSubmitting(true)
     try {
       await runContribute({ groupId, amount })
-
+      
+      removeDraft();
       setPreviewOpen(false)
       setSuccessMessage('Contribution successful! Transaction confirmed.')
       setAmount(contributionAmount)
