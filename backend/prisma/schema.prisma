@@ -12,16 +12,18 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  // KYC/AML fields
-  kycLevel        Int      @default(0)                     // 0=no verification, 1=email/phone, 2=ID, 3=full
-  kycStatus       String   @default("none")               // pending/approved/rejected/none
-  kycRequestedAt  DateTime?
-  kycVerifiedAt   DateTime?
-  kycRejectedAt   DateTime?
-  kycDocuments    Json?                                   // metadata about submitted documents
+  groups              GroupMember[]
+  contributions       Contribution[]
+  gamification        UserGamification?
+  achievements        UserAchievement[]
+  challenges          UserChallenge[]
+  followers           UserFollow[]      @relation("Following")
+  following           UserFollow[]      @relation("Followers")
+  activities          ActivityFeed[]
+  pointTransactions   PointTransaction[]
+  rewardHistory       RewardHistory[]
 
-  groups        GroupMember[]
-  contributions Contribution[]
+  @@index([walletAddress])
 }
 
 model Group {
@@ -37,6 +39,7 @@ model Group {
 
   members        GroupMember[]
   contributions  Contribution[]
+  multiSigConfig MultiSigConfig?
 }
 
 model GroupMember {
@@ -66,19 +69,254 @@ model Contribution {
   @@index([groupId, round])
 }
 
-// Documents uploaded as part of the KYC process
-model KycDocument {
+// Gamification Models
+model UserGamification {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  points            Int       @default(0)
+  level             String    @default("BRONZE") // BRONZE, SILVER, GOLD, PLATINUM
+  contributionStreak Int      @default(0)
+  loginStreak       Int       @default(0)
+  lastContribution  DateTime?
+  lastLogin         DateTime?
+  totalInvites      Int       @default(0)
+  groupsCompleted   Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [walletAddress], onDelete: Cascade)
+
+  @@index([points(sort: Desc)])
+  @@index([level])
+  @@index([userId])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  icon        String
+  category    String   // CONTRIBUTION, SOCIAL, MILESTONE, SPECIAL
+  points      Int
+  requirement String   // JSON string describing requirement
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userAchievements UserAchievement[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [walletAddress], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+}
+
+model Challenge {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  type        String   // DAILY, WEEKLY, SEASONAL
+  category    String   // CONTRIBUTION, SOCIAL, ENGAGEMENT
+  requirement String   // JSON string describing requirement
+  points      Int
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userChallenges UserChallenge[]
+
+  @@index([type])
+  @@index([isActive])
+  @@index([startDate, endDate])
+}
+
+model UserChallenge {
+  id          String    @id @default(cuid())
+  userId      String
+  challengeId String
+  progress    Int       @default(0)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [walletAddress], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+  @@index([userId])
+  @@index([challengeId])
+  @@index([completed])
+}
+
+model UserFollow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Following", fields: [followerId], references: [walletAddress], onDelete: Cascade)
+  following User @relation("Followers", fields: [followingId], references: [walletAddress], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model ActivityFeed {
   id          String   @id @default(cuid())
   userId      String
-  docType     String
-  status      String   @default("pending")
-  ipfsCid     String
-  uploadedAt  DateTime @default(now())
-  reviewedBy  String?
-  reviewedAt  DateTime?
-  notes       String?
+  type        String   // CONTRIBUTION, ACHIEVEMENT, CHALLENGE, LEVEL_UP, GROUP_COMPLETE
+  title       String
+  description String
+  metadata    String?  // JSON string for additional data
+  createdAt   DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [walletAddress], onDelete: Cascade)
 
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([type])
+}
+
+model SeasonalEvent {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  rewards     String   // JSON string describing rewards
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([startDate, endDate])
+}
+
+// Idempotency and audit trail
+model PointTransaction {
+  id              String   @id @default(cuid())
+  userId          String
+  points          Int
+  reason          String
+  referenceId     String?  // For idempotency (e.g., contributionId, inviteId)
+  referenceType   String?  // CONTRIBUTION, INVITE, GROUP_COMPLETE, etc.
+  metadata        String?  // JSON string for additional context
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [walletAddress], onDelete: Cascade)
+
+  @@unique([userId, referenceId, referenceType])
   @@index([userId])
+  @@index([referenceId, referenceType])
+  @@index([createdAt(sort: Desc)])
+}
+
+model RewardHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  rewardType  String   // ACHIEVEMENT, CHALLENGE, STREAK, LEVEL_UP
+  rewardId    String   // Achievement ID, Challenge ID, etc.
+  points      Int
+  metadata    String?  // JSON string for additional context
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [walletAddress], onDelete: Cascade)
+
+  @@unique([userId, rewardType, rewardId])
+  @@index([userId])
+  @@index([rewardType])
+  @@index([createdAt(sort: Desc)])
+}
+
+// Multi-Signature Wallet Models
+model MultiSigConfig {
+  id                String   @id @default(cuid())
+  groupId           String   @unique
+  threshold         Int      // Required signatures
+  totalSigners      Int      // Total number of signers
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  group             Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  signers           SignerConfig[]
+  proposals         TransactionProposal[]
+  
+  @@index([groupId])
+  @@index([isActive])
+}
+
+model SignerConfig {
+  id              String   @id @default(cuid())
+  multiSigId      String
+  walletAddress   String
+  weight          Int      @default(1)
+  isActive        Boolean  @default(true)
+  addedAt         DateTime @default(now())
+  removedAt       DateTime?
+  
+  multiSig        MultiSigConfig @relation(fields: [multiSigId], references: [id], onDelete: Cascade)
+  signatures      ProposalSignature[]
+  
+  @@unique([multiSigId, walletAddress])
+  @@index([multiSigId])
+  @@index([walletAddress])
+  @@index([isActive])
+}
+
+model TransactionProposal {
+  id              String   @id @default(cuid())
+  multiSigId      String
+  proposerId      String
+  operationType   String   // PAYOUT, CANCEL_GROUP, REMOVE_MEMBER, CHANGE_SETTINGS
+  transactionXdr  String   @db.Text
+  metadata        String?  @db.Text
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, EXECUTED, EXPIRED
+  requiredSigs    Int
+  currentSigs     Int      @default(0)
+  expiresAt       DateTime
+  executedAt      DateTime?
+  executedTxHash  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  multiSig        MultiSigConfig @relation(fields: [multiSigId], references: [id], onDelete: Cascade)
+  signatures      ProposalSignature[]
+  
+  @@index([multiSigId])
+  @@index([proposerId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([createdAt(sort: Desc)])
+}
+
+model ProposalSignature {
+  id              String   @id @default(cuid())
+  proposalId      String
+  signerId        String
+  signature       String   @db.Text
+  signedAt        DateTime @default(now())
+  
+  proposal        TransactionProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  signer          SignerConfig @relation(fields: [signerId], references: [id], onDelete: Cascade)
+  
+  @@unique([proposalId, signerId])
+  @@index([proposalId])
+  @@index([signerId])
+  @@index([signedAt(sort: Desc)])
 }

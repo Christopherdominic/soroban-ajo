@@ -272,6 +272,15 @@ fn test_create_group_invalid_amount() {
 
 #[test]
 #[should_panic]
+fn test_create_group_negative_amount() {
+    let (env, client, creator, _, _) = setup_test_env();
+
+    // Try to create group with a negative contribution (should panic)
+    client.create_group(&creator, &(-100_000_000i128), &604_800u64, &10u32, &86400u64, &5u32);
+}
+
+#[test]
+#[should_panic]
 fn test_create_group_invalid_duration() {
     let (env, client, creator, _, _) = setup_test_env();
 

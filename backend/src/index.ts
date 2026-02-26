@@ -13,6 +13,7 @@ import { authRouter } from './routes/auth'
 import { analyticsRouter } from './routes/analytics'
 import { emailRouter } from './routes/email'
 import { jobsRouter } from './routes/jobs'
+import { gamificationRouter } from './routes/gamification'
 import { setupSwagger } from './swagger'
 import { apiLimiter, strictLimiter } from './middleware/rateLimiter'
 import { startWorkers, stopWorkers } from './jobs/jobWorkers'
@@ -46,8 +47,11 @@ app.use('/api/webhooks', strictLimiter, webhooksRouter)
 app.use('/api/analytics', analyticsRouter)
 app.use('/api/email', emailRouter)
 app.use('/api/jobs', jobsRouter)
-// kyc endpoints (user-facing and admin)
-app.use('/api/kyc', kycRouter)
+app.use('/api/gamification', gamificationRouter)
+
+// Disputes
+import { disputesRouter } from './routes/disputes'
+app.use('/api/disputes', disputesRouter)
 
 // 404 handler
 app.use((req, res) => {
@@ -60,8 +64,8 @@ app.use((req, res) => {
 // Error handling
 app.use(errorHandler)
 
-// Start server
-app.listen(PORT, () => {
+// Start server and keep reference so we can close it on shutdown
+const server = app.listen(PORT, () => {
   logger.info(`Server started on port ${PORT}`, { env: process.env.NODE_ENV || 'development' })
 
   // Start background job workers and cron scheduler
@@ -79,9 +83,21 @@ app.listen(PORT, () => {
 // Graceful shutdown
 const shutdown = async () => {
   logger.info('Shutting down gracefully...')
+  // stop accepting new connections
+  if (server && server.close) {
+    server.close((err?: Error) => {
+      if (err) {
+        logger.error('Error closing server', { error: err.message })
+      } else {
+        logger.info('HTTP server closed')
+      }
+    })
+  }
+
   stopScheduler()
   await stopWorkers()
-  process.exit(0)
+  // give a short delay in case there are pending callbacks
+  setTimeout(() => process.exit(0), 100)
 }
 
 process.on('SIGTERM', shutdown)
