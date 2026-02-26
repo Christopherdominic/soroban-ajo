@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -27,6 +28,14 @@ model User {
   // Goal Management
   goals               Goal[]            @relation("UserGoals")
   goalMemberships     GoalMember[]
+
+  // Referral and Rewards
+  referralCode        ReferralCode?     @relation("UserReferralCode")
+  referralsGiven      Referral[]        @relation("ReferralsGiven")
+  referralsReceived   Referral?         @relation("ReferralsReceived")
+  rewards             Reward[]          @relation("UserRewards")
+  fraudFlags          FraudFlag[]       @relation("UserFraudFlags")
+  leaderboardEntries  LeaderboardCache[] @relation("LeaderboardEntries")
 
   @@index([walletAddress])
 }
@@ -454,4 +463,119 @@ model ProposalSignature {
   @@index([proposalId])
   @@index([signerId])
   @@index([signedAt(sort: Desc)])
+}
+
+// Referral and Rewards System Models
+
+model Referral {
+  id            String   @id @default(cuid())
+  referrerId    String   // User who invited
+  refereeId     String   // User who was invited
+  referralCode  String
+  status        String   @default("PENDING") // PENDING, ACTIVE, COMPLETED, FLAGGED
+  createdAt     DateTime @default(now())
+  completedAt   DateTime? // When referee completed first contribution
+  
+  referrer   User         @relation("ReferralsGiven", fields: [referrerId], references: [walletAddress], onDelete: Cascade)
+  referee    User         @relation("ReferralsReceived", fields: [refereeId], references: [walletAddress], onDelete: Cascade)
+  fraudFlags FraudFlag[]
+  
+  @@unique([refereeId]) // Each user can only be referred once
+  @@index([referrerId])
+  @@index([referralCode])
+  @@index([status])
+}
+
+model ReferralCode {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  code      String   @unique
+  createdAt DateTime @default(now())
+  
+  user User @relation("UserReferralCode", fields: [userId], references: [walletAddress], onDelete: Cascade)
+  
+  @@index([code])
+}
+
+model Reward {
+  id            String    @id @default(cuid())
+  userId        String
+  type          String    // FEE_DISCOUNT, BONUS_TOKEN, PREMIUM_FEATURE, NFT_BADGE
+  status        String    @default("PENDING") // PENDING, ACTIVE, REDEEMED, EXPIRED, FAILED
+  source        String    // REFERRAL, ACHIEVEMENT, CHALLENGE
+  sourceId      String?   // Achievement ID, Challenge ID, etc.
+  
+  // Type-specific fields
+  discountPercent Int?
+  tokenAmount     BigInt?
+  featureId       String?
+  nftMetadata     String?   @db.Text
+  
+  // Blockchain fields
+  txHash          String?
+  nftTokenId      String?
+  
+  // Lifecycle fields
+  earnedAt        DateTime  @default(now())
+  expiresAt       DateTime?
+  redeemedAt      DateTime?
+  
+  metadata        String?   @db.Text // JSON for additional data
+  
+  user User @relation("UserRewards", fields: [userId], references: [walletAddress], onDelete: Cascade)
+  
+  @@index([userId, status])
+  @@index([type])
+  @@index([source, sourceId])
+  @@index([expiresAt])
+}
+
+model FraudFlag {
+  id          String   @id @default(cuid())
+  referralId  String?
+  userId      String?
+  flagType    String   // SELF_REFERRAL, IP_MATCH, DEVICE_MATCH, BULK_CREATION
+  severity    String   // LOW, MEDIUM, HIGH
+  details     String   @db.Text // JSON with evidence
+  status      String   @default("PENDING") // PENDING, REVIEWED, CONFIRMED, DISMISSED
+  createdAt   DateTime @default(now())
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  
+  referral Referral? @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  user     User?     @relation("UserFraudFlags", fields: [userId], references: [walletAddress], onDelete: Cascade)
+  
+  @@index([referralId])
+  @@index([userId])
+  @@index([status])
+  @@index([severity])
+}
+
+model LeaderboardCache {
+  id            String   @id @default(cuid())
+  leaderboardType String // TOP_REFERRERS, MOST_ACTIVE, BEST_SAVERS
+  period        String   // ALL_TIME, MONTHLY, WEEKLY
+  rank          Int
+  userId        String
+  score         BigInt   // Referral count, contribution count, or total saved
+  metadata      String?  @db.Text // JSON for additional display data
+  updatedAt     DateTime @default(now())
+  
+  user User @relation("LeaderboardEntries", fields: [userId], references: [walletAddress], onDelete: Cascade)
+  
+  @@unique([leaderboardType, period, userId])
+  @@index([leaderboardType, period, rank])
+  @@index([updatedAt])
+}
+
+model RewardConfig {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  version     Int      @default(1)
+  config      String   @db.Text // JSON configuration
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  activatedAt DateTime?
+  
+  @@index([isActive])
 }

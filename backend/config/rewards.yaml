@@ -1,0 +1,103 @@
+version: 1
+
+referralRewards:
+  referrer:
+    - type: BONUS_TOKEN
+      amount: 1000
+      expirationDays: 90
+    - type: FEE_DISCOUNT
+      amount: 10
+      expirationDays: 30
+  referee:
+    - type: BONUS_TOKEN
+      amount: 500
+      expirationDays: 90
+    - type: FEE_DISCOUNT
+      amount: 5
+      expirationDays: 30
+
+achievements:
+  first_group_created:
+    name: "Group Pioneer"
+    description: "Create your first savings group"
+    criteria:
+      type: FIRST_GROUP
+    rewards:
+      - type: NFT_BADGE
+        nftMetadata:
+          name: "Group Pioneer"
+          description: "Started their savings journey by creating the first group"
+          image: "ipfs://QmFirstGroupBadge"
+          attributes:
+            - trait_type: "Achievement Type"
+              value: "Milestone"
+            - trait_type: "Rarity"
+              value: "Common"
+      - type: BONUS_TOKEN
+        amount: 500
+
+  ten_contributions:
+    name: "Consistent Saver"
+    description: "Make 10 successful contributions"
+    criteria:
+      type: CONTRIBUTION_COUNT
+      threshold: 10
+    rewards:
+      - type: FEE_DISCOUNT
+        amount: 15
+        expirationDays: 60
+      - type: BONUS_TOKEN
+        amount: 2000
+
+  perfect_attendance:
+    name: "Reliability Champion"
+    description: "Complete 3 cycles with no late payments"
+    criteria:
+      type: PERFECT_ATTENDANCE
+      threshold: 3
+      consecutiveRequired: true
+    rewards:
+      - type: PREMIUM_FEATURE
+        featureId: "advanced_analytics"
+        expirationDays: 90
+      - type: NFT_BADGE
+        nftMetadata:
+          name: "Reliability Champion"
+          description: "Never missed a payment for 3 consecutive cycles"
+          image: "ipfs://QmPerfectAttendanceBadge"
+          attributes:
+            - trait_type: "Achievement Type"
+              value: "Excellence"
+            - trait_type: "Rarity"
+              value: "Rare"
+
+  community_helper:
+    name: "Community Builder"
+    description: "Invite 5 friends who complete contributions"
+    criteria:
+      type: REFERRAL_COUNT
+      threshold: 5
+    rewards:
+      - type: PREMIUM_FEATURE
+        featureId: "priority_support"
+        expirationDays: 180
+      - type: BONUS_TOKEN
+        amount: 5000
+      - type: NFT_BADGE
+        nftMetadata:
+          name: "Community Builder"
+          description: "Helped grow the community by inviting 5+ active members"
+          image: "ipfs://QmCommunityBuilderBadge"
+          attributes:
+            - trait_type: "Achievement Type"
+              value: "Social"
+            - trait_type: "Rarity"
+              value: "Epic"
+
+features:
+  advanced_analytics:
+    name: "Advanced Analytics"
+    description: "Access detailed savings insights, projections, and personalized recommendations"
+  priority_support:
+    name: "Priority Support"
+    description: "Get faster response times and dedicated support from our team"
