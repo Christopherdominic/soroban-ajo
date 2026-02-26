@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express'
 import { SorobanService } from '../services/sorobanService'
 import { NotFoundError } from '../errors/AppError'
 import { asyncHandler } from '../middleware/errorHandler'
+import { gamificationService } from '../services/gamification/GamificationService'
+import { logger } from '../utils/logger'
 
 /**
  * Parses and validates `?page` and `?limit` query parameters.
@@ -97,6 +99,18 @@ export class GroupsController {
     const { id } = req.params
     const { amount, publicKey, signedXdr } = req.body // Already validated by middleware
     const result = await sorobanService.contribute(id, publicKey, amount, signedXdr)
+    
+    // Award gamification points for contribution (only on successful submission)
+    if (result.txHash && publicKey) {
+      try {
+        // Use transaction hash as unique identifier for idempotency
+        await gamificationService.handleContribution(publicKey, result.txHash)
+      } catch (error) {
+        // Log but don't fail the request if gamification fails
+        logger.error('Failed to update gamification', { error, publicKey, txHash: result.txHash })
+      }
+    }
+    
     res.json({ success: true, data: result })
   })
 

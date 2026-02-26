@@ -13,6 +13,7 @@ import { authRouter } from './routes/auth'
 import { analyticsRouter } from './routes/analytics'
 import { emailRouter } from './routes/email'
 import { jobsRouter } from './routes/jobs'
+import { gamificationRouter } from './routes/gamification'
 import { setupSwagger } from './swagger'
 import { apiLimiter, strictLimiter } from './middleware/rateLimiter'
 import { startWorkers, stopWorkers } from './jobs/jobWorkers'
@@ -45,6 +46,7 @@ app.use('/api/webhooks', strictLimiter, webhooksRouter)
 app.use('/api/analytics', analyticsRouter)
 app.use('/api/email', emailRouter)
 app.use('/api/jobs', jobsRouter)
+app.use('/api/gamification', gamificationRouter)
 
 // 404 handler
 app.use((req, res) => {

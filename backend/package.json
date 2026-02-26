@@ -14,7 +14,8 @@
         "db:push": "prisma db push",
         "db:migrate": "prisma migrate dev",
         "db:studio": "prisma studio",
-        "generate-sdk": "tsx scripts/generate-sdk.ts"
+        "generate-sdk": "tsx scripts/generate-sdk.ts",
+        "seed:gamification": "tsx scripts/seed-gamification.ts"
     },
     "dependencies": {
         "@prisma/adapter-pg": "^7.4.1",
