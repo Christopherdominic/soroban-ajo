@@ -14,6 +14,7 @@ import { analyticsRouter } from './routes/analytics'
 import { emailRouter } from './routes/email'
 import { jobsRouter } from './routes/jobs'
 import { gamificationRouter } from './routes/gamification'
+import { goalsRouter } from './routes/goals'
 import { setupSwagger } from './swagger'
 import { apiLimiter, strictLimiter } from './middleware/rateLimiter'
 import { startWorkers, stopWorkers } from './jobs/jobWorkers'
@@ -26,7 +27,7 @@ const PORT = process.env.PORT || 3001
 // Middleware
 app.use(helmet())
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL, 'http://localhost:3000', 'http://localhost:5173'] : ['http://localhost:3000', 'http://localhost:5173'],
   credentials: true
 }))
 app.use(requestLogger)
@@ -47,6 +48,7 @@ app.use('/api/analytics', analyticsRouter)
 app.use('/api/email', emailRouter)
 app.use('/api/jobs', jobsRouter)
 app.use('/api/gamification', gamificationRouter)
+app.use('/api/goals', goalsRouter)
 
 // 404 handler
 app.use((req, res) => {
