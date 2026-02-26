@@ -19,6 +19,7 @@ import { setupSwagger } from './swagger'
 import { apiLimiter, strictLimiter } from './middleware/rateLimiter'
 import { startWorkers, stopWorkers } from './jobs/jobWorkers'
 import { startScheduler, stopScheduler } from './cron/scheduler'
+import { kycRouter } from './routes/kyc'  // new KYC routes
 
 dotenv.config()
 

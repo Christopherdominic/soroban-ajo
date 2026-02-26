@@ -27,6 +27,7 @@ export default function AdminDashboardPage() {
   }
 
   const metrics = data?.health?.metrics;
+const kycSummary = data?.kycSummary || {};
 
   return (
     <div className="space-y-6">
@@ -53,6 +54,10 @@ export default function AdminDashboardPage() {
         <div className="rounded-lg border p-4 bg-amber-500/10 border-amber-500/20">
           <div className="text-xs text-gray-400 uppercase mb-3">Pending Flags</div>
           <div className="text-2xl font-bold text-amber-400">{metrics?.pendingModerationFlags ?? '—'}</div>
+        </div>
+        <div className="rounded-lg border p-4 bg-yellow-500/10 border-yellow-500/20">
+          <div className="text-xs text-gray-400 uppercase mb-3">KYC Pending</div>
+          <div className="text-2xl font-bold text-yellow-400">{kycSummary?.pending ?? '—'}</div>
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { useProfile } from '@/hooks/useProfile'
 import { ProfileCard } from '@/components/ProfileCard'
 import { ProfileForm } from '@/components/ProfileForm'
 import { SettingsPanel } from '@/components/SettingsPanel'
+import { KYCVerification } from '@/components/KYCVerification'
 import type { ActivityItem } from '@/types/profile'
 
 export default function ProfilePage() {
@@ -116,7 +117,11 @@ export default function ProfilePage() {
             {activeSection === 'overview' && (
               <>
                 <ProfileCard profile={profile} isLoading={isLoading} />
-                
+                {/* KYC block */}
+                <div className="mt-6">
+                  <KYCVerification />
+                </div>
+
                 {/* Quick Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <StatCard

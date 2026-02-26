@@ -7,6 +7,11 @@ export interface UserProfile {
   avatar?: string
   email?: string
   joinedDate: string
+
+  // KYC/AML
+  kycLevel?: number
+  kycStatus?: string
+
   preferences: UserPreferences
   stats: UserStats
 }
@@ -155,6 +160,9 @@ export const useProfile = (address?: string) => {
             totalContributions: 0,
             totalReceived: 0,
           },
+          // default kyc values
+          kycLevel: 0,
+          kycStatus: 'none',
         }
         storageService.saveProfile(userProfile)
       }
