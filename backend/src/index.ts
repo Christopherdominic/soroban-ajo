@@ -17,6 +17,7 @@ import { setupSwagger } from './swagger'
 import { apiLimiter, strictLimiter } from './middleware/rateLimiter'
 import { startWorkers, stopWorkers } from './jobs/jobWorkers'
 import { startScheduler, stopScheduler } from './cron/scheduler'
+import { kycRouter } from './routes/kyc'  // new KYC routes
 
 dotenv.config()
 
@@ -45,6 +46,8 @@ app.use('/api/webhooks', strictLimiter, webhooksRouter)
 app.use('/api/analytics', analyticsRouter)
 app.use('/api/email', emailRouter)
 app.use('/api/jobs', jobsRouter)
+// kyc endpoints (user-facing and admin)
+app.use('/api/kyc', kycRouter)
 
 // 404 handler
 app.use((req, res) => {

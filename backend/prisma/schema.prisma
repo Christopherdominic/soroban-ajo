@@ -12,6 +12,14 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // KYC/AML fields
+  kycLevel        Int      @default(0)                     // 0=no verification, 1=email/phone, 2=ID, 3=full
+  kycStatus       String   @default("none")               // pending/approved/rejected/none
+  kycRequestedAt  DateTime?
+  kycVerifiedAt   DateTime?
+  kycRejectedAt   DateTime?
+  kycDocuments    Json?                                   // metadata about submitted documents
+
   groups        GroupMember[]
   contributions Contribution[]
 }
@@ -56,4 +64,21 @@ model Contribution {
   user  User  @relation(fields: [userId], references: [walletAddress])
 
   @@index([groupId, round])
+}
+
+// Documents uploaded as part of the KYC process
+model KycDocument {
+  id          String   @id @default(cuid())
+  userId      String
+  docType     String
+  status      String   @default("pending")
+  ipfsCid     String
+  uploadedAt  DateTime @default(now())
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  notes       String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }

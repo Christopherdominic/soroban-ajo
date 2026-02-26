@@ -69,6 +69,13 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, isLoading = f
             </svg>
             <span>Joined {new Date(profile.joinedAt).toLocaleDateString()}</span>
           </div>
+          {profile.kycLevel !== undefined && (
+            <div className="mt-2">
+              <span className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
+                KYC L{profile.kycLevel} ({profile.kycStatus || 'none'})
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
