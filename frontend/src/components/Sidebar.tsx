@@ -14,6 +14,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => 
     { id: 'create', label: 'Create Group', icon: '➕' },
     { id: 'detail', label: 'My Groups', icon: '👥' },
     { id: 'analytics', label: 'Analytics', icon: '📈' },
+    { id: 'insurance', label: 'Insurance', icon: '🛡️' },
   ]
 
   return (

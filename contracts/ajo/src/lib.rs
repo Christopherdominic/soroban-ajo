@@ -21,6 +21,7 @@ mod storage;
 mod token;
 mod types;
 mod utils;
+mod insurance;
 
 pub use contract::AjoContract;
 pub use contract::AjoContractClient;

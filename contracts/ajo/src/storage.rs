@@ -44,6 +44,18 @@ pub enum StorageKey {
     /// Penalty pool for current cycle.
     /// Stored in persistent storage under `("PENPOOL", group_id, cycle)`.
     CyclePenaltyPool(u64, u32),
+
+    /// Insurance pool for a specific token.
+    /// Stored in instance storage under `("INSPOOL", token_address)`.
+    InsurancePool(Address),
+
+    /// Insurance claim keyed by ID.
+    /// Stored in persistent storage under `("INSCLAIM", claim_id)`.
+    InsuranceClaim(u64),
+
+    /// Global insurance claim counter.
+    /// Stored in instance storage under `"ICONT"`.
+    ClaimCounter,
 }
 
 impl StorageKey {
@@ -69,6 +81,9 @@ impl StorageKey {
             StorageKey::ContributionDetail(_, _, _) => symbol_short!("CONTREC"),
             StorageKey::MemberPenalty(_, _) => symbol_short!("PENALTY"),
             StorageKey::CyclePenaltyPool(_, _) => symbol_short!("PENPOOL"),
+            StorageKey::InsurancePool(_) => symbol_short!("INSPOOL"),
+            StorageKey::InsuranceClaim(_) => symbol_short!("INSCLAIM"),
+            StorageKey::ClaimCounter => symbol_short!("ICONT"),
         }
     }
 }
@@ -517,5 +532,38 @@ pub fn get_refund_record(
     member: &Address,
 ) -> Option<crate::types::RefundRecord> {
     let key = (symbol_short!("REFUND"), group_id, member);
+    env.storage().persistent().get(&key)
+}
+
+/// Stores the insurance pool for a token.
+pub fn store_insurance_pool(env: &Env, token: &Address, pool: &crate::types::InsurancePool) {
+    let key = (symbol_short!("INSPOOL"), token);
+    env.storage().instance().set(&key, pool);
+}
+
+/// Retrieves the insurance pool for a token.
+pub fn get_insurance_pool(env: &Env, token: &Address) -> Option<crate::types::InsurancePool> {
+    let key = (symbol_short!("INSPOOL"), token);
+    env.storage().instance().get(&key)
+}
+
+/// Returns next available claim ID.
+pub fn get_next_claim_id(env: &Env) -> u64 {
+    let key = symbol_short!("ICONT");
+    let current: u64 = env.storage().instance().get(&key).unwrap_or(0);
+    let next = current + 1;
+    env.storage().instance().set(&key, &next);
+    next
+}
+
+/// Stores an insurance claim.
+pub fn store_insurance_claim(env: &Env, claim_id: u64, claim: &crate::types::InsuranceClaim) {
+    let key = (symbol_short!("INSCLAIM"), claim_id);
+    env.storage().persistent().set(&key, claim);
+}
+
+/// Retrieves an insurance claim.
+pub fn get_insurance_claim(env: &Env, claim_id: u64) -> Option<crate::types::InsuranceClaim> {
+    let key = (symbol_short!("INSCLAIM"), claim_id);
     env.storage().persistent().get(&key)
 }

@@ -145,6 +145,7 @@ impl AjoContract {
         max_members: u32,
         grace_period: u64,
         penalty_rate: u32,
+        insurance_rate_bps: u32,
     ) -> Result<u64, AjoError> {
         // Validate parameters
         utils::validate_group_params(contribution_amount, cycle_duration, max_members)?;
@@ -183,6 +184,10 @@ impl AjoContract {
             grace_period,
             penalty_rate,
             state: crate::types::GroupState::Active,
+            insurance_config: crate::types::InsuranceConfig {
+                rate_bps: insurance_rate_bps,
+                is_enabled: insurance_rate_bps > 0,
+            },
         };
 
         // Store group
@@ -403,6 +408,14 @@ impl AjoContract {
 
         // Record contribution
         storage::store_contribution(&env, group_id_cached, current_cycle, &member, true);
+
+        // Insurance logic: Deduct premium if enabled
+        if group.insurance_config.is_enabled {
+            let premium = crate::insurance::calculate_premium(contribution_amount, group.insurance_config.rate_bps);
+            if premium > 0 {
+                crate::insurance::deposit_to_pool(&env, &group.token_address, premium);
+            }
+        }
 
         // Emit event
         events::emit_contribution_made(
@@ -1318,5 +1331,52 @@ impl AjoContract {
     pub fn get_contract_balance(env: Env, token_address: Address) -> i128 {
         let contract_address = env.current_contract_address();
         crate::token::get_balance(&env, &token_address, &contract_address)
+    }
+
+    /// File an insurance claim for non-payment.
+    pub fn file_insurance_claim(
+        env: Env,
+        claimant: Address,
+        group_id: u64,
+        cycle: u32,
+        defaulter: Address,
+        amount: i128,
+    ) -> Result<u64, AjoError> {
+        claimant.require_auth();
+        crate::insurance::file_claim(&env, group_id, cycle, claimant, defaulter, amount)
+    }
+
+    /// Process (approve/reject) an insurance claim.
+    /// Only the contract admin can process claims.
+    pub fn process_insurance_claim(
+        env: Env,
+        admin: Address,
+        claim_id: u64,
+        approved: bool,
+    ) -> Result<(), AjoError> {
+        let contract_admin = storage::get_admin(&env).ok_or(AjoError::Unauthorized)?;
+        contract_admin.require_auth();
+        crate::insurance::process_claim(&env, claim_id, approved)
+    }
+
+    /// Get insurance pool details for a specific token.
+    pub fn get_insurance_pool(env: Env, token_address: Address) -> Result<crate::types::InsurancePool, AjoError> {
+        storage::get_insurance_pool(&env, &token_address).ok_or(AjoError::PoolNotFound)
+    }
+
+    /// Get insurance claim details.
+    pub fn get_insurance_claim(env: Env, claim_id: u64) -> Result<crate::types::InsuranceClaim, AjoError> {
+        storage::get_insurance_claim(&env, claim_id).ok_or(AjoError::InvalidClaim)
+    }
+
+    /// Get risk score for a member.
+    pub fn get_member_risk_score(env: Env, member: Address) -> u32 {
+        crate::insurance::get_member_risk_score(&env, &member)
+    }
+
+    /// Get risk rating for a group.
+    pub fn get_group_risk_rating(env: Env, group_id: u64) -> Result<u32, AjoError> {
+        let group = storage::get_group(&env, group_id).ok_or(AjoError::GroupNotFound)?;
+        Ok(crate::insurance::get_group_risk_rating(&env, &group))
     }
 }

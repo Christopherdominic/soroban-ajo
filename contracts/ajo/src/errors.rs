@@ -124,4 +124,16 @@ pub enum AjoError {
 
     /// Token allowance is insufficient for transfer.
     InsufficientAllowance = 40,
+
+    /// Insurance claim not found or invalid.
+    InvalidClaim = 41,
+
+    /// Claim has already been processed (approved or rejected).
+    ClaimAlreadyProcessed = 42,
+
+    /// Insurance pool has insufficient balance for payout.
+    InsufficientPoolBalance = 43,
+
+    /// Insurance pool for token not found.
+    PoolNotFound = 44,
 }

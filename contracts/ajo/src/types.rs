@@ -86,6 +86,9 @@ pub struct Group {
 
     /// Current state of the group (Active, Cancelled, or Complete).
     pub state: GroupState,
+
+    /// Insurance configuration for the group.
+    pub insurance_config: InsuranceConfig,
 }
 
 /// Comprehensive snapshot of a group's current state.
@@ -270,7 +273,8 @@ pub struct ContributionRecord {
     pub penalty_amount: i128,
 }
 
-/// Record that a member has received their payout for a given cycle.
+
+/// Records that a member has received their payout for a given cycle.
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PayoutRecord {
@@ -278,4 +282,60 @@ pub struct PayoutRecord {
     pub member: Address,
     pub amount: i128,
     pub timestamp: u64,
+}
+
+/// Insurance configuration for a group.
+#[contracttype]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct InsuranceConfig {
+    /// Insurance rate in basis points (1 bp = 0.01%).
+    /// A value of 100 means 1% of each contribution goes to the insurance pool.
+    pub rate_bps: u32,
+    /// Whether insurance is enabled for this group.
+    pub is_enabled: bool,
+}
+
+/// Status of an insurance claim.
+#[contracttype]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
+pub enum ClaimStatus {
+    Pending = 0,
+    Approved = 1,
+    Rejected = 2,
+    Paid = 3,
+}
+
+/// Information about an insurance claim filed for non-payment.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct InsuranceClaim {
+    /// The unique identifier for the claim.
+    pub id: u64,
+    /// The group the claim belongs to.
+    pub group_id: u64,
+    /// The cycle in which the default occurred.
+    pub cycle: u32,
+    /// The member who defaulted (did not pay).
+    pub defaulter: Address,
+    /// The member who is filing the claim (usually the cycle's recipient).
+    pub claimant: Address,
+    /// The amount being claimed.
+    pub amount: i128,
+    /// The current status of the claim.
+    pub status: ClaimStatus,
+    /// Unix timestamp when the claim was filed.
+    pub created_at: u64,
+}
+
+/// Insurance fund balance tracking.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct InsurancePool {
+    /// Total balance available in the insurance pool for a specific token.
+    pub balance: i128,
+    /// Total amount paid out from the pool.
+    pub total_payouts: i128,
+    /// Total amount of claims filed.
+    pub pending_claims_count: u32,
 }
