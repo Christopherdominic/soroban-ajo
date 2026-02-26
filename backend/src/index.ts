@@ -48,6 +48,10 @@ app.use('/api/email', emailRouter)
 app.use('/api/jobs', jobsRouter)
 app.use('/api/gamification', gamificationRouter)
 
+// Disputes
+import { disputesRouter } from './routes/disputes'
+app.use('/api/disputes', disputesRouter)
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({

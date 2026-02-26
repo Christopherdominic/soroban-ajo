@@ -1,5 +1,9 @@
 import { dbService } from './databaseService';
 import { SorobanService } from './sorobanService';
+import Redis from 'ioredis';
+
+// initialize Redis client (will read from REDIS_URL or fallback to localhost)
+export const redisClient = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379');
 
 const sorobanService = new SorobanService();
 
@@ -7,26 +11,45 @@ const sorobanService = new SorobanService();
  * Example: Fetch group with caching
  * First checks database, falls back to blockchain if not found
  */
+/**
+ * Get a group, preferring cache layers.  This example now layers Redis on
+ * top of the existing database cache so that reads are extremely fast.
+ *
+ * Order of operations:
+ * 1. Check Redis cache
+ * 2. If miss, check PostgreSQL via dbService
+ * 3. If still miss, fetch from blockchain and populate both caches
+ */
 export async function getGroupWithCache(groupId: string) {
-  // Try cache first
-  const cached = await dbService.getGroup(groupId);
-  if (cached) {
-    return cached;
+  const redisKey = `group:${groupId}`;
+
+  // 1. Redis
+  const cachedRedis = await redisClient.get(redisKey);
+  if (cachedRedis) {
+    return JSON.parse(cachedRedis);
   }
 
-  // Fetch from blockchain
+  // 2. Postgres cache
+  const cachedDb = await dbService.getGroup(groupId);
+  if (cachedDb) {
+    // warm redis for subsequent requests
+    await redisClient.set(redisKey, JSON.stringify(cachedDb), 'EX', 60 * 5);
+    return cachedDb;
+  }
+
+  // 3. Blockchain fallback
   const blockchainData = await sorobanService.getGroup(groupId);
   if (!blockchainData) {
     throw new Error('Group not found on blockchain');
   }
 
-  // Cache it
+  // Persist to db cache
   const freqString = blockchainData.frequency || 'monthly';
   let frequencyInt = 30; // default to 30 days
   if (freqString === 'daily') frequencyInt = 1;
   else if (freqString === 'weekly') frequencyInt = 7;
 
-  await dbService.upsertGroup(groupId, {
+  const upserted = await dbService.upsertGroup(groupId, {
     name: blockchainData.name,
     contributionAmount: BigInt(blockchainData.contributionAmount),
     frequency: frequencyInt,
@@ -34,7 +57,10 @@ export async function getGroupWithCache(groupId: string) {
     isActive: blockchainData.isActive,
   });
 
-  return dbService.getGroup(groupId);
+  // Also cache in Redis
+  await redisClient.set(redisKey, JSON.stringify(upserted), 'EX', 60 * 5);
+
+  return upserted;
 }
 
 /**
@@ -68,4 +94,17 @@ export async function recordContribution(
  */
 export async function getAllGroupsFast() {
   return dbService.getAllGroups();
+}
+
+// Generic Redis helpers exposed for middleware or other services
+export async function cacheSet(key: string, value: string, ttlSeconds = 60) {
+  return redisClient.set(key, value, 'EX', ttlSeconds);
+}
+
+export async function cacheGet(key: string): Promise<string | null> {
+  return redisClient.get(key);
+}
+
+export async function cacheDel(key: string) {
+  return redisClient.del(key);
 }
