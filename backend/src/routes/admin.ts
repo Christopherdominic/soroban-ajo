@@ -16,12 +16,22 @@ router.get('/health', async (req: Request, res: Response) => {
 });
 
 router.get('/dashboard', requirePermission('users:read'), async (req: Request, res: Response) => {
-  const [health, recentAudit, pendingFlags] = await Promise.all([
+  const [health, recentAudit, pendingFlags, kycCounts] = await Promise.all([
     config.getSystemHealth(),
     audit.getAuditLogs({ limit: 10 }),
     moderation.getPendingFlags(1, 5),
+    prisma.user.groupBy({
+      by: ['kycStatus'],
+      _count: { _all: true },
+    }),
   ]);
-  res.json({ health, recentAudit: recentAudit.logs, pendingFlags: pendingFlags.flags });
+
+  const kycSummary: Record<string, number> = {}
+  kycCounts.forEach(c => {
+    kycSummary[c.kycStatus] = c._count._all
+  })
+
+  res.json({ health, recentAudit: recentAudit.logs, pendingFlags: pendingFlags.flags, kycSummary });
 });
 
 router.get('/users', requirePermission('users:read'), async (req: Request, res: Response) => {
