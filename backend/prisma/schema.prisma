@@ -13,7 +13,8 @@ model User {
   updatedAt     DateTime @updatedAt
 
   groups        GroupMember[]
-  contributions Contribution[]
+  contributions  Contribution[]
+  metrics        UserMetrics?
 }
 
 model Group {
@@ -29,6 +30,7 @@ model Group {
 
   members        GroupMember[]
   contributions  Contribution[]
+  metrics        GroupMetrics?
 }
 
 model GroupMember {
@@ -56,4 +58,102 @@ model Contribution {
   user  User  @relation(fields: [userId], references: [walletAddress])
 
   @@index([groupId, round])
+}
+
+// Analytics tables for advanced BI
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  eventType   String
+  userId      String?
+  groupId     String?
+  eventData   Json
+  timestamp   DateTime @default(now())
+  sessionId   String?
+  
+  @@index([eventType, timestamp])
+  @@index([userId, timestamp])
+  @@index([groupId, timestamp])
+}
+
+model UserMetrics {
+  id              String @id @default(cuid())
+  userId          String @unique
+  totalContributed BigInt @default(0)
+  totalReceived   BigInt @default(0)
+  groupsJoined    Int @default(0)
+  groupsCompleted Int @default(0)
+  lastActiveAt    DateTime @default(now())
+  retentionRate   Float @default(0)
+  churnScore      Float @default(0)
+  ltv             BigInt @default(0)
+  predictedChurn  Boolean @default(false)
+  
+  user User @relation(fields: [userId], references: [walletAddress])
+  
+  @@index([predictedChurn])
+  @@index([churnScore])
+}
+
+model GroupMetrics {
+  id                    String @id @default(cuid())
+  groupId               String @unique
+  totalContributions    BigInt @default(0)
+  totalPayouts          BigInt @default(0)
+  memberCount           Int @default(0)
+  completedRounds       Int @default(0)
+  successRate           Float @default(0)
+  defaultRate           Float @default(0)
+  avgContributionTime   Float @default(0)
+  predictedSuccess      Boolean @default(false)
+  riskScore             Float @default(0)
+  lastUpdated           DateTime @default(now())
+  
+  group Group @relation(fields: [groupId], references: [id])
+  
+  @@index([predictedSuccess])
+  @@index([riskScore])
+}
+
+model CohortAnalysis {
+  id            String @id @default(cuid())
+  cohortDate    DateTime
+  cohortSize    Int
+  period        Int
+  activeUsers   Int
+  retentionRate Float
+  createdAt     DateTime @default(now())
+  
+  @@unique([cohortDate, period])
+  @@index([cohortDate])
+}
+
+model ABTest {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  status      String @default("active")
+  variants    Json // { A: { traffic: 50, conversions: 0 }, B: { traffic: 50, conversions: 0 } }
+  metrics     Json // { primary: "conversion_rate", secondary: ["engagement", "retention"] }
+  results     Json? // Statistical results
+  createdAt   DateTime @default(now())
+  
+  @@index([status])
+}
+
+model DataExport {
+  id          String @id @default(cuid())
+  userId      String?
+  exportType  String // "csv", "excel", "pdf"
+  format      String
+  query       Json // Export parameters
+  status      String @default("pending")
+  filePath    String?
+  fileSize    Int?
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+  
+  @@index([userId, status])
+  @@index([status])
 }
