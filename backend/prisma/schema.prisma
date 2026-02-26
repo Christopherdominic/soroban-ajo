@@ -39,6 +39,7 @@ model Group {
 
   members        GroupMember[]
   contributions  Contribution[]
+  multiSigConfig MultiSigConfig?
 }
 
 model GroupMember {
@@ -240,4 +241,82 @@ model RewardHistory {
   @@index([userId])
   @@index([rewardType])
   @@index([createdAt(sort: Desc)])
+}
+
+// Multi-Signature Wallet Models
+model MultiSigConfig {
+  id                String   @id @default(cuid())
+  groupId           String   @unique
+  threshold         Int      // Required signatures
+  totalSigners      Int      // Total number of signers
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  group             Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  signers           SignerConfig[]
+  proposals         TransactionProposal[]
+  
+  @@index([groupId])
+  @@index([isActive])
+}
+
+model SignerConfig {
+  id              String   @id @default(cuid())
+  multiSigId      String
+  walletAddress   String
+  weight          Int      @default(1)
+  isActive        Boolean  @default(true)
+  addedAt         DateTime @default(now())
+  removedAt       DateTime?
+  
+  multiSig        MultiSigConfig @relation(fields: [multiSigId], references: [id], onDelete: Cascade)
+  signatures      ProposalSignature[]
+  
+  @@unique([multiSigId, walletAddress])
+  @@index([multiSigId])
+  @@index([walletAddress])
+  @@index([isActive])
+}
+
+model TransactionProposal {
+  id              String   @id @default(cuid())
+  multiSigId      String
+  proposerId      String
+  operationType   String   // PAYOUT, CANCEL_GROUP, REMOVE_MEMBER, CHANGE_SETTINGS
+  transactionXdr  String   @db.Text
+  metadata        String?  @db.Text
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, EXECUTED, EXPIRED
+  requiredSigs    Int
+  currentSigs     Int      @default(0)
+  expiresAt       DateTime
+  executedAt      DateTime?
+  executedTxHash  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  multiSig        MultiSigConfig @relation(fields: [multiSigId], references: [id], onDelete: Cascade)
+  signatures      ProposalSignature[]
+  
+  @@index([multiSigId])
+  @@index([proposerId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([createdAt(sort: Desc)])
+}
+
+model ProposalSignature {
+  id              String   @id @default(cuid())
+  proposalId      String
+  signerId        String
+  signature       String   @db.Text
+  signedAt        DateTime @default(now())
+  
+  proposal        TransactionProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  signer          SignerConfig @relation(fields: [signerId], references: [id], onDelete: Cascade)
+  
+  @@unique([proposalId, signerId])
+  @@index([proposalId])
+  @@index([signerId])
+  @@index([signedAt(sort: Desc)])
 }
