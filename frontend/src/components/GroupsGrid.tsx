@@ -3,7 +3,7 @@ import { Group } from '@/types'
 import { GroupCard } from './GroupCard'
 
 interface GroupsGridProps {
-  groups: Group[]
+  groups?: Group[]
   isLoading?: boolean
   onGroupClick?: (groupId: string) => void
 }
@@ -13,6 +13,7 @@ export const GroupsGrid: React.FC<GroupsGridProps> = ({
   isLoading = false,
   onGroupClick
 }) => {
+  const list = groups ?? []
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -27,7 +28,7 @@ export const GroupsGrid: React.FC<GroupsGridProps> = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {groups.map((group, i) => (
+      {list.map((group, i) => (
         <div key={group.id} className="animate-fade-in-up" style={{ animationDelay: `${i * 60}ms` }}>
           <GroupCard
             groupId={group.id}

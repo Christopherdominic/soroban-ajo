@@ -1,0 +1,190 @@
+{
+  "common": {
+    "appName": "Ajo",
+    "loading": "Inapakia...",
+    "error": "Hitilafu",
+    "success": "Mafanikio",
+    "cancel": "Ghairi",
+    "confirm": "Thibitisha",
+    "save": "Hifadhi",
+    "delete": "Futa",
+    "edit": "Hariri",
+    "close": "Funga",
+    "back": "Rudi",
+    "next": "Ifuatayo",
+    "submit": "Wasilisha",
+    "search": "Tafuta",
+    "filter": "Chuja",
+    "clear": "Futa",
+    "viewDetails": "Tazama Maelezo",
+    "learnMore": "Jifunze Zaidi",
+    "getStarted": "Anza"
+  },
+  "nav": {
+    "home": "Nyumbani",
+    "dashboard": "Dashibodi",
+    "groups": "Vikundi",
+    "profile": "Wasifu",
+    "analytics": "Takwimu",
+    "community": "Jamii",
+    "settings": "Mipangilio"
+  },
+  "home": {
+    "hero": {
+      "title": "Okoa pamoja. Kua pamoja.",
+      "subtitle": "Akiba za jadi, uaminifu wa blockchain",
+      "description": "Ajo ni mfumo wa akiba wa jamii ambapo vikundi vinachangia pamoja na kupokea malipo kwa zamu. Sasa inasaidiwa na blockchain ya Stellar kwa uwazi na usalama."
+    },
+    "howItWorks": {
+      "title": "Jinsi Inavyofanya Kazi",
+      "step1": {
+        "title": "Jiunge au Unda Kikundi",
+        "description": "Anzisha kikundi chako cha akiba au jiunge na kilichopo na marafiki, familia, au wanajamii."
+      },
+      "step2": {
+        "title": "Changia Mara kwa Mara",
+        "description": "Kila mwanachama anachangia kiasi kilichowekwa kila mzunguko. Michango yote inarekodiwa kwenye blockchain."
+      },
+      "step3": {
+        "title": "Pokea Malipo Yako",
+        "description": "Wanachama wanapokea mfuko kamili kwa zamu. Kila mtu anapata zamu yake hadi mzunguko ukamilike."
+      }
+    }
+  },
+  "wallet": {
+    "connect": "Unganisha Mkoba",
+    "disconnect": "Tenganisha",
+    "connecting": "Inaunganisha...",
+    "connected": "Imeunganishwa",
+    "notConnected": "Haijaunganishwa",
+    "balance": "Salio",
+    "address": "Anwani",
+    "copyAddress": "Nakili Anwani",
+    "addressCopied": "Anwani imenakiliwa!",
+    "installFreighter": "Sakinisha Mkoba wa Freighter",
+    "freighterRequired": "Mkoba wa Freighter unahitajika kutumia programu hii"
+  },
+  "group": {
+    "create": "Unda Kikundi",
+    "join": "Jiunge na Kikundi",
+    "leave": "Acha Kikundi",
+    "details": "Maelezo ya Kikundi",
+    "members": "Wanachama",
+    "status": "Hali",
+    "active": "Hai",
+    "complete": "Kamili",
+    "cancelled": "Imeghairiwa",
+    "contributionAmount": "Kiasi cha Mchango",
+    "cycleDuration": "Muda wa Mzunguko",
+    "maxMembers": "Wanachama Wengi Zaidi",
+    "currentCycle": "Mzunguko wa Sasa",
+    "nextRecipient": "Mpokeaji Anayefuata",
+    "contributionsReceived": "Michango Iliyopokelewa",
+    "pendingContributors": "Wachangiaji Wanaosubiri",
+    "cycleStartTime": "Muda wa Kuanza Mzunguko",
+    "cycleEndTime": "Muda wa Kumalizika Mzunguko",
+    "createdAt": "Iliundwa",
+    "creator": "Muundaji",
+    "myGroups": "Vikundi Vyangu",
+    "allGroups": "Vikundi Vyote",
+    "noGroups": "Hakuna vikundi vilivyopatikana",
+    "createFirst": "Unda kikundi chako cha kwanza kuanza"
+  },
+  "groupForm": {
+    "title": "Unda Kikundi Kipya",
+    "name": "Jina la Kikundi",
+    "namePlaceholder": "Ingiza jina la kikundi",
+    "description": "Maelezo",
+    "descriptionPlaceholder": "Eleza madhumuni ya kikundi hiki",
+    "rules": "Sheria",
+    "rulesPlaceholder": "Weka sheria na miongozo ya kikundi",
+    "contributionAmount": "Kiasi cha Mchango (XLM)",
+    "contributionAmountPlaceholder": "Kiasi kinachochangiwa na kila mwanachama",
+    "cycleDuration": "Muda wa Mzunguko (siku)",
+    "cycleDurationPlaceholder": "Muda gani kila mzunguko unachukua",
+    "maxMembers": "Wanachama Wengi Zaidi",
+    "maxMembersPlaceholder": "Idadi ya juu ya wanachama (2-100)",
+    "creating": "Inaunda...",
+    "create": "Unda Kikundi"
+  },
+  "contribution": {
+    "make": "Fanya Mchango",
+    "amount": "Kiasi",
+    "contribute": "Changia",
+    "contributing": "Inachangia...",
+    "success": "Mchango umefanikiwa!",
+    "alreadyContributed": "Tayari umechangia mzunguko huu",
+    "notMember": "Wewe si mwanachama wa kikundi hiki",
+    "cycleComplete": "Mzunguko huu umekamilika",
+    "history": "Historia ya Michango"
+  },
+  "transaction": {
+    "history": "Historia ya Miamala",
+    "type": "Aina",
+    "amount": "Kiasi",
+    "date": "Tarehe",
+    "status": "Hali",
+    "pending": "Inasubiri",
+    "confirmed": "Imethibitishwa",
+    "failed": "Imeshindwa",
+    "contribution": "Mchango",
+    "payout": "Malipo",
+    "noTransactions": "Bado hakuna miamala"
+  },
+  "profile": {
+    "title": "Wasifu",
+    "settings": "Mipangilio ya Wasifu",
+    "displayName": "Jina la Kuonyesha",
+    "email": "Barua Pepe",
+    "bio": "Wasifu",
+    "language": "Lugha",
+    "theme": "Mandhari",
+    "notifications": "Arifa",
+    "save": "Hifadhi Mabadiliko",
+    "saving": "Inahifadhi..."
+  },
+  "analytics": {
+    "title": "Takwimu",
+    "totalGroups": "Jumla ya Vikundi",
+    "totalMembers": "Jumla ya Wanachama",
+    "totalContributions": "Jumla ya Michango",
+    "totalPayouts": "Jumla ya Malipo",
+    "activeGroups": "Vikundi Hai",
+    "completedGroups": "Vikundi Vilivyokamilika"
+  },
+  "language": {
+    "select": "Chagua Lugha",
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "pt": "Português",
+    "sw": "Kiswahili"
+  },
+  "errors": {
+    "generic": "Kuna kitu kimeenda vibaya",
+    "networkError": "Hitilafu ya mtandao. Tafadhali angalia muunganisho wako.",
+    "walletNotConnected": "Tafadhali unganisha mkoba wako",
+    "insufficientBalance": "Salio haitoshi",
+    "transactionFailed": "Muamala umeshindwa",
+    "groupNotFound": "Kikundi hakijapatikana",
+    "unauthorized": "Hauruhusiwi",
+    "invalidInput": "Ingizo batili",
+    "maxMembersExceeded": "Idadi ya juu ya wanachama imezidishwa",
+    "alreadyMember": "Tayari ni mwanachama",
+    "notMember": "Si mwanachama",
+    "alreadyContributed": "Tayari umechangia mzunguko huu",
+    "groupComplete": "Kikundi kimekamilika",
+    "contractPaused": "Mkataba umesimamishwa"
+  },
+  "time": {
+    "seconds": "sekunde",
+    "minutes": "dakika",
+    "hours": "saa",
+    "days": "siku",
+    "weeks": "wiki",
+    "months": "miezi",
+    "years": "miaka",
+    "ago": "iliyopita",
+    "remaining": "iliyobaki"
+  }
+}

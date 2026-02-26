@@ -1,45 +1,42 @@
-export interface CacheHealthParams {
-    hits: number
-    misses: number
-    size: number
-    maxSize: number
-    evictions: number
-    invalidations: number
+export interface CacheHealthMetrics {
+  hits: number;
+  misses: number;
+  size: number;
+  maxSize: number;
+  evictions: number;
+  invalidations: number;
 }
 
-export interface CacheHealthResult {
-    healthy: boolean
-    issues: string[]
-    warnings: string[]
+export interface CacheHealth {
+  healthy: boolean;
+  issues: string[];
+  warnings: string[];
 }
 
-export const checkCacheHealth = (params: CacheHealthParams): CacheHealthResult => {
-    const issues: string[] = []
-    const warnings: string[] = []
+export const checkCacheHealth = (metrics: CacheHealthMetrics): CacheHealth => {
+  const issues: string[] = [];
+  const warnings: string[] = [];
 
-    // Check hit rate
-    const total = params.hits + params.misses
-    const hitRate = total === 0 ? 0 : params.hits / total
+  const totalRequests = metrics.hits + metrics.misses;
+  const hitRate = totalRequests > 0 ? (metrics.hits / totalRequests) : 1;
 
-    if (total > 10 && hitRate < 0.1) {
-        issues.push(`Critical: Very low hit rate (${(hitRate * 100).toFixed(1)}%)`)
-    } else if (total > 5 && hitRate < 0.3) {
-        warnings.push(`Low hit rate (${(hitRate * 100).toFixed(1)}%)`)
-    }
+  if (metrics.size >= metrics.maxSize) {
+    issues.push(`Cache is full (${metrics.size}/${metrics.maxSize} entries)`);
+  } else if (metrics.size >= metrics.maxSize * 0.9) {
+    warnings.push(`Cache is almost full (${metrics.size}/${metrics.maxSize} entries)`);
+  }
 
-    // Check size
-    if (params.size >= params.maxSize) {
-        warnings.push(`Cache is full (${params.size}/${params.maxSize})`)
-    }
+  if (totalRequests > 100 && hitRate < 0.2) {
+    warnings.push(`Low cache hit rate: ${(hitRate * 100).toFixed(1)}%`);
+  }
 
-    // Check evictions
-    if (params.evictions > 100) {
-        warnings.push(`High eviction rate: ${params.evictions} evictions`)
-    }
+  if (metrics.evictions > metrics.size * 0.1) {
+    warnings.push(`High eviction rate detected (${metrics.evictions} evictions)`);
+  }
 
-    return {
-        healthy: issues.length === 0,
-        issues,
-        warnings,
-    }
-}
+  return {
+    healthy: issues.length === 0,
+    issues,
+    warnings,
+  };
+};

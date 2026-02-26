@@ -4,6 +4,7 @@
 
 import React from 'react'
 import { analytics } from '../services/analytics'
+import { monitoring } from '../services/monitoring'
 
 interface ErrorBoundaryProps {
   children: React.ReactNode
@@ -83,22 +84,17 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   private sendToMonitoringService(error: Error, errorInfo: React.ErrorInfo) {
-    // TODO: Integrate with external monitoring service
-    // Example: Sentry.captureException(error, { contexts: { react: errorInfo } })
-    
-    // For now, prepare data for future integration
-    const errorData = {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      retryCount: this.state.retryCount,
-      timestamp: Date.now(),
-      sessionId: analytics.getStats().sessionId,
-      userId: analytics.getStats().userId,
-    }
-
-    // Placeholder for monitoring service integration
-    console.log('[Monitoring Service] Error logged:', errorData)
+    monitoring.captureError({
+      error,
+      severity: 'high',
+      context: {
+        componentStack: errorInfo.componentStack,
+        retryCount: this.state.retryCount,
+        timestamp: Date.now(),
+        sessionId: analytics.getStats().sessionId,
+        userId: analytics.getStats().userId,
+      },
+    })
   }
 
   private attemptRecovery(error: Error) {

@@ -1,6 +1,8 @@
+'use client'
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '../hooks/useWallet';
 import { WalletType } from '../types/wallet';
+import Image from 'next/image';
 
 interface WalletConnectProps {
     onConnect?: (address: string) => void;
@@ -75,15 +77,15 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({
     if (isConnected && address) {
         return (
             <div className={`wallet-connect-container ${className}`}>
-                <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg">
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                             <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
-                            <span className="text-sm font-medium text-green-800">
+                            <span className="text-sm font-medium text-green-800 dark:text-green-300">
                                 Connected via {walletType === 'freighter' ? 'Freighter' : 'Albedo'}
                             </span>
                         </div>
-                        <div className="text-xs text-gray-600 font-mono" title={address}>
+                        <div className="text-xs text-gray-600 dark:text-gray-300 font-mono" title={address}>
                             {formatAddress(address)}
                         </div>
                         {showNetworkSelector && (
@@ -105,13 +107,25 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({
     }
 
     return (
-        <div className={`wallet-connect-container ${className}`}>
-            {!showWalletSelection ? (
+    <div className={`wallet-connect-container ${className}`}>
+        {/* Logo Section */}
+        <div className="flex justify-center mb-6">
+            <Image
+                src="/logo-icon.svg"
+                alt="Soroban Ajo"
+                width={60}
+                height={60}
+                className="transition-transform duration-300 hover:scale-105"
+                priority
+            />
+        </div>
+
+        {!showWalletSelection ? (
                 <div className="space-y-3">
                     <button
                         onClick={() => setShowWalletSelection(true)}
                         disabled={isLoading || !hasInstalledWallets}
-                        className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                         aria-label="Connect wallet"
                     >
                         {isLoading ? (
@@ -180,7 +194,7 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({
             ) : (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-semibold text-gray-900">Select Wallet</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Select Wallet</h3>
                         <button
                             onClick={() => setShowWalletSelection(false)}
                             className="text-gray-500 hover:text-gray-700"
@@ -224,7 +238,7 @@ export const WalletConnect: React.FC<WalletConnectProps> = ({
                             >
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="font-medium text-gray-900">{wallet.name}</p>
+                                        <p className="font-medium text-gray-900 dark:text-white">{wallet.name}</p>
                                         <p className="text-xs text-gray-500 mt-1">
                                             {wallet.isInstalled ? 'Ready to connect' : 'Not installed'}
                                         </p>

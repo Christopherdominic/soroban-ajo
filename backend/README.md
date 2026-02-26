@@ -1,6 +1,6 @@
-# Drips Backend API
+# Ajo Backend API
 
-Node.js/Express backend API for the Drips decentralized savings groups platform.
+Node.js/Express backend API for the Ajo decentralized savings groups platform.
 
 ## 🚀 Quick Start
 
@@ -8,9 +8,15 @@ Node.js/Express backend API for the Drips decentralized savings groups platform.
 # Install dependencies
 npm install
 
+# Set up PostgreSQL database
+docker-compose up -d
+
 # Set up environment
 cp .env.example .env
 # Edit .env with your configuration
+
+# Initialize database
+npm run db:push
 
 # Run development server
 npm run dev
@@ -18,24 +24,42 @@ npm run dev
 
 Server runs on http://localhost:3001
 
+## 📦 Database Layer
+
+The backend now includes a PostgreSQL database with Prisma ORM for caching blockchain data.
+
+**See [DATABASE_IMPLEMENTATION.md](DATABASE_IMPLEMENTATION.md) for complete setup guide.**
+
+Quick commands:
+- `npm run db:push` - Push schema to database
+- `npm run db:studio` - Open database GUI
+- `npm run db:migrate` - Create migration
+
 ## 📁 Project Structure
 
 ```
 backend/
+├── prisma/
+│   └── schema.prisma         # Database schema
 ├── src/
 │   ├── index.ts              # Application entry point
+│   ├── config/
+│   │   └── database.ts       # Prisma client
 │   ├── routes/               # API routes
 │   │   ├── health.ts         # Health check endpoint
 │   │   └── groups.ts         # Groups endpoints
 │   ├── controllers/          # Request handlers
 │   │   └── groupsController.ts
 │   ├── services/             # Business logic
-│   │   └── sorobanService.ts # Stellar/Soroban integration
+│   │   ├── sorobanService.ts # Stellar/Soroban integration
+│   │   ├── databaseService.ts # Database operations
+│   │   └── cacheService.ts   # Caching layer
 │   ├── middleware/           # Express middleware
 │   │   └── errorHandler.ts
 │   ├── types/                # TypeScript types
 │   └── utils/                # Utility functions
 ├── tests/                    # Test files
+├── docker-compose.yml        # PostgreSQL setup
 ├── package.json
 ├── tsconfig.json
 └── .env.example
@@ -46,6 +70,7 @@ backend/
 - **Runtime**: Node.js 18+
 - **Framework**: Express.js 4.18
 - **Language**: TypeScript 5.2
+- **Database**: PostgreSQL + Prisma ORM
 - **Blockchain**: Stellar SDK 12.0
 - **Validation**: Zod 3.22
 - **Security**: Helmet, CORS

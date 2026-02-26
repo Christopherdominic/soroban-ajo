@@ -27,6 +27,12 @@
                 },
                 {
                   "u32": 5
+                },
+                {
+                  "u64": 86400
+                },
+                {
+                  "u32": 5
                 }
               ]
             }
@@ -58,6 +64,12 @@
                 },
                 {
                   "u32": 3
+                },
+                {
+                  "u64": 86400
+                },
+                {
+                  "u32": 5
                 }
               ]
             }
@@ -169,6 +181,14 @@
                     },
                     {
                       "key": {
+                        "symbol": "grace_period"
+                      },
+                      "val": {
+                        "u64": 86400
+                      }
+                    },
+                    {
+                      "key": {
                         "symbol": "id"
                       },
                       "val": {
@@ -206,6 +226,22 @@
                     {
                       "key": {
                         "symbol": "payout_index"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "penalty_rate"
+                      },
+                      "val": {
+                        "u32": 5
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "state"
                       },
                       "val": {
                         "u32": 0
@@ -310,6 +346,14 @@
                     },
                     {
                       "key": {
+                        "symbol": "grace_period"
+                      },
+                      "val": {
+                        "u64": 86400
+                      }
+                    },
+                    {
+                      "key": {
                         "symbol": "id"
                       },
                       "val": {
@@ -347,6 +391,22 @@
                     {
                       "key": {
                         "symbol": "payout_index"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "penalty_rate"
+                      },
+                      "val": {
+                        "u32": 5
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "state"
                       },
                       "val": {
                         "u32": 0
@@ -526,6 +586,12 @@
                 },
                 {
                   "u32": 5
+                },
+                {
+                  "u64": 86400
+                },
+                {
+                  "u32": 5
                 }
               ]
             }
@@ -627,6 +693,12 @@
                 },
                 {
                   "u32": 3
+                },
+                {
+                  "u64": 86400
+                },
+                {
+                  "u32": 5
                 }
               ]
             }
@@ -790,6 +862,14 @@
                 },
                 {
                   "key": {
+                    "symbol": "grace_period"
+                  },
+                  "val": {
+                    "u64": 86400
+                  }
+                },
+                {
+                  "key": {
                     "symbol": "id"
                   },
                   "val": {
@@ -827,6 +907,22 @@
                 {
                   "key": {
                     "symbol": "payout_index"
+                  },
+                  "val": {
+                    "u32": 0
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "penalty_rate"
+                  },
+                  "val": {
+                    "u32": 5
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "state"
                   },
                   "val": {
                     "u32": 0
@@ -935,6 +1031,14 @@
                 },
                 {
                   "key": {
+                    "symbol": "grace_period"
+                  },
+                  "val": {
+                    "u64": 86400
+                  }
+                },
+                {
+                  "key": {
                     "symbol": "id"
                   },
                   "val": {
@@ -972,6 +1076,22 @@
                 {
                   "key": {
                     "symbol": "payout_index"
+                  },
+                  "val": {
+                    "u32": 0
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "penalty_rate"
+                  },
+                  "val": {
+                    "u32": 5
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "state"
                   },
                   "val": {
                     "u32": 0

@@ -6,8 +6,8 @@ export interface AnalyticsEvent {
   label?: string
   value?: number
   metadata?: Record<string, any>
-  timestamp?: number
-  sessionId?: string
+  timestamp: number
+  sessionId: string
   userId?: string
 }
 
@@ -65,8 +65,8 @@ class AnalyticsService {
   }
 
   // Track user actions
-  trackEvent(event: AnalyticsEvent) {
-    const enrichedEvent = {
+  trackEvent(event: Omit<AnalyticsEvent, 'timestamp' | 'sessionId' | 'userId'>) {
+    const enrichedEvent: AnalyticsEvent = {
       ...event,
       timestamp: Date.now(),
       sessionId: this.sessionId,
@@ -74,7 +74,6 @@ class AnalyticsService {
     }
 
     this.events.push(enrichedEvent)
-    console.log('[Analytics]', enrichedEvent)
 
     // Send to analytics backend (placeholder)
     this.sendToBackend('event', enrichedEvent)
@@ -90,7 +89,6 @@ class AnalyticsService {
     }
 
     this.metrics.push(metric)
-    console.log('[Performance]', metric)
 
     // Send to monitoring backend
     this.sendToBackend('metric', metric)
@@ -195,17 +193,13 @@ class AnalyticsService {
     }
   }
 
-  private sendToBackend(_type: string, _data: any) {
-    // TODO: Implement actual backend integration
-    // Options: Google Analytics, Mixpanel, PostHog, custom backend
-    // For now, just store locally and log
-
-    // Example: Send to custom analytics endpoint
-    // fetch('/api/analytics', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ type, data }),
-    // }).catch(err => console.error('Failed to send analytics', err))
+  private sendToBackend(type: string, data: any) {
+    if (typeof window === 'undefined') return
+    fetch('/api/analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, data }),
+    }).catch(err => console.error('Failed to send analytics', err))
   }
 }
 

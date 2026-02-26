@@ -1,0 +1,190 @@
+{
+  "common": {
+    "appName": "Ajo",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "viewDetails": "View Details",
+    "learnMore": "Learn More",
+    "getStarted": "Get Started"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "groups": "Groups",
+    "profile": "Profile",
+    "analytics": "Analytics",
+    "community": "Community",
+    "settings": "Settings"
+  },
+  "home": {
+    "hero": {
+      "title": "Save together. Grow together.",
+      "subtitle": "Traditional savings, blockchain trust",
+      "description": "Ajo is a community-based savings system where groups contribute together and take turns receiving payouts. Now powered by Stellar blockchain for transparency and security."
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "step1": {
+        "title": "Join or Create a Group",
+        "description": "Start your own savings group or join an existing one with friends, family, or community members."
+      },
+      "step2": {
+        "title": "Contribute Regularly",
+        "description": "Each member contributes a fixed amount every cycle. All contributions are recorded on the blockchain."
+      },
+      "step3": {
+        "title": "Receive Your Payout",
+        "description": "Members take turns receiving the full pool. Everyone gets their turn until the cycle completes."
+      }
+    }
+  },
+  "wallet": {
+    "connect": "Connect Wallet",
+    "disconnect": "Disconnect",
+    "connecting": "Connecting...",
+    "connected": "Connected",
+    "notConnected": "Not Connected",
+    "balance": "Balance",
+    "address": "Address",
+    "copyAddress": "Copy Address",
+    "addressCopied": "Address copied!",
+    "installFreighter": "Install Freighter Wallet",
+    "freighterRequired": "Freighter wallet is required to use this app"
+  },
+  "group": {
+    "create": "Create Group",
+    "join": "Join Group",
+    "leave": "Leave Group",
+    "details": "Group Details",
+    "members": "Members",
+    "status": "Status",
+    "active": "Active",
+    "complete": "Complete",
+    "cancelled": "Cancelled",
+    "contributionAmount": "Contribution Amount",
+    "cycleDuration": "Cycle Duration",
+    "maxMembers": "Max Members",
+    "currentCycle": "Current Cycle",
+    "nextRecipient": "Next Recipient",
+    "contributionsReceived": "Contributions Received",
+    "pendingContributors": "Pending Contributors",
+    "cycleStartTime": "Cycle Start Time",
+    "cycleEndTime": "Cycle End Time",
+    "createdAt": "Created At",
+    "creator": "Creator",
+    "myGroups": "My Groups",
+    "allGroups": "All Groups",
+    "noGroups": "No groups found",
+    "createFirst": "Create your first group to get started"
+  },
+  "groupForm": {
+    "title": "Create New Group",
+    "name": "Group Name",
+    "namePlaceholder": "Enter group name",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe the purpose of this group",
+    "rules": "Rules",
+    "rulesPlaceholder": "Set group rules and guidelines",
+    "contributionAmount": "Contribution Amount (XLM)",
+    "contributionAmountPlaceholder": "Amount each member contributes",
+    "cycleDuration": "Cycle Duration (days)",
+    "cycleDurationPlaceholder": "How long each cycle lasts",
+    "maxMembers": "Maximum Members",
+    "maxMembersPlaceholder": "Maximum number of members (2-100)",
+    "creating": "Creating...",
+    "create": "Create Group"
+  },
+  "contribution": {
+    "make": "Make Contribution",
+    "amount": "Amount",
+    "contribute": "Contribute",
+    "contributing": "Contributing...",
+    "success": "Contribution successful!",
+    "alreadyContributed": "You have already contributed this cycle",
+    "notMember": "You are not a member of this group",
+    "cycleComplete": "This cycle is complete",
+    "history": "Contribution History"
+  },
+  "transaction": {
+    "history": "Transaction History",
+    "type": "Type",
+    "amount": "Amount",
+    "date": "Date",
+    "status": "Status",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "failed": "Failed",
+    "contribution": "Contribution",
+    "payout": "Payout",
+    "noTransactions": "No transactions yet"
+  },
+  "profile": {
+    "title": "Profile",
+    "settings": "Profile Settings",
+    "displayName": "Display Name",
+    "email": "Email",
+    "bio": "Bio",
+    "language": "Language",
+    "theme": "Theme",
+    "notifications": "Notifications",
+    "save": "Save Changes",
+    "saving": "Saving..."
+  },
+  "analytics": {
+    "title": "Analytics",
+    "totalGroups": "Total Groups",
+    "totalMembers": "Total Members",
+    "totalContributions": "Total Contributions",
+    "totalPayouts": "Total Payouts",
+    "activeGroups": "Active Groups",
+    "completedGroups": "Completed Groups"
+  },
+  "language": {
+    "select": "Select Language",
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "pt": "Português",
+    "sw": "Kiswahili"
+  },
+  "errors": {
+    "generic": "Something went wrong",
+    "networkError": "Network error. Please check your connection.",
+    "walletNotConnected": "Please connect your wallet",
+    "insufficientBalance": "Insufficient balance",
+    "transactionFailed": "Transaction failed",
+    "groupNotFound": "Group not found",
+    "unauthorized": "Unauthorized",
+    "invalidInput": "Invalid input",
+    "maxMembersExceeded": "Maximum members exceeded",
+    "alreadyMember": "Already a member",
+    "notMember": "Not a member",
+    "alreadyContributed": "Already contributed this cycle",
+    "groupComplete": "Group is complete",
+    "contractPaused": "Contract is paused"
+  },
+  "time": {
+    "seconds": "seconds",
+    "minutes": "minutes",
+    "hours": "hours",
+    "days": "days",
+    "weeks": "weeks",
+    "months": "months",
+    "years": "years",
+    "ago": "ago",
+    "remaining": "remaining"
+  }
+}

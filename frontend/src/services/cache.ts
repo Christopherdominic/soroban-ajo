@@ -35,7 +35,7 @@ export interface CacheMetrics {
   size: number
 }
 
-export type CacheInvalidationStrategy = 
+export type CacheInvalidationStrategy =
   | 'time-based' // TTL expiration
   | 'tag-based' // Invalidate by tags
   | 'pattern-based' // Invalidate by key pattern
@@ -69,7 +69,7 @@ class CacheService {
     }
     this.revalidationQueue = new Set()
     this.rateLimiter = new Map()
-    
+
     // Cleanup rate limiter every minute
     if (typeof setInterval !== 'undefined') {
       setInterval(() => this.cleanupRateLimiter(), 60000)
@@ -82,15 +82,15 @@ class CacheService {
   private checkRateLimit(key: string): void {
     const now = Date.now()
     const requests = this.rateLimiter.get(key) || []
-    
+
     // Remove old requests (older than 1 minute)
     const recentRequests = requests.filter(time => now - time < 60000)
-    
+
     // Allow max 100 requests per minute per key
     if (recentRequests.length >= 100) {
       throw new Error(`Rate limit exceeded for cache key: ${key}`)
     }
-    
+
     recentRequests.push(now)
     this.rateLimiter.set(key, recentRequests)
   }
@@ -117,15 +117,15 @@ class CacheService {
     if (!key || typeof key !== 'string') {
       throw new Error('Cache key must be a non-empty string')
     }
-    
+
     // Prevent cache poisoning with special characters
     const sanitized = key.replace(/[^a-zA-Z0-9:_\-./]/g, '_')
-    
+
     // Limit key length to prevent DoS
     if (sanitized.length > 256) {
       throw new Error('Cache key too long (max 256 characters)')
     }
-    
+
     return sanitized
   }
 
@@ -135,7 +135,7 @@ class CacheService {
   private validateDataSize(data: any): void {
     const size = JSON.stringify(data).length
     const maxDataSize = 1024 * 1024 // 1MB per entry
-    
+
     if (size > maxDataSize) {
       throw new Error(`Cache entry too large: ${size} bytes (max ${maxDataSize})`)
     }
@@ -146,10 +146,10 @@ class CacheService {
    */
   get<T>(key: string): T | null {
     const sanitizedKey = this.validateKey(key)
-    
+
     // Security: Check rate limit
     this.checkRateLimit(sanitizedKey)
-    
+
     const entry = this.cache.get(sanitizedKey)
 
     if (!entry) {
@@ -194,10 +194,10 @@ class CacheService {
     } = {}
   ): void {
     const sanitizedKey = this.validateKey(key)
-    
+
     // Security: Check rate limit
     this.checkRateLimit(sanitizedKey)
-    
+
     // Security: Validate data size
     this.validateDataSize(data)
 
@@ -242,12 +242,12 @@ class CacheService {
   invalidate(key: string): boolean {
     const sanitizedKey = this.validateKey(key)
     const deleted = this.cache.delete(sanitizedKey)
-    
+
     if (deleted) {
       this.recordMetric('invalidation')
       this.removeFromTags(sanitizedKey)
     }
-    
+
     this.metrics.size = this.cache.size
     return deleted
   }
@@ -277,7 +277,7 @@ class CacheService {
    */
   invalidateByPattern(pattern: RegExp): number {
     let count = 0
-    
+
     for (const key of this.cache.keys()) {
       if (pattern.test(key)) {
         this.cache.delete(key)
@@ -286,7 +286,7 @@ class CacheService {
         this.recordMetric('invalidation')
       }
     }
-    
+
     this.metrics.size = this.cache.size
     return count
   }
@@ -296,7 +296,7 @@ class CacheService {
    */
   invalidateByVersion(currentVersion: string): number {
     let count = 0
-    
+
     for (const [key, entry] of this.cache.entries()) {
       if (entry.version && entry.version !== currentVersion) {
         this.cache.delete(key)
@@ -305,7 +305,7 @@ class CacheService {
         this.recordMetric('invalidation')
       }
     }
-    
+
     this.metrics.size = this.cache.size
     return count
   }
@@ -331,12 +331,14 @@ class CacheService {
   /**
    * Batch set operations for better performance
    */
-  setBatch<T>(entries: Array<{ key: string; data: T; options?: {
-    ttl?: number
-    tags?: string[]
-    etag?: string
-    version?: string
-  } }>): void {
+  setBatch<T>(entries: Array<{
+    key: string; data: T; options?: {
+      ttl?: number
+      tags?: string[]
+      etag?: string
+      version?: string
+    }
+  }>): void {
     entries.forEach(({ key, data, options }) => {
       this.set(key, data, options)
     })
@@ -508,7 +510,7 @@ export const CacheKeys = {
   groupStatus: (groupId: string) => `group:${groupId}:status`,
   groupMembers: (groupId: string) => `group:${groupId}:members`,
   userGroups: (userId: string) => `user:${userId}:groups`,
-  transactions: (groupId: string) => `group:${groupId}:transactions`,
+  transactions: (groupId: string, cursor?: string, limit?: number) => `group:${groupId}:transactions:${cursor || 'start'}:${limit || 10}`,
   userTransactions: (userId: string) => `user:${userId}:transactions`,
 }
 

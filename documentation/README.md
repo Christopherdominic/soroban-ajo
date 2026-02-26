@@ -1,216 +1,190 @@
-# Drips Frontend - Next.js Application
+# Ajo Documentation
 
-A modern, production-ready frontend for the Drips decentralized savings groups platform, built with Next.js 14, React, TypeScript, and Tailwind CSS.
+Welcome to the Ajo platform documentation. This directory contains all technical documentation, guides, and implementation details.
 
-## 🚀 Quick Start
+## 📚 Documentation Structure
 
-### Prerequisites
+### 🏗️ Architecture (`architecture/`)
+System design, data models, and architectural decisions.
 
-- Node.js 18+ and npm/yarn/pnpm
-- Git
+- [Architecture Overview](architecture/architecture.md) - High-level system architecture
+- [Profile Architecture](architecture/PROFILE_ARCHITECTURE.md) - User profile system design
+- [Monitoring](architecture/monitoring.md) - System monitoring and observability
+- [Storage Layout](architecture/storage-layout.md) - Data storage architecture
+- [Threat Model](architecture/threat-model.md) - Security threat analysis
 
-### Installation
+### 📖 Guides (`guides/`)
+Step-by-step guides and quick references organized by topic.
 
-```bash
-# Install dependencies
-npm install
+#### General Guides
+- [Monorepo Guide](guides/MONOREPO_GUIDE.md) - Working with the monorepo
+- [Next.js Migration](guides/NEXTJS_MIGRATION.md) - Migration from Vite to Next.js
+- [Quick Reference Guide](guides/QUICK_REFERENCE_GUIDE.md) - Quick command reference
+- [Wallet Integration](guides/WALLET_INTEGRATION.md) - Integrating Stellar wallets
+- [Frontend Setup](guides/FRONTEND_SETUP.md) - Frontend development setup
+- [Group Status Feature](guides/GROUP_STATUS_FEATURE.md) - Group status functionality
+- [Cycle Timing Guide](guides/CYCLE_TIMING_GUIDE.md) - Understanding cycle timing
+- [Event Schema Reference](guides/EVENT_SCHEMA_REFERENCE.md) - Event data schemas
 
-# Copy environment variables
-cp .env.example .env.local
+#### Accessibility (`guides/accessibility/`)
+- [Accessibility Quick Reference](guides/accessibility/ACCESSIBILITY_QUICK_REFERENCE.md)
+- [Accessibility Testing Guide](guides/accessibility/ACCESSIBILITY_TESTING_GUIDE.md)
+- [Accessibility Improvements](guides/accessibility/ACCESSIBILITY_IMPROVEMENTS.md)
 
-# Update .env.local with your Stellar/Soroban configuration
-# NEXT_PUBLIC_SOROBAN_RPC_URL=your_rpc_url
-# NEXT_PUBLIC_SOROBAN_CONTRACT_ID=your_contract_id
+#### Caching (`guides/caching/`)
+- [Caching Quick Reference](guides/caching/CACHING_QUICK_REFERENCE.md)
+- [Caching Implementation](guides/caching/CACHING_IMPLEMENTATION.md)
+- [Caching Deployment Guide](guides/caching/CACHING_DEPLOYMENT_GUIDE.md)
+- [Caching Final Report](guides/caching/CACHING_FINAL_REPORT.md)
 
-# Run development server
-npm run dev
-```
+#### CI/CD (`guides/ci-cd/`)
+- [CI/CD Checks](guides/ci-cd/CI_CD_CHECKS.md)
+- [CI/CD Enhancement Summary](guides/ci-cd/CI_CD_ENHANCEMENT_SUMMARY.md)
+- [CI/CD Setup](guides/ci-cd/CI_CD_SETUP.md)
+- [Create PR Instructions](guides/ci-cd/CREATE_PR_INSTRUCTIONS.md)
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+#### Profile (`guides/profile/`)
+- [Profile Quick Start](guides/profile/PROFILE_QUICK_START.md)
+- [Profile Feature](guides/profile/PROFILE_FEATURE.md)
 
-## 📁 Project Structure
+### 🔧 Implementation (`implementation/`)
+Implementation details, summaries, and technical specifications.
 
-```
-frontend/
-├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── layout.tsx          # Root layout
-│   │   ├── page.tsx            # Home page
-│   │   ├── providers.tsx       # React Query & Toast providers
-│   │   ├── dashboard/          # Dashboard pages
-│   │   ├── groups/             # Group listing & detail pages
-│   │   └── analytics/          # Analytics pages
-│   ├── components/             # React components
-│   │   ├── WalletConnector.tsx
-│   │   ├── DashboardLayout.tsx
-│   │   ├── GroupCard.tsx
-│   │   ├── GroupsList.tsx
-│   │   ├── GroupDetailPage.tsx
-│   │   └── ...
-│   ├── hooks/                  # Custom React hooks
-│   │   ├── useAuth.ts          # Authentication state
-│   │   ├── useContractData.ts  # Blockchain data fetching
-│   │   ├── useWallet.ts        # Wallet integration
-│   │   └── useAnalytics.ts
-│   ├── services/               # Service layer
-│   │   ├── soroban.ts          # Stellar SDK integration
-│   │   ├── authService.ts      # Authentication
-│   │   └── cache.ts            # Caching utilities
-│   ├── utils/                  # Utility functions
-│   │   └── notifications.ts    # Toast notifications
-│   ├── types/                  # TypeScript types
-│   │   └── index.ts
-│   └── styles/                 # Global styles
-│       └── globals.css
-├── public/                     # Static assets
-├── next.config.js              # Next.js configuration
-├── tailwind.config.js          # Tailwind CSS config
-├── tsconfig.json               # TypeScript config
-└── package.json
-```
+#### General Implementation
+- [Implementation Summary](implementation/IMPLEMENTATION_SUMMARY.md)
+- [Design System Implementation](implementation/DESIGN_SYSTEM_IMPLEMENTATION.md)
+- [Migration Summary](implementation/MIGRATION_SUMMARY.md)
+- [Final Summary](implementation/FINAL_SUMMARY.md)
+- [Cleanup Summary](implementation/CLEANUP_SUMMARY.md)
 
-## 🛠 Tech Stack
+#### Events (`implementation/events/`)
+- [Event Emission Implementation](implementation/events/EVENT_EMISSION_IMPLEMENTATION.md)
+- [Event Implementation Summary](implementation/events/EVENT_IMPLEMENTATION_SUMMARY.md)
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript 5.2
-- **Styling**: Tailwind CSS 3.3
-- **State Management**:
-  - React Query (TanStack Query 5.28) - Server state
-  - Zustand 4.4 - Client state
-- **Blockchain**: Stellar SDK 12.0
-- **UI Components**: Custom components with Tailwind
-- **Notifications**: React Hot Toast 2.4
-- **Charts**: Recharts 2.10
-- **Date Utilities**: date-fns 2.30
-- **HTTP Client**: Axios 1.6
+#### Error Handling (`implementation/errors/`)
+- [Error Handling Implementation](implementation/errors/ERROR_HANDLING_IMPLEMENTATION.md)
+- [Error Empty States Delivery](implementation/errors/ERROR_EMPTY_STATES_DELIVERY_SUMMARY.md)
 
-## 📄 Available Scripts
+#### Validation (`implementation/validation/`)
+- [Validation Errors Implementation](implementation/validation/VALIDATION_ERRORS_IMPLEMENTATION.md)
+- [Validation Errors Summary](implementation/validation/VALIDATION_ERRORS_SUMMARY.md)
 
-```bash
-# Development
-npm run dev              # Start dev server (localhost:3000)
+#### Icons (`implementation/icons/`)
+- [Icon Implementation Checklist](implementation/icons/ICON_IMPLEMENTATION_CHECKLIST.md)
+- [Icon Delivery Summary](implementation/icons/ICON_DELIVERY_SUMMARY.md)
 
-# Production
-npm run build            # Build for production
-npm run start            # Start production server
+#### Wallet (`implementation/wallet/`)
+- [Wallet Implementation Summary](implementation/wallet/WALLET_IMPLEMENTATION_SUMMARY.md)
 
-# Code Quality
-npm run lint             # Run ESLint
-npm run type-check       # Run TypeScript compiler check
-```
+#### Webhooks
+- [Webhook Implementation Summary](implementation/WEBHOOK_IMPLEMENTATION_SUMMARY.md)
+- [Webhook System](implementation/WEBHOOK_SYSTEM.md)
 
-## 🔧 Configuration
+#### Profile
+- [Profile Implementation Summary](implementation/PROFILE_IMPLEMENTATION_SUMMARY.md)
 
-### Environment Variables
+#### Environment
+- [Environment Implementation Summary](implementation/ENVIRONMENT_IMPLEMENTATION_SUMMARY.md)
 
-Create a `.env.local` file with:
+#### Copy
+- [Copy Implementation Guide](implementation/COPY_IMPLEMENTATION_GUIDE.md)
+- [In-App Copy Summary](implementation/IN_APP_COPY_SUMMARY.md)
 
-```env
-# Stellar/Soroban Configuration
-NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
-NEXT_PUBLIC_SOROBAN_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
-NEXT_PUBLIC_SOROBAN_CONTRACT_ID=your_contract_id_here
+#### Cycle Timing
+- [Cycle Timing Implementation](implementation/CYCLE_TIMING_IMPLEMENTATION.md)
 
-# Application
-NEXT_PUBLIC_APP_NAME=Drips
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
+### 💻 Development (`development/`)
+Development workflows, refactoring plans, and testing guides.
 
-## 🎨 Component Architecture
+- [Refactoring Plan](development/REFACTORING_PLAN.md) - Comprehensive codebase refactoring plan
+- [Refactoring Summary](development/REFACTORING_SUMMARY.md) - Summary of completed refactoring
+- [Code Quality Review](development/CODE_QUALITY_REVIEW.md) - Code quality standards
+- [Environment Setup](development/ENVIRONMENT_SETUP.md) - Development environment setup
+- [Environment Quick Reference](development/ENV_QUICK_REFERENCE.md) - Environment variables reference
 
-### Client vs Server Components
+### 🎨 Design (`design/`)
+Design specifications, UI patterns, and style guides.
 
-- **Server Components** (default): Layout, static pages
-- **Client Components** (`'use client'`): Interactive components, hooks, state management
+#### UI States (`design/ui-states/`)
+- Error states, empty states, loading states, and other UI state designs
 
-### Key Components
+#### Icons (`design/icons/`)
+- Icon system documentation and guidelines
 
-1. **WalletConnector**: Freighter wallet integration
-2. **DashboardLayout**: Main authenticated layout
-3. **GroupsList**: Display all savings groups
-4. **GroupCard**: Individual group preview
-5. **GroupDetailPage**: Detailed group view with tabs
-6. **ContributionForm**: Make contributions
-7. **TransactionHistory**: View transaction history
-8. **GroupAnalytics**: Charts and analytics
+#### Copy (`design/copy/`)
+- In-app copy guidelines and tone of voice
 
-## 🔐 Authentication Flow
+### 🔌 API (`api/`)
+API documentation and specifications.
 
-1. User clicks "Connect Wallet"
-2. Freighter extension opens
-3. User authorizes connection
-4. Public key stored in Zustand store
-5. Auto-redirect to dashboard
+- Backend API documentation is available at `/api-docs` when running the backend server
+- See [Backend README](../backend/README.md) for API endpoint details
 
-## 📊 Data Fetching
+### 📋 General Documentation
+- [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
+- [Roadmap](roadmap.md) - Project roadmap and future plans
 
-Using React Query for:
-- Automatic caching
-- Background refetching
-- Optimistic updates
-- Loading/error states
+## 🚀 Quick Links
 
-## 🎯 Routing
+### Getting Started
+1. [Main README](../README.md) - Project overview and setup
+2. [Contributing Guidelines](../CONTRIBUTING.md) - How to contribute
+3. [Frontend README](../frontend/README.md) - Frontend setup
+4. [Backend README](../backend/README.md) - Backend setup
 
-Next.js App Router structure:
-- `/` - Landing page
-- `/dashboard` - User dashboard (protected)
-- `/groups` - Browse all groups
-- `/groups/[id]` - Group detail page
-- `/analytics` - Platform analytics
+### For Developers
+- [Architecture Overview](architecture/architecture.md) - Understand the system
+- [Refactoring Plan](development/REFACTORING_PLAN.md) - Code quality improvements
+- [CI/CD Checks](guides/CI_CD_CHECKS.md) - Automated checks and workflows
 
-## 🚢 Deployment
+### For Users
+- [Profile Feature](guides/PROFILE_FEATURE.md) - User profile functionality
+- [Profile Quick Start](guides/PROFILE_QUICK_START.md) - Get started with profiles
 
-### Vercel (Recommended)
+## 📝 Documentation Standards
 
-```bash
-# Install Vercel CLI
-npm i -g vercel
+When adding new documentation:
 
-# Deploy
-vercel
-```
+1. **Location**: Place docs in the appropriate subfolder
+   - `architecture/` - System design and architecture
+   - `guides/` - How-to guides and quick references
+   - `implementation/` - Implementation details and specs
+   - `development/` - Development workflows and tools
+   - `api/` - API documentation
 
-### Other Platforms
+2. **Format**: Use Markdown (.md) format
 
-```bash
-# Build
-npm run build
+3. **Naming**: Use descriptive names with UPPERCASE for important docs
+   - Good: `CACHING_IMPLEMENTATION.md`
+   - Good: `profile-feature.md`
+   - Avoid: `doc1.md`, `temp.md`
 
-# The output is in .next/ folder
-# Serve with: npm start
-```
+4. **Content**: Include
+   - Clear title and description
+   - Table of contents for long docs
+   - Code examples where applicable
+   - Links to related documentation
+   - Last updated date
 
-## 📝 Code Style
+5. **Update Index**: Add new docs to this README
 
-- ESLint with Next.js config
-- TypeScript strict mode
-- Functional components with hooks
-- Tailwind for all styling
+## 🔄 Maintenance
 
-## 📚 Learn More
+This documentation is actively maintained. If you find:
+- Outdated information
+- Broken links
+- Missing documentation
+- Unclear explanations
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [React Query Docs](https://tanstack.com/query/latest)
-- [Stellar SDK](https://stellar.github.io/js-stellar-sdk/)
-- [Tailwind CSS](https://tailwindcss.com/docs)
+Please open an issue or submit a pull request.
 
-## 🐛 Troubleshooting
+## 📧 Support
 
-### Build Errors
+For questions about the documentation:
+1. Check existing docs first
+2. Search closed issues
+3. Open a new issue with the `documentation` label
 
-```bash
-# Clear cache
-rm -rf .next node_modules
-npm install
-```
+---
 
-### Environment Variables Not Working
-
-- Ensure variables start with `NEXT_PUBLIC_`
-- Restart dev server after changes
-- Check `.env.local` exists
-
-## 📄 License
-
-See LICENSE file in repository root.
+Last Updated: February 2026

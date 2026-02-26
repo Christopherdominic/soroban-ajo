@@ -1,0 +1,190 @@
+{
+  "common": {
+    "appName": "Ajo",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "submit": "Soumettre",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "clear": "Effacer",
+    "viewDetails": "Voir les Détails",
+    "learnMore": "En Savoir Plus",
+    "getStarted": "Commencer"
+  },
+  "nav": {
+    "home": "Accueil",
+    "dashboard": "Tableau de Bord",
+    "groups": "Groupes",
+    "profile": "Profil",
+    "analytics": "Analytiques",
+    "community": "Communauté",
+    "settings": "Paramètres"
+  },
+  "home": {
+    "hero": {
+      "title": "Économisez ensemble. Grandissez ensemble.",
+      "subtitle": "Épargne traditionnelle, confiance blockchain",
+      "description": "Ajo est un système d'épargne communautaire où les groupes contribuent ensemble et reçoivent des paiements à tour de rôle. Maintenant alimenté par la blockchain Stellar pour la transparence et la sécurité."
+    },
+    "howItWorks": {
+      "title": "Comment Ça Marche",
+      "step1": {
+        "title": "Rejoindre ou Créer un Groupe",
+        "description": "Créez votre propre groupe d'épargne ou rejoignez-en un existant avec des amis, de la famille ou des membres de la communauté."
+      },
+      "step2": {
+        "title": "Contribuer Régulièrement",
+        "description": "Chaque membre contribue un montant fixe à chaque cycle. Toutes les contributions sont enregistrées sur la blockchain."
+      },
+      "step3": {
+        "title": "Recevoir Votre Paiement",
+        "description": "Les membres reçoivent à tour de rôle le fonds complet. Tout le monde a son tour jusqu'à ce que le cycle soit terminé."
+      }
+    }
+  },
+  "wallet": {
+    "connect": "Connecter le Portefeuille",
+    "disconnect": "Déconnecter",
+    "connecting": "Connexion...",
+    "connected": "Connecté",
+    "notConnected": "Non Connecté",
+    "balance": "Solde",
+    "address": "Adresse",
+    "copyAddress": "Copier l'Adresse",
+    "addressCopied": "Adresse copiée!",
+    "installFreighter": "Installer le Portefeuille Freighter",
+    "freighterRequired": "Le portefeuille Freighter est requis pour utiliser cette application"
+  },
+  "group": {
+    "create": "Créer un Groupe",
+    "join": "Rejoindre le Groupe",
+    "leave": "Quitter le Groupe",
+    "details": "Détails du Groupe",
+    "members": "Membres",
+    "status": "Statut",
+    "active": "Actif",
+    "complete": "Terminé",
+    "cancelled": "Annulé",
+    "contributionAmount": "Montant de Contribution",
+    "cycleDuration": "Durée du Cycle",
+    "maxMembers": "Membres Maximum",
+    "currentCycle": "Cycle Actuel",
+    "nextRecipient": "Prochain Bénéficiaire",
+    "contributionsReceived": "Contributions Reçues",
+    "pendingContributors": "Contributeurs en Attente",
+    "cycleStartTime": "Heure de Début du Cycle",
+    "cycleEndTime": "Heure de Fin du Cycle",
+    "createdAt": "Créé le",
+    "creator": "Créateur",
+    "myGroups": "Mes Groupes",
+    "allGroups": "Tous les Groupes",
+    "noGroups": "Aucun groupe trouvé",
+    "createFirst": "Créez votre premier groupe pour commencer"
+  },
+  "groupForm": {
+    "title": "Créer un Nouveau Groupe",
+    "name": "Nom du Groupe",
+    "namePlaceholder": "Entrez le nom du groupe",
+    "description": "Description",
+    "descriptionPlaceholder": "Décrivez l'objectif de ce groupe",
+    "rules": "Règles",
+    "rulesPlaceholder": "Définir les règles et directives du groupe",
+    "contributionAmount": "Montant de Contribution (XLM)",
+    "contributionAmountPlaceholder": "Montant que chaque membre contribue",
+    "cycleDuration": "Durée du Cycle (jours)",
+    "cycleDurationPlaceholder": "Combien de temps dure chaque cycle",
+    "maxMembers": "Membres Maximum",
+    "maxMembersPlaceholder": "Nombre maximum de membres (2-100)",
+    "creating": "Création...",
+    "create": "Créer un Groupe"
+  },
+  "contribution": {
+    "make": "Faire une Contribution",
+    "amount": "Montant",
+    "contribute": "Contribuer",
+    "contributing": "Contribution...",
+    "success": "Contribution réussie!",
+    "alreadyContributed": "Vous avez déjà contribué ce cycle",
+    "notMember": "Vous n'êtes pas membre de ce groupe",
+    "cycleComplete": "Ce cycle est terminé",
+    "history": "Historique des Contributions"
+  },
+  "transaction": {
+    "history": "Historique des Transactions",
+    "type": "Type",
+    "amount": "Montant",
+    "date": "Date",
+    "status": "Statut",
+    "pending": "En Attente",
+    "confirmed": "Confirmé",
+    "failed": "Échoué",
+    "contribution": "Contribution",
+    "payout": "Paiement",
+    "noTransactions": "Aucune transaction pour le moment"
+  },
+  "profile": {
+    "title": "Profil",
+    "settings": "Paramètres du Profil",
+    "displayName": "Nom d'Affichage",
+    "email": "Email",
+    "bio": "Biographie",
+    "language": "Langue",
+    "theme": "Thème",
+    "notifications": "Notifications",
+    "save": "Enregistrer les Modifications",
+    "saving": "Enregistrement..."
+  },
+  "analytics": {
+    "title": "Analytiques",
+    "totalGroups": "Total des Groupes",
+    "totalMembers": "Total des Membres",
+    "totalContributions": "Total des Contributions",
+    "totalPayouts": "Total des Paiements",
+    "activeGroups": "Groupes Actifs",
+    "completedGroups": "Groupes Terminés"
+  },
+  "language": {
+    "select": "Sélectionner la Langue",
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "pt": "Português",
+    "sw": "Kiswahili"
+  },
+  "errors": {
+    "generic": "Quelque chose s'est mal passé",
+    "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",
+    "walletNotConnected": "Veuillez connecter votre portefeuille",
+    "insufficientBalance": "Solde insuffisant",
+    "transactionFailed": "Transaction échouée",
+    "groupNotFound": "Groupe non trouvé",
+    "unauthorized": "Non autorisé",
+    "invalidInput": "Entrée invalide",
+    "maxMembersExceeded": "Nombre maximum de membres dépassé",
+    "alreadyMember": "Déjà membre",
+    "notMember": "Pas membre",
+    "alreadyContributed": "Déjà contribué ce cycle",
+    "groupComplete": "Le groupe est terminé",
+    "contractPaused": "Le contrat est en pause"
+  },
+  "time": {
+    "seconds": "secondes",
+    "minutes": "minutes",
+    "hours": "heures",
+    "days": "jours",
+    "weeks": "semaines",
+    "months": "mois",
+    "years": "années",
+    "ago": "il y a",
+    "remaining": "restant"
+  }
+}

@@ -1,6 +1,15 @@
-# Drips - Decentralized Savings Groups
+# Ajo - Decentralized Savings Groups
 
 A blockchain-based savings group platform built on Stellar/Soroban, enabling communities to create and manage traditional "Ajo" or "Rotating Savings and Credit Associations" (ROSCAs) with full transparency and security.
+
+## 📖 Documentation
+
+**Interactive documentation site**: Run `npm run dev:docs` and visit http://localhost:3000
+
+- [Getting Started Guide](http://localhost:3000/docs/getting-started)
+- [API Reference](http://localhost:3001/api-docs) - Interactive Swagger UI
+- [Architecture Overview](http://localhost:3000/docs/architecture)
+- [Smart Contracts](http://localhost:3000/docs/contracts)
 
 ## 🏗 Project Structure
 
@@ -28,7 +37,7 @@ drips_maintener/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - Rust 1.70+
 - Stellar CLI
 - Git
@@ -63,6 +72,31 @@ cargo test
 # Deploy (with Stellar CLI configured)
 stellar contract deploy --wasm target/wasm32-unknown-unknown/release/ajo.wasm
 ```
+
+### Testnet Deployment (recommended)
+
+Use the helper script to deploy the contract to Stellar testnet:
+
+```bash
+# From repo root
+scripts/deploy_testnet.sh
+```
+
+What it does:
+
+- Ensures Soroban CLI, Rust, and testnet network config exist
+- Generates a `deployer` identity (if missing) and prompts you to fund it via friendbot
+- Builds and optimizes the contract
+- Deploys to testnet and writes the contract ID to `contract-id.txt`
+- Prints next steps and an explorer link
+
+See the full walkthrough in `demo/demo-script.md`.
+
+**Troubleshooting**
+
+- If deployment fails with funding errors: fund the deployer shown in the script output via `https://friendbot.stellar.org?addr=<address>`, then re-run.
+- If `soroban` can't find `testnet`: the script re-adds it, or you can run  
+  `soroban network add --global testnet --rpc-url https://soroban-testnet.stellar.org:443 --network-passphrase "Test SDF Network ; September 2015"`.
 
 ### Backend API (Node.js/Express)
 
@@ -105,24 +139,33 @@ This starts both frontend and backend concurrently.
 
 ## 📚 Documentation
 
+Comprehensive documentation is available in the [`documentation/`](documentation/) folder:
+
+- **[Documentation Index](documentation/README.md)** - Complete documentation guide
+- **[Project Structure](PROJECT_STRUCTURE.md)** - Detailed project structure
+- **[Architecture](documentation/architecture/architecture.md)** - System design
+- **[Guides](documentation/guides/)** - Step-by-step guides
+- **[Development](documentation/development/)** - Development workflows
+- **[API Documentation](http://localhost:3001/api-docs)** - Interactive Swagger UI (when backend is running)
+
+### Quick Links
+
 - [Frontend README](frontend/README.md) - Next.js setup and development
 - [Backend README](backend/README.md) - API server setup and endpoints
-- [Next.js Migration Guide](documentation/NEXTJS_MIGRATION.md) - Migration from Vite
-- [Migration Summary](documentation/MIGRATION_SUMMARY.md) - Recent migration details
-- [Monorepo Guide](documentation/MONOREPO_GUIDE.md) - Monorepo workflow
-- [Architecture](documentation/architecture.md) - System design
-- [Security](documentation/SECURITY.md) - Security considerations
-- [Contributing](CONTRIBUTING.md) - Contribution guidelines
+- [Contributing Guidelines](CONTRIBUTING.md) - How to contribute
+- [Refactoring Plan](documentation/development/REFACTORING_PLAN.md) - Code quality improvements
 
 ## 🛠 Technology Stack
 
 ### Smart Contracts
+
 - **Blockchain**: Stellar (Soroban)
 - **Language**: Rust
 - **Testing**: Rust test framework
 
 ### Backend API
-- **Runtime**: Node.js 18+
+
+- **Runtime**: Node.js 20+
 - **Framework**: Express.js 4.18
 - **Language**: TypeScript 5.2
 - **Blockchain SDK**: Stellar SDK 12.0
@@ -130,6 +173,7 @@ This starts both frontend and backend concurrently.
 - **Validation**: Zod
 
 ### Frontend
+
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript 5.2
 - **Styling**: Tailwind CSS 3.3
@@ -151,7 +195,7 @@ This starts both frontend and backend concurrently.
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - Rust 1.70+
 - Stellar CLI
 - Git
@@ -203,6 +247,7 @@ npm run lint           # ESLint
 ## 📝 Environment Variables
 
 ### Backend (`backend/.env`)
+
 ```env
 NODE_ENV=development
 PORT=3001
@@ -213,6 +258,7 @@ SOROBAN_CONTRACT_ID=<your_contract_id>
 ```
 
 ### Frontend (`frontend/.env.local`)
+
 ```env
 NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
 NEXT_PUBLIC_SOROBAN_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
@@ -223,12 +269,14 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 ## 🧪 Testing
 
 ### Contracts
+
 ```bash
 cd contracts/ajo
 cargo test
 ```
 
 ### Backend
+
 ```bash
 cd backend
 npm run type-check
@@ -237,6 +285,7 @@ npm test  # (when tests are added)
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 npm run type-check
@@ -244,6 +293,7 @@ npm run lint
 ```
 
 ### All at Once
+
 ```bash
 # From root
 npm run type-check
@@ -254,7 +304,9 @@ npm run test:contracts
 ## 🚢 Deployment
 
 ### Contracts
+
 Deploy to Stellar testnet/mainnet using Stellar CLI:
+
 ```bash
 cd contracts/ajo
 stellar contract build
@@ -262,7 +314,9 @@ stellar contract deploy --wasm target/wasm32-unknown-unknown/release/ajo.wasm --
 ```
 
 ### Backend
+
 Deploy to Railway, Render, Heroku, or any Node.js hosting:
+
 ```bash
 cd backend
 npm run build
@@ -270,6 +324,7 @@ npm start
 ```
 
 Recommended platforms:
+
 - Railway (easiest)
 - Render
 - DigitalOcean App Platform
@@ -277,7 +332,9 @@ Recommended platforms:
 - AWS/GCP/Azure
 
 ### Frontend
+
 Deploy to Vercel (recommended for Next.js):
+
 ```bash
 cd frontend
 npm run build
@@ -285,11 +342,13 @@ npm start
 ```
 
 Or one-click deploy:
+
 - Vercel (recommended)
 - Netlify
 - Cloudflare Pages
 
 ### Environment Variables
+
 Remember to set all required environment variables in your hosting platform.
 
 ## 🤝 Contributing

@@ -1,0 +1,10 @@
+/Users/macbook/dev/soroban-ajo/contracts/ajo/./target_local/debug/deps/primeorder-9f5840302f4c7c9e.d: /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/lib.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/point_arithmetic.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/affine.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/field.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/projective.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/../README.md
+
+/Users/macbook/dev/soroban-ajo/contracts/ajo/./target_local/debug/deps/libprimeorder-9f5840302f4c7c9e.rmeta: /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/lib.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/point_arithmetic.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/affine.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/field.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/projective.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/../README.md
+
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/lib.rs:
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/point_arithmetic.rs:
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/affine.rs:
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/field.rs:
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/projective.rs:
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/primeorder-0.13.6/src/../README.md:

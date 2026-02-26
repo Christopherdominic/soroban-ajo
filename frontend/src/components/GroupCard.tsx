@@ -111,8 +111,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
     <div
       className={`${cardClass} relative overflow-hidden group`}
       onClick={onClick}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
+      tabIndex={onClick ? 0 : -1}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
       aria-label={`${groupName} group with ${memberCount} of ${maxMembers} members, status: ${config.label}`}
     >

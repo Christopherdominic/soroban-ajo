@@ -1,9 +1,18 @@
-// Issue #29: Add transaction history display
-// Complexity: Medium (150 pts)
-// Status: Implemented with filtering and sorting
+'use client'
 
 import React, { useState, useMemo } from 'react'
+import { TransactionDetailModal } from './TransactionDetailModal'
+
+const TablePagination: React.FC<any> = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+  pageSize,
+  onPageSizeChange,
+}) => null
 import { TransactionFilters, TransactionSort, TransactionSortField } from '../types'
+import { useTransactions } from '../hooks/useContractData'
+import { useTheme } from '@/context/ThemeContext'
 
 interface Transaction {
   id: string
@@ -16,13 +25,10 @@ interface Transaction {
 
 interface TransactionHistoryProps {
   groupId: string
-  transactions: Transaction[]
 }
 
-export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
-  groupId,
-  transactions,
-}) => {
+export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ groupId }) => {
+  const { resolvedTheme } = useTheme()
   const [filters, setFilters] = useState<TransactionFilters>({
     type: 'all',
     member: '',
@@ -39,44 +45,33 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     end: '',
   })
 
-  // TODO: Fetch real transaction history from contract
-  // TODO: Add pagination
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
-  const mockTransactions: Transaction[] = [
-    {
-      id: 'tx-1',
-      type: 'contribution',
-      amount: 500,
-      date: '2026-02-10',
-      member: 'GAAAA...AAAA',
-      status: 'completed',
-    },
-    {
-      id: 'tx-2',
-      type: 'contribution',
-      amount: 500,
-      date: '2026-02-11',
-      member: 'GBBBB...BBBB',
-      status: 'completed',
-    },
-    {
-      id: 'tx-3',
-      type: 'payout',
-      amount: 4000,
-      date: '2026-02-12',
-      member: 'GCCCC...CCCC',
-      status: 'completed',
-    },
-  ]
+  // Since we don't have a real cursor API yet, we use page numbers for the mock
+  // In a real implementation this would manage cursor strings
+  const cursor = currentPage > 1 ? `page-${currentPage}` : undefined
 
-  const allTransactions = transactions.length > 0 ? transactions : mockTransactions
+  // Fetch data
+  const { data, isLoading, isError } = useTransactions(groupId, cursor, pageSize) as any
+
+  const transactions: any[] = data?.transactions || []
+  const hasNextPage = data?.hasNextPage || false
+  const hasPreviousPage = !!cursor
+
+  // Modal state
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Filter transactions
   const filteredTransactions = useMemo(() => {
-    return allTransactions.filter((tx) => {
+    return transactions.filter((tx: any) => {
+      const txDateStr = typeof tx.date === 'string' ? tx.date : new Date(tx.timestamp || tx.date).toISOString().split('T')[0]
+
       // Date range filter
-      if (dateRange.start && tx.date < dateRange.start) return false
-      if (dateRange.end && tx.date > dateRange.end) return false
+      if (dateRange.start && txDateStr < dateRange.start) return false
+      if (dateRange.end && txDateStr > dateRange.end) return false
 
       // Type filter
       if (filters.type && filters.type !== 'all' && tx.type !== filters.type) return false
@@ -93,7 +88,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
       return true
     })
-  }, [allTransactions, filters, dateRange])
+  }, [transactions, filters, dateRange])
 
   // Sort transactions
   const sortedTransactions = useMemo(() => {
@@ -103,9 +98,12 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       let comparison = 0
 
       switch (sort.field) {
-        case 'date':
-          comparison = a.date.localeCompare(b.date)
+        case 'date': {
+          const dateA = a.date || a.timestamp
+          const dateB = b.date || b.timestamp
+          comparison = new Date(dateA).getTime() - new Date(dateB).getTime()
           break
+        }
         case 'amount':
           comparison = a.amount - b.amount
           break
@@ -135,59 +133,83 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     setDateRange({ start: '', end: '' })
   }
 
+  const handleRowClick = (tx: Transaction) => {
+    setSelectedTx(tx)
+    setIsModalOpen(true)
+  }
+
   const SortIcon = ({ field }: { field: TransactionSortField }) => {
     if (sort.field !== field) {
-      return <span className="text-gray-400 ml-1">↕</span>
+      return (
+        <span style={{ color: 'var(--color-text-muted)' }} className="ml-1">
+          ↕
+        </span>
+      )
     }
     return <span className="ml-1">{sort.direction === 'asc' ? '↑' : '↓'}</span>
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="theme-surface p-6 rounded-xl border border-[var(--color-border)] shadow" data-theme={resolvedTheme}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-2xl font-bold">Transaction History</h3>
-        <button className="text-blue-600 hover:text-blue-700 font-semibold">
-          Export
+        <h3 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
+          Transaction History
+        </h3>
+        <button className="px-4 py-2 rounded font-semibold bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity">
+          Export CSV
         </button>
       </div>
 
       {/* Filters Section */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+      <div
+        className="mb-6 p-4 rounded-lg"
+        style={{
+          background: 'var(--color-surface-muted)',
+          border: '1px solid var(--color-border)',
+        }}
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Date Range Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-1"
+              style={{ color: 'var(--color-text)' }}
+            >
               Start Date
             </label>
             <input
               type="date"
               value={dateRange.start}
               onChange={(e) => setDateRange((prev) => ({ ...prev, start: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-primary)] focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-1"
+              style={{ color: 'var(--color-text)' }}
+            >
               End Date
             </label>
             <input
               type="date"
               value={dateRange.end}
               onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-primary)] focus:outline-none"
             />
           </div>
 
-          {/* Transaction Type Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-1"
+              style={{ color: 'var(--color-text)' }}
+            >
               Type
             </label>
             <select
               value={filters.type || 'all'}
-              onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value as any }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value as TransactionFilters['type'] }))}
+              className="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-primary)] focus:outline-none"
             >
               <option value="all">All Types</option>
               <option value="contribution">Contribution</option>
@@ -196,89 +218,110 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             </select>
           </div>
 
-          {/* Member Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-1"
+              style={{ color: 'var(--color-text)' }}
+            >
               Member
             </label>
             <input
               type="text"
-              placeholder="Search member..."
+              placeholder="Search address..."
               value={filters.member || ''}
               onChange={(e) => setFilters((prev) => ({ ...prev, member: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-primary)] focus:outline-none"
             />
           </div>
         </div>
 
-        <div className="mt-3 flex justify-between items-center">
-          <span className="text-sm text-gray-600">
-            Showing {sortedTransactions.length} of {allTransactions.length} transactions
+        <div className="mt-4 flex justify-between items-center">
+          <span className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>
+            Showing {sortedTransactions.length} results
           </span>
           <button
             onClick={handleResetFilters}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="text-sm font-medium"
+            style={{ color: 'var(--color-primary)' }}
           >
             Reset Filters
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+      <div className="overflow-x-auto rounded-lg border border-[var(--color-border)]">
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-[var(--color-surface-muted)] text-[var(--color-text)] border-b border-[var(--color-border)]">
             <tr>
+              {(['type', 'amount', 'date', 'member'] as TransactionSortField[]).map((field) => (
+                <th
+                  key={field}
+                  className="px-4 py-3 text-sm font-semibold cursor-pointer hover:bg-[var(--color-border)] transition-colors select-none group"
+                  onClick={() => handleSort(field)}
+                >
+                  <div className="flex items-center gap-1">
+                    {field.charAt(0).toUpperCase() + field.slice(1)}
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      <SortIcon field={field} />
+                    </span>
+                  </div>
+                </th>
+              ))}
               <th
-                className="px-4 py-2 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('type')}
+                className="px-4 py-2 text-left text-sm font-semibold"
+                style={{ color: 'var(--color-text)' }}
               >
-                Type <SortIcon field="type" />
+                Status
               </th>
-              <th
-                className="px-4 py-2 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('amount')}
-              >
-                Amount <SortIcon field="amount" />
-              </th>
-              <th
-                className="px-4 py-2 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('date')}
-              >
-                Date <SortIcon field="date" />
-              </th>
-              <th
-                className="px-4 py-2 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('member')}
-              >
-                Member <SortIcon field="member" />
-              </th>
-              <th className="px-4 py-2 text-left text-sm font-semibold">Status</th>
             </tr>
           </thead>
-          <tbody>
-            {sortedTransactions.length === 0 ? (
+          <tbody className="bg-[var(--color-surface)]">
+            {isLoading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                <td
+                  colSpan={5}
+                  className="px-4 py-8 text-center"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
                   No transactions found matching your filters
                 </td>
               </tr>
             ) : (
               sortedTransactions.map((tx) => (
-                <tr key={tx.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm capitalize">{tx.type}</td>
-                  <td className="px-4 py-3 text-sm font-semibold">${tx.amount}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{tx.date}</td>
-                  <td className="px-4 py-3 text-sm font-mono text-gray-600">
+                <tr key={tx.id} className="border-b">
+                  <td
+                    className="px-4 py-3 text-sm capitalize"
+                    style={{ color: 'var(--color-text)' }}
+                  >
+                    {tx.type}
+                  </td>
+                  <td
+                    className="px-4 py-3 text-sm font-semibold"
+                    style={{ color: 'var(--color-text)' }}
+                  >
+                    ${tx.amount}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-[var(--color-text-muted)]">
+                    {typeof tx.date === 'string' ? tx.date.split('T')[0] : new Date(tx.timestamp || tx.date).toISOString().split('T')[0]}
+                  </td>
+                  <td
+                    className="px-4 py-3 text-sm font-mono"
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
                     {tx.member}
                   </td>
-                  <td className="px-4 py-3 text-sm">
+                  <td className="px-4 py-4 text-sm">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-semibold ${tx.status === 'completed'
-                          ? 'bg-green-100 text-green-800'
-                          : tx.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
+                      className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold leading-none capitalize"
+                      style={{
+                        background:
+                          tx.status === 'completed' || tx.status === 'confirmed'
+                            ? 'var(--color-success)'
+                            : tx.status === 'pending'
+                              ? 'var(--color-warning)'
+                              : 'var(--color-danger)',
+                        color: 'var(--color-primary-contrast)',
+                      }}
                     >
                       {tx.status}
                     </span>
@@ -290,9 +333,27 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         </table>
       </div>
 
-      <p className="text-xs text-gray-500 mt-4">
-        Group ID: {groupId} • {allTransactions.length} total transactions
-      </p>
+      {transactions.length > 0 && (
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={hasNextPage ? currentPage + 1 : currentPage} // Simple next-page logic for cursor-based
+          pageSize={pageSize}
+          totalItems={transactions.length} // This is inaccurate for cursor, ideally backend returns total
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size: any) => {
+            setPageSize(size)
+            setCurrentPage(1) // Reset to first page
+          }}
+          pageSizeOptions={[5, 10, 25, 50]}
+          showItemCount={false}
+        />
+      )}
+
+      <TransactionDetailModal
+        transaction={selectedTx as any}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   )
 }

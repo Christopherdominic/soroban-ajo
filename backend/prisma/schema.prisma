@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  groups        GroupMember[]
+  contributions Contribution[]
+}
+
+model Group {
+  id                String   @id
+  name              String
+  contributionAmount BigInt
+  frequency         Int
+  maxMembers        Int
+  currentRound      Int      @default(0)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  members        GroupMember[]
+  contributions  Contribution[]
+}
+
+model GroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  joinedAt  DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [walletAddress])
+
+  @@unique([groupId, userId])
+}
+
+model Contribution {
+  id          String   @id @default(cuid())
+  groupId     String
+  userId      String
+  amount      BigInt
+  round       Int
+  txHash      String   @unique
+  createdAt   DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [walletAddress])
+
+  @@index([groupId, round])
+}

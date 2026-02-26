@@ -1,6 +1,6 @@
 /**
  * Contract Data Management with Intelligent Caching
- * 
+ *
  * Features:
  * - React Query integration for server state
  * - Multi-layer caching (React Query + custom cache service)
@@ -9,26 +9,51 @@
  * - Optimistic updates
  * - Background refetching
  * - Cache busting strategies
+ * - Memoization and stable selectors to reduce re-renders (#80)
+ * - Performance metrics integration
  */
 
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { initializeSoroban } from '../services/soroban'
 import { cacheService, CacheKeys, CacheTags } from '../services/cache'
 import { analytics } from '../services/analytics'
 import { useWallet } from './useWallet'
+import { showNotification } from '../utils/notifications'
 import { Group } from '@/types'
 
-// Initialize Soroban service
+// Initialize Soroban service (singleton, stable reference)
 const sorobanService = initializeSoroban()
 
-// React Query default options with caching strategy
-const DEFAULT_QUERY_OPTIONS = {
+// --- Constants & Keys ---
+export const QUERY_KEYS = {
+  GROUPS: ['groups'] as const,
+  USER_GROUPS: (userId: string) => ['groups', userId] as const,
+  GROUP_DETAIL: (groupId: string) => ['group', groupId] as const,
+  GROUP_STATUS: (groupId: string) => ['groupStatus', groupId] as const,
+  GROUP_MEMBERS: (groupId: string) => ['groupMembers', groupId] as const,
+  USER_CONTRIBUTIONS: ['user_contributions'] as const,
+  TRANSACTIONS: (groupId: string) => ['transactions', groupId] as const,
+} as const
+
+// React Query default options - frozen for referential stability and to avoid accidental mutation
+const DEFAULT_QUERY_OPTIONS = Object.freeze({
   staleTime: 30 * 1000, // Consider data fresh for 30 seconds
-  cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-  refetchOnWindowFocus: true, // Refetch when user returns to tab
-  refetchOnReconnect: true, // Refetch when network reconnects
-  retry: 2, // Retry failed requests twice
-}
+  gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes (formerly cacheTime in RQ v5)
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
+  retry: 2,
+})
+
+// --- Selectors: stable functions so React Query only triggers re-renders when selected value changes ---
+// Stable empty references to avoid re-renders when data is loading/undefined
+
+const EMPTY_GROUPS: Group[] = []
+
+export const selectGroupsData = (data: Group[] | undefined): Group[] =>
+  data && data.length > 0 ? data : EMPTY_GROUPS
+export const selectGroupDetailData = <T>(data: T | undefined): T | undefined => data
+export const selectGroupMembersData = <T>(data: T[] | undefined): T[] => data ?? ([] as T[])
 
 interface CacheOptions {
   useCache?: boolean
@@ -36,72 +61,160 @@ interface CacheOptions {
 }
 
 /**
- * Fetch user's groups with intelligent caching
+ * Fetch user's groups with intelligent caching.
+ * Uses stable selector so consumers only re-render when groups array reference changes.
  */
-export const useGroups = (userId?: string, options: CacheOptions = {}): { data: Group[], isLoading: boolean, error: Error | null } => {
+export const useGroups = (
+  userId?: string,
+  options: CacheOptions = {}
+): { data: Group[]; isLoading: boolean; error: Error | null } => {
   const { useCache = true, bustCache = false } = options
 
+  const queryKey = useMemo(
+    () => (userId ? QUERY_KEYS.USER_GROUPS(userId) : QUERY_KEYS.GROUPS),
+    [userId]
+  )
+
   return useQuery({
-    queryKey: ['groups', userId],
+    queryKey,
     queryFn: async (): Promise<Group[]> => {
-      // Bust cache if requested
-      if (bustCache && userId) {
-        cacheService.invalidate(CacheKeys.userGroups(userId))
-      }
-
-      // Fetch with caching
-      if (userId) {
-        return await sorobanService.getUserGroups(userId, useCache)
-      }
-
-      console.log('TODO: Fetch all groups from contract')
-      return []
+      return analytics.measureAsync('query_groups', async () => {
+        if (bustCache && userId) {
+          cacheService.invalidate(CacheKeys.userGroups(userId))
+        }
+        if (userId) {
+          return await sorobanService.getUserGroups(userId, useCache)
+        }
+        return []
+      })
     },
     ...DEFAULT_QUERY_OPTIONS,
-    enabled: !!userId, // Only run if userId is provided
-  }) as any
+    enabled: !!userId,
+    select: selectGroupsData,
+  }) as ReturnType<typeof useQuery<Group[], Error>> & { data: Group[] }
 }
 
 /**
- * Fetch single group detail with caching
+ * Fetch single group detail with caching.
+ * Stable queryKey and memoized onError to avoid unnecessary re-runs.
  */
 export const useGroupDetail = (groupId: string, options: CacheOptions = {}) => {
   const { useCache = true, bustCache = false } = options
+  const queryKey = useMemo(() => QUERY_KEYS.GROUP_DETAIL(groupId), [groupId])
 
   return useQuery({
-    queryKey: ['group', groupId],
+    queryKey,
     queryFn: async () => {
-      // Bust cache if requested
       if (bustCache) {
         cacheService.invalidate(CacheKeys.group(groupId))
       }
-
-      return await sorobanService.getGroupStatus(groupId, useCache)
+      try {
+        return await analytics.measureAsync('query_group_detail', () =>
+          sorobanService.getGroupStatus(groupId, useCache)
+        )
+      } catch (error) {
+        analytics.trackError(error as Error, { operation: 'useGroupDetail', groupId }, 'medium')
+        throw error
+      }
     },
     ...DEFAULT_QUERY_OPTIONS,
+    enabled: !!groupId,
+    select: selectGroupDetailData,
+  })
+}
+
+/**
+ * Fetch group members with caching.
+ * Stable queryKey and memoized onError to reduce re-renders.
+ */
+export const useGroupMembers = (groupId: string, options: CacheOptions = {}) => {
+  const { useCache = true, bustCache = false } = options
+  const queryKey = useMemo(() => QUERY_KEYS.GROUP_MEMBERS(groupId), [groupId])
+
+  return useQuery({
+    queryKey,
+    queryFn: async () => {
+      if (bustCache) {
+        cacheService.invalidate(CacheKeys.groupMembers(groupId))
+      }
+      try {
+        return await analytics.measureAsync('query_group_members', () =>
+          sorobanService.getGroupMembers(groupId, useCache)
+        )
+      } catch (error) {
+        analytics.trackError(error as Error, { operation: 'useGroupMembers', groupId }, 'medium')
+        throw error
+      }
+    },
+    ...DEFAULT_QUERY_OPTIONS,
+    staleTime: 60 * 1000,
+    enabled: !!groupId,
+    select: selectGroupMembersData,
+  })
+}
+
+/**
+ * Fetch group status with real-time blockchain data and caching.
+ * Returns current cycle info, contribution status, and payout schedule.
+ */
+export const useGroupStatus = (groupId: string, options: CacheOptions = {}) => {
+  const { useCache = true, bustCache = false } = options
+  const queryKey = useMemo(() => QUERY_KEYS.GROUP_STATUS(groupId), [groupId])
+
+  return useQuery({
+    queryKey,
+    queryFn: async () => {
+      if (bustCache) {
+        cacheService.invalidate(CacheKeys.groupStatus(groupId))
+      }
+      try {
+        return await analytics.measureAsync('query_group_status', () =>
+          sorobanService.getGroupStatus(groupId, useCache)
+        )
+      } catch (error) {
+        analytics.trackError(error as Error, { operation: 'useGroupStatus', groupId }, 'medium')
+        throw error
+      }
+    },
+    ...DEFAULT_QUERY_OPTIONS,
+    staleTime: 30 * 1000, // 30 seconds - status changes frequently
     enabled: !!groupId,
   })
 }
 
 /**
- * Fetch group members with caching
+ * Fetch transaction history for a group with pagination
  */
-export const useGroupMembers = (groupId: string, options: CacheOptions = {}) => {
+export const useTransactions = (
+  groupId: string,
+  cursor?: string,
+  limit: number = 10,
+  options: CacheOptions = {}
+) => {
   const { useCache = true, bustCache = false } = options
 
-  return useQuery({
-    queryKey: ['groupMembers', groupId],
-    queryFn: async () => {
-      // Bust cache if requested
-      if (bustCache) {
-        cacheService.invalidate(CacheKeys.groupMembers(groupId))
-      }
+  // Use a cursor-specific query key for unique caching per page
+  const queryKey = useMemo(() => [...QUERY_KEYS.TRANSACTIONS(groupId), cursor, limit], [groupId, cursor, limit])
 
-      return await sorobanService.getGroupMembers(groupId, useCache)
+  return useQuery({
+    queryKey,
+    queryFn: async () => {
+      if (bustCache) {
+        cacheService.invalidate(CacheKeys.transactions(groupId, cursor, limit))
+      }
+      try {
+        return await analytics.measureAsync('query_transactions', () =>
+          sorobanService.getTransactions(groupId, cursor, limit)
+        )
+      } catch (error) {
+        analytics.trackError(error as Error, { operation: 'useTransactions', groupId, cursor }, 'medium')
+        throw error
+      }
     },
     ...DEFAULT_QUERY_OPTIONS,
-    staleTime: 60 * 1000, // Members change less frequently
+    staleTime: 2 * 60 * 1000, // 2 minutes, transactions are more static
     enabled: !!groupId,
+
   })
 }
 
@@ -125,35 +238,31 @@ interface CreateGroupContext {
  */
 export const useCreateGroup = () => {
   const queryClient = useQueryClient()
-  const { signTransaction } = useWallet()
 
   return useMutation<CreateGroupResult, Error, CreateGroupParams, CreateGroupContext>({
     mutationFn: async (params: CreateGroupParams) => {
-      const groupId = await sorobanService.createGroup(params, async (xdr) => {
-        const result = await signTransaction(xdr)
-        if (result.error) throw new Error(result.error.message)
-        if (!result.signedXdr) throw new Error('Failed to sign transaction')
-        return result.signedXdr
-      })
+      const groupId = await sorobanService.createGroup(params)
       return { groupId }
     },
     onMutate: async (params: CreateGroupParams) => {
+      showNotification.info(`Creating group: ${params.groupName}...`)
       // Optimistic update: Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['groups'] })
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.GROUPS })
 
       // Snapshot previous value
-      const previousGroups = queryClient.getQueryData(['groups'])
+      const previousGroups = queryClient.getQueryData(QUERY_KEYS.GROUPS)
 
       // Optimistically update to the new value
-      queryClient.setQueryData(['groups'], (old: any) => {
+      queryClient.setQueryData(QUERY_KEYS.GROUPS, (old: any) => {
         return [...(old || []), { ...params, id: 'temp_id', status: 'creating' }]
       })
 
       return { previousGroups }
     },
     onSuccess: (_data: CreateGroupResult) => {
+      showNotification.success('Savings group created successfully!')
       // Invalidate and refetch groups
-      queryClient.invalidateQueries({ queryKey: ['groups'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUPS })
 
       // Invalidate custom cache
       cacheService.invalidateByTag(CacheTags.groups)
@@ -164,16 +273,17 @@ export const useCreateGroup = () => {
       })
     },
     onError: (error: Error, _variables: CreateGroupParams, context?: CreateGroupContext) => {
+      showNotification.error(`Failed to create group: ${error.message}`)
       // Rollback optimistic update
       if (context?.previousGroups) {
-        queryClient.setQueryData(['groups'], context.previousGroups)
+        queryClient.setQueryData(QUERY_KEYS.GROUPS, context.previousGroups)
       }
 
       analytics.trackError(error, { operation: 'createGroup' }, 'high')
     },
     onSettled: () => {
       // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: ['groups'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUPS })
     },
   })
 }
@@ -185,25 +295,34 @@ interface JoinGroupResult {
 /**
  * Join group mutation with cache invalidation
  */
-export const useJoinGroup = () => {
+export const useJoinGroup = (userId?: string) => {
   const queryClient = useQueryClient()
-  const { signTransaction } = useWallet()
 
   return useMutation<JoinGroupResult, Error, string>({
     mutationFn: async (groupId: string) => {
-      await sorobanService.joinGroup(groupId, async (xdr) => {
-        const result = await signTransaction(xdr)
-        if (result.error) throw new Error(result.error.message)
-        if (!result.signedXdr) throw new Error('Failed to sign transaction')
-        return result.signedXdr
-      })
+      // Validate local cache first if userId is present
+      if (userId) {
+        const userGroups = queryClient.getQueryData<Group[]>(QUERY_KEYS.USER_GROUPS(userId));
+        if (userGroups?.some((g) => g.id === groupId)) {
+          throw new Error('You are already a member of this group.');
+        }
+      }
+      await sorobanService.joinGroup(groupId)
       return { groupId }
     },
+    onMutate: () => {
+      showNotification.info('Joining group...')
+    },
     onSuccess: (_data: JoinGroupResult) => {
+      showNotification.success('Joined group successfully!')
       // Invalidate group-specific queries
-      queryClient.invalidateQueries({ queryKey: ['group', _data.groupId] })
-      queryClient.invalidateQueries({ queryKey: ['groupMembers', _data.groupId] })
-      queryClient.invalidateQueries({ queryKey: ['groups'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUP_DETAIL(_data.groupId) })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUP_STATUS(_data.groupId) })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUP_MEMBERS(_data.groupId) })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUPS })
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_GROUPS(userId) })
+      }
 
       // Invalidate custom cache
       sorobanService.invalidateGroupCache(_data.groupId)
@@ -214,6 +333,7 @@ export const useJoinGroup = () => {
       })
     },
     onError: (error: Error) => {
+      showNotification.error(`Failed to join group: ${error.message}`)
       analytics.trackError(error, { operation: 'joinGroup' }, 'high')
     },
   })
@@ -233,27 +353,22 @@ interface ContributeContext {
  */
 export const useContribute = () => {
   const queryClient = useQueryClient()
-  const { signTransaction } = useWallet()
 
   return useMutation<ContributeParams, Error, ContributeParams, ContributeContext>({
     mutationFn: async (params: ContributeParams) => {
-      await sorobanService.contribute(params.groupId, params.amount, async (xdr) => {
-        const result = await signTransaction(xdr)
-        if (result.error) throw new Error(result.error.message)
-        if (!result.signedXdr) throw new Error('Failed to sign transaction')
-        return result.signedXdr
-      })
+      await sorobanService.contribute(params.groupId, params.amount)
       return params
     },
     onMutate: async (params: ContributeParams) => {
+      showNotification.info(`Processing contribution of $${params.amount}...`)
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['group', params.groupId] })
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.GROUP_DETAIL(params.groupId) })
 
       // Snapshot previous value
-      const previousGroup = queryClient.getQueryData(['group', params.groupId])
+      const previousGroup = queryClient.getQueryData(QUERY_KEYS.GROUP_DETAIL(params.groupId))
 
       // Optimistically update
-      queryClient.setQueryData(['group', params.groupId], (old: any) => {
+      queryClient.setQueryData(QUERY_KEYS.GROUP_DETAIL(params.groupId), (old: any) => {
         if (!old) return old
         return {
           ...old,
@@ -264,10 +379,13 @@ export const useContribute = () => {
       return { previousGroup }
     },
     onSuccess: (data: ContributeParams) => {
+      showNotification.success(`Successfully contributed $${data.amount}!`)
       // Invalidate group and contributions
-      queryClient.invalidateQueries({ queryKey: ['group', data.groupId] })
-      queryClient.invalidateQueries({ queryKey: ['groupMembers', data.groupId] })
-      queryClient.invalidateQueries({ queryKey: ['transactions', data.groupId] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUP_DETAIL(data.groupId) })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUP_STATUS(data.groupId) })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUP_MEMBERS(data.groupId) })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_CONTRIBUTIONS })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TRANSACTIONS(data.groupId) })
 
       // Invalidate custom cache
       sorobanService.invalidateGroupCache(data.groupId)
@@ -280,9 +398,10 @@ export const useContribute = () => {
       })
     },
     onError: (error: Error, variables: ContributeParams, context?: ContributeContext) => {
+      showNotification.error(`Contribution failed: ${error.message}`)
       // Rollback optimistic update
       if (context?.previousGroup) {
-        queryClient.setQueryData(['group', variables.groupId], context.previousGroup)
+        queryClient.setQueryData(QUERY_KEYS.GROUP_DETAIL(variables.groupId), context.previousGroup)
       }
 
       analytics.trackError(error, { operation: 'contribute' }, 'high')
@@ -291,38 +410,60 @@ export const useContribute = () => {
 }
 
 /**
- * Manual cache invalidation hook
+ * Manual cache invalidation hook.
+ * Returns a stable object with stable function refs to avoid downstream re-renders.
  */
 export const useCacheInvalidation = () => {
   const queryClient = useQueryClient()
 
-  return {
-    invalidateGroup: (groupId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['group', groupId] })
-      queryClient.invalidateQueries({ queryKey: ['groupMembers', groupId] })
+  const invalidateGroup = useCallback(
+    (groupId: string) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUP_DETAIL(groupId) })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUP_STATUS(groupId) })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUP_MEMBERS(groupId) })
       sorobanService.invalidateGroupCache(groupId)
     },
-    invalidateGroups: () => {
-      queryClient.invalidateQueries({ queryKey: ['groups'] })
-      cacheService.invalidateByTag(CacheTags.groups)
-    },
-    invalidateUser: (userId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['groups', userId] })
+    [queryClient]
+  )
+
+  const invalidateGroups = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.GROUPS })
+    cacheService.invalidateByTag(CacheTags.groups)
+  }, [queryClient])
+
+  const invalidateUser = useCallback(
+    (userId: string) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER_GROUPS(userId) })
       sorobanService.invalidateUserCache(userId)
     },
-    bustAllCache: () => {
-      queryClient.clear()
-      sorobanService.clearCache()
-    },
-  }
+    [queryClient]
+  )
+
+  const bustAllCache = useCallback(() => {
+    queryClient.clear()
+    sorobanService.clearCache()
+  }, [queryClient])
+
+  return useMemo(
+    () => ({
+      invalidateGroup,
+      invalidateGroups,
+      invalidateUser,
+      bustAllCache,
+    }),
+    [invalidateGroup, invalidateGroups, invalidateUser, bustAllCache]
+  )
 }
 
 /**
- * Cache metrics hook for monitoring
+ * Cache metrics hook for monitoring.
+ * Stable queryKey to avoid unnecessary refetches.
  */
+const CACHE_METRICS_QUERY_KEY = ['cacheMetrics'] as const
+
 export const useCacheMetrics = () => {
   return useQuery({
-    queryKey: ['cacheMetrics'],
+    queryKey: CACHE_METRICS_QUERY_KEY,
     queryFn: () => {
       const metrics = cacheService.getMetrics()
       const hitRate = cacheService.getHitRate()
@@ -335,31 +476,81 @@ export const useCacheMetrics = () => {
         state,
       }
     },
-    refetchInterval: 10000, // Refresh every 10 seconds
+    refetchInterval: 10000,
     staleTime: 5000,
   })
 }
 
 /**
- * Prefetch data for better UX
+ * Prefetch data for better UX.
+ * Stable return value to avoid triggering re-renders in consumers.
  */
 export const usePrefetch = () => {
   const queryClient = useQueryClient()
 
-  return {
-    prefetchGroup: (groupId: string) => {
+  const prefetchGroup = useCallback(
+    (groupId: string) => {
       queryClient.prefetchQuery({
-        queryKey: ['group', groupId],
+        queryKey: QUERY_KEYS.GROUP_DETAIL(groupId),
         queryFn: () => sorobanService.getGroupStatus(groupId),
         staleTime: 30 * 1000,
       })
     },
-    prefetchGroupMembers: (groupId: string) => {
+    [queryClient]
+  )
+
+  const prefetchGroupMembers = useCallback(
+    (groupId: string) => {
       queryClient.prefetchQuery({
-        queryKey: ['groupMembers', groupId],
+        queryKey: QUERY_KEYS.GROUP_MEMBERS(groupId),
         queryFn: () => sorobanService.getGroupMembers(groupId),
         staleTime: 60 * 1000,
       })
     },
-  }
+    [queryClient]
+  )
+
+  return useMemo(
+    () => ({ prefetchGroup, prefetchGroupMembers }),
+    [prefetchGroup, prefetchGroupMembers]
+  )
+}
+
+/**
+ * Tracks re-renders and exposes performance metrics for the calling component.
+ * Use to identify re-render bottlenecks and to report metrics to analytics.
+ * When reportRenderCount is true, reports total render count on unmount.
+ */
+export const usePerformanceMetrics = (options: PerformanceMetricsOptions = {}) => {
+  const { reportRenderCount = false, label = 'unknown' } = options
+  const renderCountRef = useRef(0)
+  renderCountRef.current += 1
+
+  useEffect(() => {
+    if (!reportRenderCount) return
+    return () => {
+      analytics.trackMetric(`render_count_${label}`, renderCountRef.current, {
+        label,
+        renderCount: renderCountRef.current,
+      })
+    }
+  }, [reportRenderCount, label])
+
+  return useMemo(
+    () => ({
+      get renderCount() {
+        return renderCountRef.current
+      },
+      getRecentMetrics: (limit = 50) => analytics.getMetrics(limit),
+      getStats: () => analytics.getStats(),
+    }),
+    []
+  )
+}
+
+export interface PerformanceMetricsOptions {
+  /** Report render count to analytics (e.g. for debugging re-render bottlenecks). Default: false in prod. */
+  reportRenderCount?: boolean
+  /** Component/hook name for analytics label. */
+  label?: string
 }

@@ -1,12 +1,11 @@
 // Issue #34: Implement mobile-responsive design
 // Complexity: High (200 pts)
 // Status: Complete
-
+'use client'
 import React, { ReactNode } from 'react'
-import { Header } from './Header'
 import { Sidebar } from './Sidebar'
 import { Footer } from './Footer'
-import { MobileNav } from './MobileNav'
+import { TopNav } from './TopNav'
 
 interface ResponsiveLayoutProps {
   children: ReactNode
@@ -21,14 +20,7 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
 }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
-      {/* Header with Mobile Nav */}
-      <div className="relative">
-        <Header currentView={currentView} onNavigate={onNavigate} />
-        <div className="absolute top-4 left-4 lg:hidden">
-          <MobileNav currentView={currentView} onNavigate={onNavigate} />
-        </div>
-      </div>
-
+      <TopNav />
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1">
         <Sidebar currentView={currentView} onNavigate={onNavigate} />

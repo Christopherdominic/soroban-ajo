@@ -1,0 +1,11 @@
+/Users/macbook/dev/soroban-ajo/contracts/ajo/./target_local/debug/deps/wasmi_core-4a133da5611539ae.d: /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/lib.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/host_error.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/nan_preserving_float.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/trap.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/units.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/untyped.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/value.rs
+
+/Users/macbook/dev/soroban-ajo/contracts/ajo/./target_local/debug/deps/libwasmi_core-4a133da5611539ae.rmeta: /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/lib.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/host_error.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/nan_preserving_float.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/trap.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/units.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/untyped.rs /Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/value.rs
+
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/lib.rs:
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/host_error.rs:
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/nan_preserving_float.rs:
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/trap.rs:
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/units.rs:
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/untyped.rs:
+/Users/macbook/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_core-0.13.0/src/value.rs:

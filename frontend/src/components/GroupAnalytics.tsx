@@ -1,20 +1,19 @@
 // Issue #33: Create group analytics page
 // Complexity: High (200 pts)
-// Status: Placeholder
+// Status: Placeholder - theme-aware charts (#58)
 
 import React from 'react'
-// TASK: IMPORTED RECHARTS COMPONENTS (#54)
-import { 
-  ResponsiveContainer, 
-  AreaChart, 
-  Area, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend 
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
 } from 'recharts'
 
 interface AnalyticsMetric {
@@ -25,8 +24,7 @@ interface AnalyticsMetric {
 }
 
 export const GroupAnalytics: React.FC = () => {
-  // TODO: Replace placeholder metrics with real analytics data
-  // TODO: Integrate Recharts for charts and graphs
+  const tickFill = 'var(--chart-tick)' // theme-aware via .dark in globals.css
 
   const metrics: AnalyticsMetric[] = [
     { label: 'Total Contributions', value: '$12,500', change: '+12%', trend: 'up' },
@@ -55,23 +53,22 @@ export const GroupAnalytics: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold">Group Analytics</h2>
-        <p className="text-gray-600">Track performance and contribution trends</p>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Group Analytics</h2>
+        <p className="text-gray-600 dark:text-slate-400">Track performance and contribution trends</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((metric) => (
-          <div key={metric.label} className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">{metric.label}</p>
-            <p className="text-2xl font-bold mt-2">{metric.value}</p>
+          <div key={metric.label} className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 p-6 border border-gray-100 dark:border-slate-700">
+            <p className="text-sm text-gray-600 dark:text-slate-400">{metric.label}</p>
+            <p className="text-2xl font-bold mt-2 text-gray-900 dark:text-slate-100">{metric.value}</p>
             <p
-              className={`text-sm mt-1 ${
-                metric.trend === 'up'
-                  ? 'text-green-600'
-                  : metric.trend === 'down'
-                  ? 'text-red-600'
-                  : 'text-gray-600'
-              }`}
+              className={`text-sm mt-1 ${metric.trend === 'up'
+                ? 'text-green-600 dark:text-emerald-400'
+                : metric.trend === 'down'
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-gray-600 dark:text-slate-400'
+                }`}
             >
               {metric.change}
             </p>
@@ -80,29 +77,27 @@ export const GroupAnalytics: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-xl font-bold mb-4">Contribution Trends</h3>
-          {/* Note: I removed the flex justify-center classes from this specific div so Recharts can expand properly */}
-          <div className="h-64 bg-gray-50 rounded pt-4 pr-4">
-            {/* TASK: IMPLEMENTED AREA CHART WITH CSS VARIABLES AND TOOLTIP STYLING (#54) */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 p-6 border border-gray-100 dark:border-slate-700">
+          <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-slate-100">Contribution Trends</h3>
+          <div className="h-64 bg-gray-50 dark:bg-slate-700/50 rounded pt-4 pr-4">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trendData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--chart-primary)" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="var(--chart-primary)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--chart-primary)" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="var(--chart-primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-line)" vertical={false} />
-                <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} dy={10} />
-                <YAxis tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'var(--chart-tooltip-bg)', 
-                    borderColor: 'var(--chart-tooltip-border)', 
+                <XAxis dataKey="name" tick={{ fill: tickFill, fontSize: 12 }} axisLine={false} tickLine={false} dy={10} />
+                <YAxis tick={{ fill: tickFill, fontSize: 12 }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--chart-tooltip-bg)',
+                    borderColor: 'var(--chart-tooltip-border)',
                     color: 'var(--chart-tooltip-text)',
-                    borderRadius: '8px' 
-                  }} 
+                    borderRadius: '8px',
+                  }}
                 />
                 <Area type="monotone" dataKey="amount" stroke="var(--chart-primary)" fillOpacity={1} fill="url(#colorAmount)" />
               </AreaChart>
@@ -110,24 +105,22 @@ export const GroupAnalytics: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-xl font-bold mb-4">Payout Timeline</h3>
-          {/* Note: Removed flex justify-center here as well so Recharts fills the container */}
-          <div className="h-64 bg-gray-50 rounded pt-4 pr-4">
-            {/* TASK: IMPLEMENTED BAR CHART WITH CSS VARIABLES, SPACING, AND LEGEND (#54) */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 p-6 border border-gray-100 dark:border-slate-700">
+          <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-slate-100">Payout Timeline</h3>
+          <div className="h-64 bg-gray-50 dark:bg-slate-700/50 rounded pt-4 pr-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={timelineData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-line)" vertical={false} />
-                <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} dy={10} />
-                <YAxis tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <Tooltip 
+                <XAxis dataKey="name" tick={{ fill: tickFill, fontSize: 12 }} axisLine={false} tickLine={false} dy={10} />
+                <YAxis tick={{ fill: tickFill, fontSize: 12 }} axisLine={false} tickLine={false} />
+                <Tooltip
                   cursor={{ fill: 'transparent' }}
-                  contentStyle={{ 
-                    backgroundColor: 'var(--chart-tooltip-bg)', 
-                    borderColor: 'var(--chart-tooltip-border)', 
+                  contentStyle={{
+                    backgroundColor: 'var(--chart-tooltip-bg)',
+                    borderColor: 'var(--chart-tooltip-border)',
                     color: 'var(--chart-tooltip-text)',
-                    borderRadius: '8px' 
-                  }} 
+                    borderRadius: '8px',
+                  }}
                 />
                 <Legend wrapperStyle={{ paddingTop: '10px' }} iconType="circle" />
                 <Bar dataKey="completed" fill="var(--chart-primary)" radius={[4, 4, 0, 0]} name="Completed" />
@@ -138,13 +131,13 @@ export const GroupAnalytics: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-xl font-bold mb-4">Top Contributors</h3>
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 p-6 border border-gray-100 dark:border-slate-700">
+        <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-slate-100">Top Contributors</h3>
         <div className="space-y-3">
           {['GAAAA...AAAA', 'GBBBB...BBBB', 'GCCCC...CCCC'].map((addr) => (
             <div key={addr} className="flex items-center justify-between">
-              <span className="font-mono text-sm text-gray-600">{addr}</span>
-              <span className="font-semibold">$1,500</span>
+              <span className="font-mono text-sm text-gray-600 dark:text-slate-400">{addr}</span>
+              <span className="font-semibold text-gray-900 dark:text-slate-100">$1,500</span>
             </div>
           ))}
         </div>

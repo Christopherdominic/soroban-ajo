@@ -1,5 +1,9 @@
+'use client'
+
 import React, { useState } from 'react'
 import toast from 'react-hot-toast'
+import { useTheme } from '@/context/ThemeContext'
+import { useOnboarding } from '@/hooks/useOnboarding'
 import type { UserPreferences } from '@/types/profile'
 
 interface SettingsPanelProps {
@@ -9,9 +13,22 @@ interface SettingsPanelProps {
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ preferences, onSave, isLoading = false }) => {
+  const { setTheme } = useTheme()
+  const { replayTutorial } = useOnboarding()
   const [activeTab, setActiveTab] = useState<'notifications' | 'privacy' | 'display'>('notifications')
   const [localPreferences, setLocalPreferences] = useState(preferences)
   const [isSaving, setIsSaving] = useState(false)
+
+  const handleThemeChange = (value: string) => {
+    const themeValue = value === 'auto' ? 'system' : (value as 'light' | 'dark')
+    setTheme(themeValue)
+    handleSelect('display', 'theme', value)
+  }
+
+  const handleReplayTutorial = () => {
+    replayTutorial()
+    toast.success('Tutorial started! Follow the guide.')
+  }
 
   const handleToggle = (section: keyof UserPreferences, key: string) => {
     setLocalPreferences((prev) => ({
@@ -56,7 +73,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ preferences, onSav
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-8">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg dark:shadow-slate-900/50 p-8 border border-gray-100 dark:border-slate-700">
         <div className="space-y-6">
           <div className="skeleton h-10 w-full rounded" />
           <div className="skeleton h-64 w-full rounded" />
@@ -66,9 +83,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ preferences, onSav
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg dark:shadow-slate-900/50 overflow-hidden border border-gray-100 dark:border-slate-700">
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-slate-700">
         <div className="flex">
           {tabs.map((tab) => (
             <button
@@ -76,8 +93,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ preferences, onSav
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`flex-1 px-6 py-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                 activeTab === tab.id
-                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  ? 'text-blue-600 dark:text-indigo-400 border-b-2 border-blue-600 dark:border-indigo-400 bg-blue-50 dark:bg-indigo-900/30'
+                  : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 hover:bg-gray-50 dark:hover:bg-slate-700'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,7 +112,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ preferences, onSav
         {activeTab === 'notifications' && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Notification Preferences</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Notification Preferences</h3>
               <div className="space-y-4">
                 <ToggleItem
                   label="Email Notifications"
@@ -136,7 +153,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ preferences, onSav
         {activeTab === 'privacy' && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Privacy Settings</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Privacy Settings</h3>
               <div className="space-y-4">
                 <ToggleItem
                   label="Show Profile"
@@ -165,18 +182,18 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ preferences, onSav
         {activeTab === 'display' && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Display Settings</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Display Settings</h3>
               <div className="space-y-6">
                 <SelectItem
                   label="Theme"
-                  description="Choose your preferred color scheme"
+                  description="Choose your preferred color scheme (saved across visits)"
                   value={localPreferences.display.theme}
                   options={[
                     { value: 'light', label: 'Light' },
                     { value: 'dark', label: 'Dark' },
-                    { value: 'auto', label: 'Auto' },
+                    { value: 'auto', label: 'Auto (system)' },
                   ]}
-                  onChange={(value) => handleSelect('display', 'theme', value)}
+                  onChange={handleThemeChange}
                 />
                 <SelectItem
                   label="Language"
@@ -201,18 +218,33 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ preferences, onSav
                   onChange={(value) => handleSelect('display', 'currency', value)}
                 />
               </div>
+
+              {/* Tutorial Section */}
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-slate-700">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-slate-100 mb-4">Tutorial</h4>
+                <button
+                  onClick={handleReplayTutorial}
+                  className="w-full px-4 py-3 bg-blue-50 dark:bg-indigo-900/30 text-blue-600 dark:text-indigo-400 rounded-lg hover:bg-blue-100 dark:hover:bg-indigo-900/50 transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Replay Tutorial
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {/* Save Button */}
         {hasChanges && (
-          <div className="mt-8 pt-6 border-t border-gray-200">
+          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-slate-700">
             <div className="flex gap-3">
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-blue-600 dark:bg-indigo-600 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-indigo-500 disabled:bg-gray-300 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
               >
                 {isSaving ? (
                   <>
@@ -231,7 +263,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ preferences, onSav
               <button
                 onClick={() => setLocalPreferences(preferences)}
                 disabled={isSaving}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                className="px-6 py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
               >
                 Cancel
               </button>
@@ -254,14 +286,14 @@ interface ToggleItemProps {
 const ToggleItem: React.FC<ToggleItemProps> = ({ label, description, checked, onChange }) => (
   <div className="flex items-center justify-between py-3">
     <div className="flex-1">
-      <div className="font-medium text-gray-900">{label}</div>
-      <div className="text-sm text-gray-600">{description}</div>
+      <div className="font-medium text-gray-900 dark:text-slate-100">{label}</div>
+      <div className="text-sm text-gray-600 dark:text-slate-400">{description}</div>
     </div>
     <button
       type="button"
       onClick={onChange}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        checked ? 'bg-blue-600' : 'bg-gray-300'
+        checked ? 'bg-blue-600 dark:bg-indigo-500' : 'bg-gray-300 dark:bg-slate-600'
       }`}
     >
       <span
@@ -283,12 +315,12 @@ interface SelectItemProps {
 
 const SelectItem: React.FC<SelectItemProps> = ({ label, description, value, options, onChange }) => (
   <div>
-    <label className="block font-medium text-gray-900 mb-1">{label}</label>
-    <p className="text-sm text-gray-600 mb-3">{description}</p>
+    <label className="block font-medium text-gray-900 dark:text-slate-100 mb-1">{label}</label>
+    <p className="text-sm text-gray-600 dark:text-slate-400 mb-3">{description}</p>
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700/50 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors"
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>

@@ -164,14 +164,26 @@ class AuthService {
 
     switch (provider) {
       case 'freighter': {
-        if (typeof window === 'undefined' || !(window as any).freighterApi) {
+        // Wait for Freighter to load (it injects asynchronously)
+        let freighter = (window as any).freighterApi
+        if (!freighter) {
+          // Wait up to 3 seconds for Freighter to load
+          for (let i = 0; i < 30; i++) {
+            await new Promise(resolve => setTimeout(resolve, 100))
+            if ((window as any).freighterApi) {
+              freighter = (window as any).freighterApi
+              break
+            }
+          }
+        }
+
+        if (typeof window === 'undefined' || !freighter) {
           throw new AuthError(
-            'Freighter wallet extension is not installed. Please install it from https://freighter.app',
+            'Freighter wallet extension is not installed. Please install it from https://freighter.app and refresh the page.',
             'WALLET_NOT_FOUND',
           )
         }
 
-        const freighter = (window as any).freighterApi
         const isAllowed = await freighter.isAllowed()
         if (!isAllowed) {
           await freighter.setAllowed()
