@@ -43,11 +43,35 @@ export function startScheduler(): void {
         })
     )
 
-    // Analytics aggregation - hourly
+    // Analytics ETL - hourly (event processing + user/group metric updates)
     scheduledTasks.push(
         cron.schedule('0 * * * *', async () => {
-            logger.info('Cron: scheduling analytics aggregation')
-            await analyticsQueue.add('hourly-aggregation', { type: 'hourly_aggregation' })
+            logger.info('Cron: scheduling hourly analytics ETL')
+            await analyticsQueue.add('hourly-etl', { type: 'hourly_etl' })
+        })
+    )
+
+    // Daily analytics ETL - midnight UTC (full metric recalculation)
+    scheduledTasks.push(
+        cron.schedule('0 0 * * *', async () => {
+            logger.info('Cron: scheduling daily analytics ETL')
+            await analyticsQueue.add('daily-etl', { type: 'daily_etl' })
+        })
+    )
+
+    // Cohort analysis - every Sunday at 1 AM UTC
+    scheduledTasks.push(
+        cron.schedule('0 1 * * 0', async () => {
+            logger.info('Cron: scheduling cohort analysis')
+            await analyticsQueue.add('cohort-analysis', { type: 'cohort_analysis' })
+        })
+    )
+
+    // Predictive metrics update - daily at 3 AM UTC
+    scheduledTasks.push(
+        cron.schedule('0 3 * * *', async () => {
+            logger.info('Cron: scheduling predictive metrics update')
+            await analyticsQueue.add('metrics-update', { type: 'metrics_update' })
         })
     )
 
