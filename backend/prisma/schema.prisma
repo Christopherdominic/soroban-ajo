@@ -22,8 +22,43 @@ model User {
   activities          ActivityFeed[]
   pointTransactions   PointTransaction[]
   rewardHistory       RewardHistory[]
+  
+  // Goal Management
+  goals               Goal[]            @relation("UserGoals")
+  goalMemberships     GoalMember[]
 
   @@index([walletAddress])
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  targetAmount BigInt
+  currentAmount BigInt @default(0)
+  deadline    DateTime
+  category    String   // EMERGENCY, VACATION, EDUCATION, HOME, RETIREMENT, CUSTOM
+  isPublic    Boolean  @default(false)
+  status      String   @default("ACTIVE") // ACTIVE, COMPLETED, ARCHIVED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user    User         @relation("UserGoals", fields: [userId], references: [walletAddress], onDelete: Cascade)
+  members GoalMember[]
+}
+
+model GoalMember {
+  id        String   @id @default(cuid())
+  goalId    String
+  userId    String
+  joinedAt  DateTime @default(now())
+  contributionAmount BigInt @default(0)
+
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [walletAddress], onDelete: Cascade)
+
+  @@unique([goalId, userId])
 }
 
 model Group {
