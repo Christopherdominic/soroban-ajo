@@ -1,5 +1,8 @@
 # Ajo - Decentralized Savings Groups
 
+> 🟢 Issue #284 (Dispute Resolution and Arbitration System) has been implemented and resolved via PRs. This repository now includes filing, voting, and admin arbitration features.
+
+
 A blockchain-based savings group platform built on Stellar/Soroban, enabling communities to create and manage traditional "Ajo" or "Rotating Savings and Credit Associations" (ROSCAs) with full transparency and security.
 
 ## 📖 Documentation
