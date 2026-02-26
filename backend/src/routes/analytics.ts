@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express'
+import { Router, Response } from 'express'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
 import { analyticsService } from '../services/analyticsService'
@@ -7,6 +7,7 @@ import { dataExportService } from '../services/dataExportService'
 import { abTestService } from '../services/abTestService'
 import { anomalyDetectionService } from '../services/anomalyDetectionService'
 import { logger } from '../utils/logger'
+import { AuthRequest } from '../middleware/auth'
 
 const prisma = new PrismaClient()
 const router = Router()
@@ -25,7 +26,7 @@ const dateRangeSchema = z.object({
 })
 
 // POST /api/analytics — receive events from frontend
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', async (req: AuthRequest, res: Response) => {
   try {
     const validatedData = eventSchema.parse(req.body)
     
@@ -48,7 +49,7 @@ router.post('/', async (req: Request, res: Response) => {
 })
 
 // GET /api/analytics/stats — get aggregated stats for dashboard
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/stats', async (req: AuthRequest, res: Response) => {
   try {
     const dateRange = dateRangeSchema.parse(req.query)
     const dateFilter = dateRange.start && dateRange.end ? {
@@ -80,7 +81,7 @@ router.get('/metrics', async (_req: Request, res: Response) => {
 })
 
 // GET /api/analytics/advanced — get advanced BI metrics
-router.get('/advanced', async (req: Request, res: Response) => {
+router.get('/advanced', async (req: AuthRequest, res: Response) => {
   try {
     const dateRange = dateRangeSchema.parse(req.query)
     const dateFilter = dateRange.start && dateRange.end ? {
@@ -122,7 +123,7 @@ router.get('/funnel', async (_req: Request, res: Response) => {
 })
 
 // GET /api/analytics/cohort — get cohort analysis
-router.get('/cohort', async (req: Request, res: Response) => {
+router.get('/cohort', async (req: AuthRequest, res: Response) => {
   try {
     const { limit = 12 } = req.query
     const cohorts = await biService.getCohortData(Number(limit))
@@ -134,7 +135,7 @@ router.get('/cohort', async (req: Request, res: Response) => {
 })
 
 // POST /api/analytics/track — track specific event
-router.post('/track', async (req: Request, res: Response) => {
+router.post('/track', async (req: AuthRequest, res: Response) => {
   try {
     const { eventType, userId, groupId, eventData } = req.body
     
@@ -152,7 +153,7 @@ router.post('/track', async (req: Request, res: Response) => {
 })
 
 // GET /api/analytics/users/:userId/metrics — get user-specific metrics
-router.get('/users/:userId/metrics', async (req: Request, res: Response) => {
+router.get('/users/:userId/metrics', async (req: AuthRequest, res: Response) => {
   try {
     const { userId } = req.params
     await biService.updateUserMetrics(userId)
@@ -181,7 +182,7 @@ router.get('/users/:userId/metrics', async (req: Request, res: Response) => {
 })
 
 // GET /api/analytics/groups/:groupId/metrics — get group-specific metrics
-router.get('/groups/:groupId/metrics', async (req: Request, res: Response) => {
+router.get('/groups/:groupId/metrics', async (req: AuthRequest, res: Response) => {
   try {
     const { groupId } = req.params
     await biService.updateGroupMetrics(groupId)
@@ -214,10 +215,10 @@ router.get('/groups/:groupId/metrics', async (req: Request, res: Response) => {
 export const analyticsRouter = router
 
 // Export routes
-router.post('/export', async (req: Request, res: Response) => {
+router.post('/export', async (req: AuthRequest, res: Response) => {
   try {
     const { format, dateRange, includeMetrics, includePredictions, includeFunnel } = req.body
-    const userId = req.user?.id || 'anonymous'
+    const userId = req.user?.publicKey || 'anonymous'
 
     const exportRequest = {
       format,

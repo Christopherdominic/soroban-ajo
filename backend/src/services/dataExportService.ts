@@ -447,7 +447,8 @@ export class DataExportService {
     doc.setFontSize(8)
     doc.text(`Generated on ${new Date().toLocaleString()}`, 20, 280)
 
-    doc.save(filePath)
+    const buffer = Buffer.from(doc.output('arraybuffer'))
+    fs.writeFileSync(filePath, buffer)
     return filePath
   }
 

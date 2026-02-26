@@ -273,14 +273,18 @@ async function processMetricsUpdate(jobId: string): Promise<void> {
   })
 }
 
-// Helper function to create ETL jobs
+// Enqueue all ETL job types — called on startup to ensure initial data is populated
 export async function scheduleETLJobs() {
-  // This would be called by the cron scheduler
-  logger.info('Scheduling ETL jobs')
-  
-  // Jobs would be scheduled through the job queue
-  // Hourly ETL
-  // Daily ETL  
-  // Weekly cohort analysis
-  // Monthly metrics update
+  const { analyticsQueue } = await import('../queues/queueManager')
+
+  logger.info('Enqueuing initial ETL jobs')
+
+  await Promise.all([
+    analyticsQueue.add('hourly-etl', { type: 'hourly_etl' }),
+    analyticsQueue.add('daily-etl', { type: 'daily_etl' }),
+    analyticsQueue.add('cohort-analysis', { type: 'cohort_analysis' }),
+    analyticsQueue.add('metrics-update', { type: 'metrics_update' }),
+  ])
+
+  logger.info('Initial ETL jobs enqueued')
 }

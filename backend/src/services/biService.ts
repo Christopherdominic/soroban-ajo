@@ -359,10 +359,23 @@ export class BIService {
     const totalContributions = contributions.reduce((sum, c) => sum + Number(c._sum.amount || 0), 0)
     const avgContributionAmount = contributions.length > 0 ? totalContributions / contributions.length : 0
 
+    const payoutEvents = await prisma.analyticsEvent.findMany({
+      where: {
+        ...(dateRange ? { timestamp: { gte: dateRange.start, lte: dateRange.end } } : {}),
+        eventType: 'payout_executed',
+      },
+      select: { eventData: true },
+    })
+
+    const totalPayouts = payoutEvents.reduce((sum: number, e: { eventData: unknown }) => {
+      const data = e.eventData as Record<string, unknown>
+      return sum + (typeof data?.amount === 'number' ? data.amount : 0)
+    }, 0)
+
     return {
       totalVolume: totalContributions,
       totalContributions,
-      totalPayouts: 0, // To be implemented based on payout logic
+      totalPayouts,
       avgContributionAmount,
     }
   }
@@ -410,16 +423,16 @@ export class BIService {
     }
   }
 
-  private async getCohortData() {
+  async getCohortData(limit = 12) {
     const cohorts = await prisma.cohortAnalysis.findMany({
       orderBy: { cohortDate: 'desc' },
-      take: 12,
+      take: limit,
     })
 
     return cohorts.map(cohort => ({
       cohortDate: cohort.cohortDate,
       cohortSize: cohort.cohortSize,
-      retentionRates: [cohort.retentionRate], // Simplified for now
+      retentionRates: [cohort.retentionRate],
     }))
   }
 
@@ -502,8 +515,37 @@ export class BIService {
   }
 
   private async calculateAvgTimeInStage(stage: string): Promise<number> {
-    // Simplified time calculation - would need more sophisticated tracking
-    return 5.5 // 5.5 minutes average
+    const events = await prisma.analyticsEvent.findMany({
+      where: { eventType: stage, userId: { not: null } },
+      orderBy: { timestamp: 'asc' },
+      select: { userId: true, timestamp: true },
+    })
+
+    if (events.length < 2) return 0
+
+    const userFirstEvent = new Map<string, Date>()
+    const userLastEvent = new Map<string, Date>()
+
+    for (const event of events) {
+      if (!event.userId) continue
+      if (!userFirstEvent.has(event.userId)) {
+        userFirstEvent.set(event.userId, event.timestamp)
+      }
+      userLastEvent.set(event.userId, event.timestamp)
+    }
+
+    let totalMinutes = 0
+    let count = 0
+    for (const [userId, first] of userFirstEvent) {
+      const last = userLastEvent.get(userId)!
+      const diffMs = last.getTime() - first.getTime()
+      if (diffMs > 0) {
+        totalMinutes += diffMs / (1000 * 60)
+        count++
+      }
+    }
+
+    return count > 0 ? totalMinutes / count : 0
   }
 
   private getRiskFactors(score: number): string[] {
@@ -563,13 +605,39 @@ export class BIService {
   }
 
   private async calculateGroupDefaultRate(groupId: string): Promise<number> {
-    // Simplified default rate calculation
-    return 0.05 // 5% default rate
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      include: {
+        members: true,
+        contributions: true,
+      },
+    })
+
+    if (!group || group.members.length === 0 || group.currentRound === 0) return 0
+
+    const expectedContributions = group.members.length * group.currentRound
+    const actualContributions = group.contributions.length
+
+    const missed = Math.max(0, expectedContributions - actualContributions)
+    return expectedContributions > 0 ? missed / expectedContributions : 0
   }
 
   private async calculateAvgContributionTime(groupId: string): Promise<number> {
-    // Simplified calculation - would need more sophisticated tracking
-    return 2.5 // 2.5 days average
+    const contributions = await prisma.contribution.findMany({
+      where: { groupId },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    if (contributions.length < 2) return 0
+
+    let totalGap = 0
+    for (let i = 1; i < contributions.length; i++) {
+      const gap = new Date(contributions[i].createdAt).getTime() - new Date(contributions[i - 1].createdAt).getTime()
+      totalGap += gap
+    }
+
+    // Return average gap in days
+    return totalGap / (contributions.length - 1) / (1000 * 60 * 60 * 24)
   }
 
   private async calculateGroupRiskScore(groupId: string): Promise<number> {
