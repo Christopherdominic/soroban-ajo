@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ajo-postgres-staging
+    environment:
+      POSTGRES_USER: ajo
+      POSTGRES_PASSWORD: ajo_password
+      POSTGRES_DB: ajo_staging
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+
+  backend:
+    # Backend image is built and published by GitHub Actions
+    # Example: ghcr.io/<owner>/soroban-ajo-backend:<tag>
+    image: ${BACKEND_IMAGE}
+    container_name: ajo-backend-staging
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgres://ajo:ajo_password@postgres:5432/ajo_staging
+      SOROBAN_NETWORK: testnet
+      SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
+      SOROBAN_CONTRACT_ID: ${SOROBAN_CONTRACT_ID}
+    depends_on:
+      - postgres
+    ports:
+      - "4000:4000"
+
+volumes:
+  postgres_staging_data:
+
